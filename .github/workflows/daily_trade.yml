@@ -2,46 +2,44 @@ name: Equity Risk Premium Monitor Bot
 
 on:
   schedule:
-    # 每天北京时间 18:30 运行 (10:30 UTC)
-    # A股收盘后数据更新需要时间，18:30 比较稳妥
-    - cron: '30 10 * * 1-5'
-  workflow_dispatch: # 允许你点击按钮手动运行
+    # 每天 18:30 运行 (北京时间 18:30 = UTC 10:30)
+    - cron: '30 10 * * *'
+  workflow_dispatch: # 允许手动点击运行
 
 jobs:
   run-erp-strategy:
     runs-on: ubuntu-latest
-    # 授予 GitHub 操作写入权限，用于将更新后的 CSV 数据保存回仓库
-    permissions:
-      contents: write
 
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v3
+      # 1. 检出代码 (升级到 v4)
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: 设置 Python 3.10
-        uses: actions/setup-python@v4
+      # 2. 设置 Python 环境 (升级到 v5)
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: 安装必要依赖
+      # 3. 安装依赖
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas akshare
+          pip install -r requirements.txt
 
-      - name: 第一步：增量获取 ERP 数据
-        run: |
-          python fetch_bond_yield_incremental.py
+      # 4. 执行增量抓取数据
+      - name: Fetch Data
+        run: python fetch_bond_yield_incremental.py
 
-      - name: 第二步：分析估值并生成报告
-        run: |
-          python erp_position.py > daily_report.txt
-          cat daily_report.txt # 在 Action 日志里直接显示报告内容
+      # 5. 执行分析并推送到微信
+      - name: Analyze and Push to WeChat
+        run: python erp_position.py
 
-      - name: 第三步：将更新同步至仓库
+      # 6. 将更新后的数据保存回 GitHub 仓库
+      - name: Commit and Push changes
         run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add data/*.csv daily_report.txt
-          # 只有在文件有变动时才提交，防止无意义的提交记录
-          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update ERP: $(date +'%Y-%m-%d %H:%M')"
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add data/
+          git commit -m "Auto update ERP data [skip ci]" || exit 0
           git push
