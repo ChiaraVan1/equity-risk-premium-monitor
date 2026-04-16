@@ -2,12 +2,26 @@ import pandas as pd
 import numpy as np
 import os
 from datetime import datetime
+import requests  # 🚀 新增：用于推送
+
+# --- 微信推送配置 ---
+SEND_KEY = "SCT338910Tt0zv5Y1j48IkxZJdh8zz0vkX"
+
+def send_wechat(content):
+    """保持静默发送，不影响原程序运行"""
+    if not SEND_KEY or not content:
+        return
+    url = f"https://sctapi.ftqq.com/{SEND_KEY}.send"
+    try:
+        requests.post(url, data={"title": "📊 今日 ERP 决策报告", "desp": content})
+    except:
+        pass
 
 def analyze_and_suggest(code, name):
     file_path = f"./data/erp_{code}.csv"
     if not os.path.exists(file_path):
         print(f"❌ 未找到 {name} ({code}) 的数据文件")
-        return
+        return "" # 修改：返回空字符串
 
     # 1. 加载数据
     df = pd.read_csv(file_path)
@@ -17,14 +31,14 @@ def analyze_and_suggest(code, name):
     erp_series = df['ERP'].dropna()
     
     if len(erp_series) < 250:
-        print(f"\n⚠️ {name} ({code}) 有效样本不足，当前仅有 {len(erp_series)} 天数据，跳过分析。")
-        return
+        msg = f"\n⚠️ {name} ({code}) 有效样本不足，当前仅有 {len(erp_series)} 天数据，跳过分析。"
+        print(msg)
+        return msg # 修改：返回消息内容
 
     # 2. 分析 ERP 分布特征
     mean_erp = erp_series.mean()
     std_erp = erp_series.std()
     
-    # 修正了空格问题，确保 key 的一致性
     quantiles = {
         "P90": erp_series.quantile(0.90),
         "P75": erp_series.quantile(0.75),
@@ -37,12 +51,21 @@ def analyze_and_suggest(code, name):
     current_erp = erp_series.iloc[-1]
     current_date = df['Date'].iloc[-1].date()
 
+    # --- 开始收集报告内容 ---
+    report_text = []
+    
     # 3. 生成报告
-    print(f"\n" + "="*60)
-    print(f"【{name} ({code})】 仓位决策报告 | 日期: {current_date}")
-    print(f"当前 ERP: {current_erp:.2%} | 历史均值: {mean_erp:.2%} | 标准差: {std_erp:.4f}")
-    print("-" * 60)
-    print("历史分位点参照 (ERP越高越便宜):")
+    l1 = "="*60
+    l2 = f"【{name} ({code})】 仓位决策报告 | 日期: {current_date}"
+    l3 = f"当前 ERP: {current_erp:.2%} | 历史均值: {mean_erp:.2%} | 标准差: {std_erp:.4f}"
+    l4 = "-" * 60
+    l5 = "历史分位点参照 (ERP越高越便宜):"
+    
+    # 先打印到屏幕（保持你原本的输出）
+    print(f"\n{l1}\n{l2}\n{l3}\n{l4}\n{l5}")
+    # 收集到报告列表
+    report_text.extend([l1, l2, l3, l4, l5])
+
     for k, v in quantiles.items():
         status = ""
         if k == "P90": status = "(极度低估)"
@@ -52,14 +75,16 @@ def analyze_and_suggest(code, name):
         elif k == "P10": status = "(极度高估)"
         elif k == "P5":  status = "(危险泡沫)"
         
-        mark = " ← [当前位置]" if (current_erp >= v if k=="P90" else False) else "" # 这里仅作演示
-        print(f"  {k} {status:<10}: {v:.2%}")
+        row = f"  {k} {status:<10}: {v:.2%}"
+        print(row)
+        report_text.append(row)
+
     print("-" * 60)
+    report_text.append("-" * 60)
 
     # 决策建议
     suggestions = []
-    
-    # 1. 投机仓 (0-30%)
+    # 1. 投机仓
     if current_erp >= quantiles["P90"]:
         suggestions.append("💎 [投机仓]：ERP >= P90！极度低估。建议买入投机头寸 (30%)。")
     elif current_erp <= quantiles["P50"]:
@@ -67,7 +92,7 @@ def analyze_and_suggest(code, name):
     else:
         suggestions.append("⏳ [投机仓]：等待极度低估信号，当前不建议新开仓。")
 
-    # 2. 价值仓 (0-60%)
+    # 2. 价值仓
     if current_erp >= quantiles["P75"]:
         suggestions.append("📈 [价值仓]：ERP >= P75。显著低估，建议建立 40-60% 仓位。")
     elif quantiles["P50"] <= current_erp < quantiles["P75"]:
@@ -77,7 +102,7 @@ def analyze_and_suggest(code, name):
     else:
         suggestions.append("🚫 [价值仓]：ERP < P25。严重高估，建议清空价值仓。")
 
-    # 3. 泡沫仓 (0-20%)
+    # 3. 泡沫仓
     if current_erp <= quantiles["P5"]:
         suggestions.append("🔥 [泡沫仓]：触发 P5 终极预警！执行强制清仓，一股不留。")
     elif current_erp <= quantiles["P10"]:
@@ -87,7 +112,13 @@ def analyze_and_suggest(code, name):
 
     for s in suggestions:
         print(s)
-    print("="*60)
+        report_text.append(s)
+    
+    l6 = "="*60
+    print(l6)
+    report_text.append(l6)
+
+    return "\n".join(report_text) # 返回这一整段文字
 
 def main():
     indices = [
@@ -95,8 +126,16 @@ def main():
         ("000688", "科创50"),
         ("000922", "中证红利")
     ]
+    
+    full_report = []
     for code, name in indices:
-        analyze_and_suggest(code, name)
+        report_content = analyze_and_suggest(code, name)
+        if report_content:
+            full_report.append(report_content)
+    
+    # 汇总并推送到微信
+    if full_report:
+        send_wechat("\n\n".join(full_report))
 
 if __name__ == "__main__":
     main()
