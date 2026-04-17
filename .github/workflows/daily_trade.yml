@@ -9,6 +9,11 @@ on:
 jobs:
   run-erp-strategy:
     runs-on: ubuntu-latest
+    
+    # --- ADD THIS SECTION ---
+    permissions:
+      contents: write  # Allows the bot to push changes to the repo
+    # ------------------------
 
     steps:
       # 1. 检出代码 (升级到 v4)
