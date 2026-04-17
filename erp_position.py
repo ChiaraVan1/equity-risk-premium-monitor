@@ -95,7 +95,7 @@ def main():
     ("000688", "科创50"),
     ("000922", "中证红利"),
     ("399989", "中证医疗"),
-    ("931071", "人工智能")    
+    ("931071", "人工智能")  
 ]
     for code, name in indices:
         analyze_and_suggest(code, name)
