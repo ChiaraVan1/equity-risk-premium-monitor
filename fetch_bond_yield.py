@@ -83,7 +83,8 @@ def main():
         print(f"   ❌ HS300 失败: {e}")'''
 
     # 策略 B: 科创50 & 中证红利
-    other_indices = {"000688": "科创50", "000300": "沪深300", "000922": "中证红利", "399989": "中证医疗"}
+    other_indices = {"000688": "科创50", "000300": "沪深300", "000922": "中证红利", "399989": "中证医疗",
+    "931071": "人工智能"}
     for code, name in other_indices.items():
         try:
             pe_csi = ak.stock_zh_index_hist_csindex(
