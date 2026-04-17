@@ -37,57 +37,66 @@ def analyze_and_suggest(code, name):
     current_erp = erp_series.iloc[-1]
     current_date = df['Date'].iloc[-1].date()
 
-    # 3. 构造报告文本 (核心修改点)
-    # 使用 Markdown 语法，针对手机端窄屏优化
-    report = []
-    report.append(f"### 📊 {name} ({code}) 决策报告")
-    report.append(f"**日期**: `{current_date}`")
-    report.append(f"**当前 ERP**: `{current_erp:.2%}`")
-    report.append(f"**历史均值**: {mean_erp:.2%} (±{std_erp:.4f})")
-    
-    report.append("\n**📍 历史分位参照 (越高越便宜)**")
-    # 手机端不建议写在一行，改成小字列表
-    report.append(f"- P90 (极度低估): `{quantiles['P90']:.2%}`")
-    report.append(f"- P50 (价值中枢): `{quantiles['P50']:.2%}`")
-    report.append(f"- P5  (危险泡沫): `{quantiles['P5']:.2%}`")
+    # 3. 生成报告
+    print(f"\n" + "="*60)
+    print(f"【{name} ({code})】 仓位决策报告 | 日期: {current_date}")
+    print(f"当前 ERP: {current_erp:.2%} | 历史均值: {mean_erp:.2%} | 标准差: {std_erp:.4f}")
+    print("-" * 60)
+    print("历史分位点参照 (ERP越高越便宜):")
+    for k, v in quantiles.items():
+        status = ""
+        if k == "P90": status = "(极度低估)"
+        elif k == "P75": status = "(显著低估)"
+        elif k == "P50": status = "(价值中枢)"
+        elif k == "P25": status = "(进入高估)"
+        elif k == "P10": status = "(极度高估)"
+        elif k == "P5":  status = "(危险泡沫)"
+        
+        mark = " ← [当前位置]" if (current_erp >= v if k=="P90" else False) else "" # 这里仅作演示
+        print(f"  {k} {status:<10}: {v:.2%}")
+    print("-" * 60)
 
-    report.append("\n**💡 仓位执行建议**")
+    # 决策建议
+    suggestions = []
     
-    # 1. 投机仓逻辑
+    # 1. 投机仓 (0-30%)
     if current_erp >= quantiles["P90"]:
-        report.append(f"> 💎 **投机仓**: 极度低估，买入 30% 头寸")
+        suggestions.append("💎 [投机仓]：ERP >= P90！极度低估。建议买入投机头寸 (30%)。")
     elif current_erp <= quantiles["P50"]:
-        report.append(f"> 💰 **投机仓**: 回到中枢，平账锁定利润")
+        suggestions.append("止 [投机仓]：回到 P50 中枢。建议卖出平账，锁定波段利润。")
     else:
-        report.append(f"> ⏳ **投机仓**: 等待信号，暂不建仓")
+        suggestions.append("⏳ [投机仓]：等待极度低估信号，当前不建议新开仓。")
 
-    # 2. 价值仓逻辑
+    # 2. 价值仓 (0-60%)
     if current_erp >= quantiles["P75"]:
-        report.append(f"> 📈 **价值仓**: 显著低估，保持 40-60% 仓位")
+        suggestions.append("📈 [价值仓]：ERP >= P75。显著低估，建议建立 40-60% 仓位。")
     elif quantiles["P50"] <= current_erp < quantiles["P75"]:
-        report.append(f"> ⚖️ **价值仓**: 合理偏低，建议持有")
+        suggestions.append("⚖️ [价值仓]：处于 P50-P75 之间。估值合理偏低，建议持有。")
+    elif quantiles["P25"] <= current_erp < quantiles["P50"]:
+        suggestions.append("📉 [价值仓]：进入 P25-P50 高估区间。建议分批止盈，减至 30% 以下。")
     else:
-        report.append(f"> 📉 **价值仓**: 估值偏高，建议减仓")
+        suggestions.append("🚫 [价值仓]：ERP < P25。严重高估，建议清空价值仓。")
 
-    # 3. 泡沫仓逻辑
+    # 3. 泡沫仓 (0-20%)
     if current_erp <= quantiles["P5"]:
-        report.append(f"> 🔥 **泡沫仓**: **触发 P5 终极预警！清仓！**")
+        suggestions.append("🔥 [泡沫仓]：触发 P5 终极预警！执行强制清仓，一股不留。")
+    elif current_erp <= quantiles["P10"]:
+        suggestions.append("⚠️ [泡沫仓]：处于 P10 极高估区。建议撤回大部分利润，仅留极少底仓。")
     else:
-        report.append(f"> 🍀 **泡沫仓**: 尚在安全区")
+        suggestions.append("🍀 [泡沫仓]：ERP 尚在安全区，无需恐慌清仓。")
 
-    report.append("\n---\n") # 分割线
-    
-    return "\n".join(report)
+    for s in suggestions:
+        print(s)
+    print("="*60)
 
 def main():
-    indices = [("000300", "沪深300"), ("000688", "科创50"), ("000922", "中证红利")]
-    final_message = ""
+    indices = [
+        ("000300", "沪深300"),
+        ("000688", "科创50"),
+        ("000922", "中证红利")
+    ]
     for code, name in indices:
-        # 获取每个指数的报告字符串
-        result = analyze_and_suggest(code, name)
-        if result:
-            final_message += result
-    
-    # 最后将 final_message 发送给 Server酱
-    # send_to_wechat(final_message) 
-    print(final_message) # 你可以先在控制台看一眼效果
+        analyze_and_suggest(code, name)
+
+if __name__ == "__main__":
+    main()
