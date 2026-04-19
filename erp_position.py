@@ -17,37 +17,82 @@ def analyze_and_suggest(code, name):
     erp_series = df['ERP'].dropna()
     
     if len(erp_series) < 250:
-        print(f"\n⚠️ {name} ({code}) 有效样本不足，当前仅有 {len(erp_series)} 天数据，跳过分析。")
+        print(f"\n⚠️ {name} ({code}) 有效样本不足，跳过分析。")
         return
 
     # 2. 分析 ERP 分布特征
     mean_erp = erp_series.mean()
-    std_erp = erp_series.std()
     
-    # 修正了空格问题，确保 key 的一致性
     quantiles = {
-        "P90": erp_series.quantile(0.90),
-        "P75": erp_series.quantile(0.75),
-        "P50": erp_series.quantile(0.50),
-        "P25": erp_series.quantile(0.25),
-        "P10": erp_series.quantile(0.10),
-        "P5":  erp_series.quantile(0.05),
+        "P95": erp_series.quantile(0.95), # 极端下杀位
+        "P90": erp_series.quantile(0.90), # 极度低估
+        "P75": erp_series.quantile(0.75), # 显著低估
+        "P50": erp_series.quantile(0.50), # 价值中枢/击球区起点
+        "P25": erp_series.quantile(0.25), # 合理估值上限
+        "P10": erp_series.quantile(0.10), # 泡沫区开始
     }
 
     current_erp = erp_series.iloc[-1]
     current_date = df['Date'].iloc[-1].date()
 
-    # 3. 生成 Markdown 报告
-    md = f"""## 📊 {name} ({code}) 仓位决策报告
+    # --- 状态区间判定 ---
+    if current_erp >= quantiles["P90"]: 
+        erp_zone = "🟢 极度低估 (>=P90)"
+    elif current_erp >= quantiles["P75"]: 
+        erp_zone = "🟢 显著低估 (P75-P90)"
+    elif current_erp >= quantiles["P50"]: 
+        erp_zone = "🟡 合理偏低 (P50-P75)"
+    elif current_erp >= quantiles["P25"]: 
+        erp_zone = "🟠 合理区间 (P25-P50)"
+    elif current_erp >= quantiles["P10"]: 
+        erp_zone = "🔴 严重高估 (P10-P25)"
+    else: 
+        erp_zone = "🚨 危险泡沫 (<P10)"
+
+    # --- 3:4:3 逻辑重构 (复刻图片实操思想) ---
+    
+    # A. 泡沫仓 (30%): 它是“先头部队”和“定海神针”
+    # 击球区(P50以上)就建满，哪怕后面还会跌。最后才卖的筹码。
+    if current_erp >= quantiles["P50"]:
+        b_msg, b_pct = "🌳 **泡沫仓**: 已进入相对便宜击球区，30% 底仓应长期锁定", 30
+    elif current_erp >= quantiles["P25"]:
+        b_msg, b_pct = "⏳ **泡沫仓**: 尚未达到远期目标价，底仓持有不动", 30
+    else:
+        b_msg, b_pct = "🔥 **泡沫仓**: 触发极致远期溢价，考虑收割最后的筹码", 5
+
+    # B. 价值仓 (40%): 它是“核心部队”
+    # 在足够便宜(P75+)时打满。回到合理价格(P25-P50)减仓。
+    if current_erp >= quantiles["P75"]:
+        v_msg, v_pct = "🛡️ **价值仓**: 足够便宜的价格，40% 核心主力必须在场", 40
+    elif current_erp >= quantiles["P50"]:
+        v_msg, v_pct = "⚖️ **价值仓**: 估值修复中，建议持有 30%-40% 主力仓位", 35
+    elif current_erp >= quantiles["P25"]:
+        v_msg, v_pct = "📤 **价值仓**: 回到合理估值区间，开始减持主力仓位", 10
+    else:
+        v_msg, v_pct = "🚫 **价值仓**: 估值已高，价值段位应已全部离场", 0
+
+    # C. 投机仓 (30%): 它是“奇兵/预备队”
+    # 应对极端惯性下杀。平时降成本，高位(P50以下)只卖不买。
+    if current_erp >= quantiles["P95"]:
+        t_msg, t_pct = "⚔️ **投机仓**: 触发极端惯性下跌，30% 预备队全额出击", 30
+    elif current_erp >= quantiles["P90"]:
+        t_msg, t_pct = "💹 **投机仓**: 极低估区，保持 20% 仓位积极做T降本", 20
+    elif current_erp >= quantiles["P50"]:
+        t_msg, t_pct = "↔️ **投机仓**: 震荡区间，维持 10% 灵活部做T", 10
+    else:
+        t_msg, t_pct = "📤 **投机仓**: 溢价区基本只卖不买，缩减至 5% 观察", 5
+
+    # --- 计算总仓位 ---
+    total_pct = v_pct + b_pct + t_pct
+
+    # --- 生成最终 Markdown 报告 ---
+    md = f"""## 📊 {name} ({code}) 决策报告
 📅 日期: {current_date}
 
-| 指标 | 数值 |
-|:-----|-----:|
-| 当前 ERP | **{current_erp:.2%}** |
-| 历史均值 | {mean_erp:.2%} |
-| 标准差 | {std_erp:.4f} |
-
-### 📈 历史分位点参照 (ERP越高越便宜)
+| 指标 | 数值 | 估值区间 |
+|:-----|-----:|:---------|
+| 当前 ERP | **{current_erp:.2%}** | **{erp_zone}** |
+| 历史均值 | {mean_erp:.2%} | {len(erp_series)}天样本 |
 
 | 分位点 | ERP值 | 估值状态 |
 |:-------|------:|:---------|
@@ -56,47 +101,28 @@ def analyze_and_suggest(code, name):
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
 | P25 | {quantiles["P25"]:.2%} | 进入高估 |
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
-| P5 | {quantiles["P5"]:.2%} | 危险泡沫 |
 
 ### 🎯 仓位建议
 
+{b_msg} **({b_pct}%)**
+{v_msg} **({v_pct}%)**
+{t_msg} **({t_pct}%)**
+
+---
+### 📌 建议总仓位：**{total_pct}%**
+(泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%)
 """
-    
-    # 决策建议（逻辑完全不变，只是加粗）
-    if current_erp >= quantiles["P90"]:
-        md += f"💎 **投机仓**: ERP >= P90！极度低估，建议买入 **(30%)**\n"
-    elif current_erp <= quantiles["P50"]:
-        md += "🛑 **投机仓**: 回到 P50 中枢，建议卖出平账，锁定波段利润\n"
-    else:
-        md += "⏳ **投机仓**: 等待极度低估信号，当前不建议新开仓\n"
-    
-    if current_erp >= quantiles["P75"]:
-        md += f"📈 **价值仓**: ERP >= P75，显著低估，建议建立 **(40-60%)**\n"
-    elif quantiles["P50"] <= current_erp < quantiles["P75"]:
-        md += "⚖️ **价值仓**: 处于 P50-P75 之间，估值合理偏低，建议持有\n"
-    elif quantiles["P25"] <= current_erp < quantiles["P50"]:
-        md += "📉 **价值仓**: 进入 P25-P50 高估区间，建议分批止盈，减至 30% 以下\n"
-    else:
-        md += "🚫 **价值仓**: ERP < P25，严重高估，建议清空价值仓\n"
-    
-    if current_erp <= quantiles["P5"]:
-        md += "🔥 **泡沫仓**: 触发 P5 终极预警！执行强制清仓，一股不留\n"
-    elif current_erp <= quantiles["P10"]:
-        md += "⚠️ **泡沫仓**: 处于 P10 极高估区，建议撤回大部分利润，仅留极少底仓\n"
-    else:
-        md += "🍀 **泡沫仓**: ERP 尚在安全区，无需恐慌清仓\n"
-    
-    md += "\n---\n"
     print(md)
+
 
 def main():
     indices = [
-    ("000300", "沪深300"),
-    ("000688", "科创50"),
-    ("000922", "中证红利"),
-    ("399989", "中证医疗"),
-    ("931071", "人工智能")  
-]
+        ("000300", "沪深300"),
+        ("000688", "科创50"),
+        ("000922", "中证红利"),
+        ("399989", "中证医疗"),
+        ("931071", "人工智能")  
+    ]
     for code, name in indices:
         analyze_and_suggest(code, name)
 
