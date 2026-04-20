@@ -37,7 +37,9 @@ def analyze_and_suggest(code, name):
     # 过滤掉空值
     erp_series = df['ERP'].dropna()
     
-    if len(erp_series) < 250:
+    # 样本门槛按市场区分
+    min_samples = 50 if code == "SPY" else 250
+    if len(erp_series) < min_samples:
         print(f"\n⚠️ {name} ({code}) 有效样本不足，跳过分析。")
         return
 
@@ -137,13 +139,14 @@ def analyze_and_suggest(code, name):
     return md
 
 if __name__ == "__main__":
-    # 定义你要监控的指数列表
+    # 监控列表
     indices = [
         ("000300", "沪深300"),
         ("000688", "科创50"),
         ("000922", "中证红利"),
         ("399989", "中证医疗"),
-        ("931071", "人工智能")
+        ("931071", "人工智能"),
+        ("SPY", "S&P 500"),  
     ]
     
     report_list = []
