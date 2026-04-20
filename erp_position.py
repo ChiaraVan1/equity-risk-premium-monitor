@@ -2,6 +2,27 @@ import pandas as pd
 import numpy as np
 import os
 from datetime import datetime
+import requests
+
+def send_to_wechat(content):
+    """
+    通过 Server酱 推送报告到微信
+    """
+    sct_key = os.getenv("SCT_KEY")
+    if not sct_key:
+        print("⚠️ 未找到 SCT_KEY，推送跳过。请在环境变量或 GitHub Secrets 中配置。")
+        return
+    
+    url = f"https://sctapi.ftqq.com/{sct_key}.send"
+    data = {
+        "title": f"📊 ERP 决策报告 ({datetime.now().strftime('%Y-%m-%d')})",
+        "desp": content
+    }
+    try:
+        res = requests.post(url, data=data)
+        print(f"✅ 方糖推送结果: {res.text}")
+    except Exception as e:
+        print(f"❌ 推送失败: {e}")
 
 def analyze_and_suggest(code, name):
     file_path = f"./data/erp_{code}.csv"
@@ -123,8 +144,17 @@ def main():
         ("399989", "中证医疗"),
         ("931071", "人工智能")  
     ]
+
+    report_list = []
     for code, name in indices:
-        analyze_and_suggest(code, name)
+        report_md = analyze_and_suggest(code, name)
+        if report_md:
+            report_list.append(report_md)
+    
+    if report_list:
+        full_report = "# 🚀 ERP 策略每日监控报告\n" + "".join(report_list)
+        print(full_report)
+        send_to_wechat(full_report)
 
 if __name__ == "__main__":
     main()
