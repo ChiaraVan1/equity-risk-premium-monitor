@@ -5,14 +5,10 @@ from datetime import datetime
 import requests
 
 def send_to_wechat(content):
-    """
-    通过 Server酱 推送报告到微信
-    """
     sct_key = os.getenv("SCT_KEY")
     if not sct_key:
-        print("⚠️ 未找到 SCT_KEY，推送跳过。请在环境变量或 GitHub Secrets 中配置。")
+        print("⚠️ 未找到 SCT_KEY，推送跳过。")
         return
-    
     url = f"https://sctapi.ftqq.com/{sct_key}.send"
     data = {
         "title": f"📊 ERP 决策报告 ({datetime.now().strftime('%Y-%m-%d')})",
@@ -30,52 +26,42 @@ def analyze_and_suggest(code, name):
         print(f"❌ 未找到 {name} ({code}) 的数据文件")
         return
 
-    # 1. 加载数据
     df = pd.read_csv(file_path)
     df['Date'] = pd.to_datetime(df['Date'])
-    
-    # 过滤掉空值
     erp_series = df['ERP'].dropna()
-    
-    # 样本门槛按市场区分
-    min_samples = 50 if code == "SPY" else 250
+
+    # 月频数据（欧日美）样本数少，门槛降低
+    min_samples = 50 if code in ('SPY', 'QQQ', 'EWQ', 'EWG', 'EWJ', 'EEM') else 250
     if len(erp_series) < min_samples:
-        print(f"\n⚠️ {name} ({code}) 有效样本不足，跳过分析。")
+        print(f"\n⚠️ {name} ({code}) 有效样本不足 ({len(erp_series)} < {min_samples})，跳过分析。")
         return
 
-    # 2. 分析 ERP 分布特征
     mean_erp = erp_series.mean()
-    
     quantiles = {
-        "P95": erp_series.quantile(0.95), # 极端下杀位
-        "P90": erp_series.quantile(0.90), # 极度低估
-        "P75": erp_series.quantile(0.75), # 显著低估
-        "P50": erp_series.quantile(0.50), # 价值中枢/击球区起点
-        "P25": erp_series.quantile(0.25), # 合理估值上限
-        "P10": erp_series.quantile(0.10), # 泡沫区开始
+        "P95": erp_series.quantile(0.95),
+        "P90": erp_series.quantile(0.90),
+        "P75": erp_series.quantile(0.75),
+        "P50": erp_series.quantile(0.50),
+        "P25": erp_series.quantile(0.25),
+        "P10": erp_series.quantile(0.10),
     }
 
     current_erp = erp_series.iloc[-1]
     current_date = df['Date'].iloc[-1].date()
 
-    # --- 状态区间判定 ---
-    if current_erp >= quantiles["P90"]: 
+    if current_erp >= quantiles["P90"]:
         erp_zone = "🟢 极度低估 (>=P90)"
-    elif current_erp >= quantiles["P75"]: 
+    elif current_erp >= quantiles["P75"]:
         erp_zone = "🟢 显著低估 (P75-P90)"
-    elif current_erp >= quantiles["P50"]: 
+    elif current_erp >= quantiles["P50"]:
         erp_zone = "🟡 合理偏低 (P50-P75)"
-    elif current_erp >= quantiles["P25"]: 
+    elif current_erp >= quantiles["P25"]:
         erp_zone = "🟠 合理区间 (P25-P50)"
-    elif current_erp >= quantiles["P10"]: 
+    elif current_erp >= quantiles["P10"]:
         erp_zone = "🔴 严重高估 (P10-P25)"
-    else: 
+    else:
         erp_zone = "🚨 危险泡沫 (<P10)"
 
-    # --- 3:4:3 逻辑重构 (复刻图片实操思想) ---
-    
-    # A. 泡沫仓 (30%): 它是“先头部队”和“定海神针”
-    # 击球区(P50以上)就建满，哪怕后面还会跌。最后才卖的筹码。
     if current_erp >= quantiles["P50"]:
         b_msg, b_pct = "🌳 **泡沫仓**: 已进入相对便宜击球区，30% 底仓应长期锁定", 30
     elif current_erp >= quantiles["P25"]:
@@ -83,8 +69,6 @@ def analyze_and_suggest(code, name):
     else:
         b_msg, b_pct = "🔥 **泡沫仓**: 触发极致远期溢价，考虑收割最后的筹码", 5
 
-    # B. 价值仓 (40%): 它是“核心部队”
-    # 在足够便宜(P75+)时打满。回到合理价格(P25-P50)减仓。
     if current_erp >= quantiles["P75"]:
         v_msg, v_pct = "🛡️ **价值仓**: 足够便宜的价格，40% 核心主力必须在场", 40
     elif current_erp >= quantiles["P50"]:
@@ -94,8 +78,6 @@ def analyze_and_suggest(code, name):
     else:
         v_msg, v_pct = "🚫 **价值仓**: 估值已高，价值段位应已全部离场", 0
 
-    # C. 投机仓 (30%): 它是“奇兵/预备队”
-    # 应对极端惯性下杀。平时降成本，高位(P50以下)只卖不买。
     if current_erp >= quantiles["P95"]:
         t_msg, t_pct = "⚔️ **投机仓**: 触发极端惯性下跌，30% 预备队全额出击", 30
     elif current_erp >= quantiles["P90"]:
@@ -105,17 +87,15 @@ def analyze_and_suggest(code, name):
     else:
         t_msg, t_pct = "📤 **投机仓**: 溢价区基本只卖不买，缩减至 5% 观察", 5
 
-    # --- 计算总仓位 ---
     total_pct = v_pct + b_pct + t_pct
 
-    # --- 生成最终 Markdown 报告 ---
     md = f"""## 📊 {name} ({code}) 决策报告
 📅 日期: {current_date}
 
 | 指标 | 数值 | 估值区间 |
 |:-----|-----:|:---------|
 | 当前 ERP | **{current_erp:.2%}** | **{erp_zone}** |
-| 历史均值 | {mean_erp:.2%} | {len(erp_series)}天样本 |
+| 历史均值 | {mean_erp:.2%} | {len(erp_series)}条样本 |
 
 | 分位点 | ERP值 | 估值状态 |
 |:-------|------:|:---------|
@@ -139,29 +119,29 @@ def analyze_and_suggest(code, name):
     return md
 
 if __name__ == "__main__":
-    # 监控列表
     indices = [
         ("000300", "沪深300"),
         ("000688", "科创50"),
         ("000922", "中证红利"),
         ("399989", "中证医疗"),
         ("931071", "人工智能"),
-        ("SPY", "S&P 500"),  
+        ("SPY",    "S&P 500"),
+        ("QQQ",    "Nasdaq 100"),
+        ("EWQ",    "MSCI France"),
+        ("EWG",    "MSCI Germany"),
+        ("EWJ",    "MSCI Japan"),
+        ("EEM",    "MSCI Emerging"),
     ]
-    
+
     report_list = []
     for code, name in indices:
         report_md = analyze_and_suggest(code, name)
         if report_md:
             report_list.append(report_md)
-    
+
     if report_list:
         full_report = "# 🚀 ERP 策略每日监控报告\n" + "".join(report_list)
-        
-        # 1. 在日志里打印（方便在 GitHub Action Logs 里调试）
         print("正在生成报告并准备推送...")
-        
-        # 2. 调用推送函数 (确保你之前定义了 send_to_wechat)
-        send_to_wechat(full_report) 
+        send_to_wechat(full_report)
     else:
         print("❌ 未生成任何有效报告，请检查数据文件。")
