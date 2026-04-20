@@ -6,42 +6,65 @@ import time
 from datetime import datetime, timedelta
 from io import StringIO
 
-def process_incremental(new_pe_df, new_bond_df, code, name, currency='CNY', bond_code='CN10Y'):
-    file_path = f"./data/erp_{code}.csv"
+# ── 配置表（与历史脚本保持一致）────────────────────────────────────────────────
 
-    new_pe_df['Date'] = pd.to_datetime(new_pe_df['Date'])
-    new_data = pd.merge(new_bond_df, new_pe_df, on='Date', how='outer').sort_values('Date')
-    
-    # 美股PE月频，前向填充
-    if currency == 'USD':
-        new_data['PE'] = new_data['PE'].ffill()
+FRED_API_KEY = "a8ce66c09bbcedfb9e33de739a0dcbfb"
 
-    new_data['ERP'] = (1 / new_data['PE']) - new_data['Bond_Yield_10Y']
-    new_data['IndexCode'] = code
-    new_data['IndexName'] = name
-    new_data['Currency'] = currency
-    new_data['BondCode'] = bond_code
+BOND_CONFIG = {
+    'CN10Y': 'bond_china',
+    'US10Y': 'DGS10',
+    'FR10Y': 'IRLTLT01FRM156N',
+    'DE10Y': 'IRLTLT01DEM156N',
+    'JP10Y': 'IRLTLT01JPM156N',
+}
 
-    if os.path.exists(file_path):
-        old_data = pd.read_csv(file_path)
-        old_data['Date'] = pd.to_datetime(old_data['Date'])
-        combined = pd.concat([old_data, new_data], ignore_index=True)
-        combined = combined.drop_duplicates(subset=['Date'], keep='last').sort_values('Date')
-        # 合并后再做一次ffill，确保历史衔接处没有空值
-        if currency == 'USD':
-            combined['PE'] = combined['PE'].ffill()
-            combined['ERP'] = (1 / combined['PE']) - combined['Bond_Yield_10Y']
-        action = "增量更新"
-    else:
-        combined = new_data
-        action = "全新创建"
+INDEX_CONFIG = [
+    ("000300", "沪深300",        "CNY", "CN10Y", "csindex"),
+    ("000688", "科创50",         "CNY", "CN10Y", "csindex"),
+    ("000922", "中证红利",       "CNY", "CN10Y", "csindex"),
+    ("399989", "中证医疗",       "CNY", "CN10Y", "csindex"),
+    ("931071", "人工智能",       "CNY", "CN10Y", "csindex"),
+    ("SPY",    "S&P 500",       "USD", "US10Y", "worldpe"),
+    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "worldpe"),
+    ("EWQ",    "MSCI France",   "EUR", "FR10Y", "worldpe"),
+    ("EWG",    "MSCI Germany",  "EUR", "DE10Y", "worldpe"),
+    ("EWJ",    "MSCI Japan",    "JPY", "JP10Y", "worldpe"),
+    ("EEM",    "MSCI Emerging", "USD", "CN10Y", "worldpe"),
+]
 
-    combined.to_csv(file_path, index=False, encoding='utf-8-sig')
-    valid_now = combined['ERP'].notna().sum()
-    print(f"   ✅ {name} {action}成功！总记录: {len(combined)} 天，有效ERP: {valid_now} 天")
+# ── 国债增量获取 ───────────────────────────────────────────────────────────────
 
-def fetch_us_pe_today():
-    """从 worldperatio 抓当日各指数 PE"""
+def fetch_cn_bond_incremental(start_date, end_date):
+    df = ak.bond_china_yield(start_date=start_date, end_date=end_date)
+    df = df[df['曲线名称'] == '中债国债收益率曲线'][['日期', '10年']]
+    df.columns = ['Date', 'Bond_Yield_10Y']
+    df['Date'] = pd.to_datetime(df['Date'])
+    df['Bond_Yield_10Y'] = df['Bond_Yield_10Y'] / 100
+    return df
+
+def fetch_fred_bond_incremental(series_id, start_date_str):
+    """start_date_str 格式: YYYY-MM-DD"""
+    url = "https://api.stlouisfed.org/fred/series/observations"
+    params = {
+        "series_id": series_id,
+        "api_key": FRED_API_KEY,
+        "file_type": "json",
+        "observation_start": start_date_str,
+    }
+    r = requests.get(url, params=params)
+    data = r.json()
+    if "observations" not in data:
+        raise ValueError(f"FRED 错误: {data.get('error_message')}")
+    df = pd.DataFrame(data["observations"])[["date", "value"]]
+    df.columns = ['Date', 'Bond_Yield_10Y']
+    df['Date'] = pd.to_datetime(df['Date'])
+    df['Bond_Yield_10Y'] = pd.to_numeric(df['Bond_Yield_10Y'], errors='coerce') / 100
+    return df.dropna().sort_values('Date').reset_index(drop=True)
+
+# ── PE 增量获取 ────────────────────────────────────────────────────────────────
+
+def fetch_worldpe_today():
+    """从 worldperatio 获取今日所有指数 PE，返回 dict {symbol: pe}"""
     url = "https://worldperatio.com/major-stock-index-pe-ratios"
     headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
     r = requests.get(url, headers=headers)
@@ -52,87 +75,121 @@ def fetch_us_pe_today():
         'Unnamed: 3_level_0_P/E Ratio▾': 'PE',
     })
     df['PE'] = pd.to_numeric(df['PE'], errors='coerce')
-    df['Date'] = pd.Timestamp(datetime.now().date())
-    return df[['symbol', 'Date', 'PE']]
+    return dict(zip(df['symbol'], df['PE']))
+
+# ── 增量合并保存 ───────────────────────────────────────────────────────────────
+
+def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code):
+    file_path = f"./data/erp_{code}.csv"
+
+    new_pe_df = new_pe_df.copy()
+    new_pe_df['Date'] = pd.to_datetime(new_pe_df['Date'])
+    new_bond_df = new_bond_df.copy()
+    new_bond_df['Date'] = pd.to_datetime(new_bond_df['Date'])
+
+    new_data = pd.merge(new_bond_df, new_pe_df[['Date', 'PE']], on='Date', how='outer').sort_values('Date')
+    new_data['IndexCode'] = code
+    new_data['IndexName'] = name
+    new_data['Currency'] = currency
+    new_data['BondCode'] = bond_code
+
+    if os.path.exists(file_path):
+        old_data = pd.read_csv(file_path)
+        old_data['Date'] = pd.to_datetime(old_data['Date'])
+        combined = pd.concat([old_data, new_data], ignore_index=True)
+        combined = combined.drop_duplicates(subset=['Date'], keep='last').sort_values('Date')
+        action = "增量更新"
+    else:
+        combined = new_data
+        action = "全新创建"
+
+    # 月频PE前向填充（欧日及美股）
+    combined['PE'] = combined['PE'].ffill()
+    combined['ERP'] = (1 / combined['PE']) - combined['Bond_Yield_10Y']
+
+    combined.to_csv(file_path, index=False, encoding='utf-8-sig')
+    valid_now = combined['ERP'].notna().sum()
+    print(f"   ✅ {name} {action}！总记录: {len(combined)} 天，有效ERP: {valid_now} 天")
+
+# ── 主流程 ────────────────────────────────────────────────────────────────────
 
 def main():
     os.makedirs('./data', exist_ok=True)
 
-    end_date = datetime.now().strftime("%Y%m%d")
-    start_date = (datetime.now() - timedelta(days=30)).strftime("%Y%m%d")
-    print(f"--- 1. 抓取增量数据 [{start_date} -> {end_date}] ---")
+    end_date_str   = datetime.now().strftime("%Y%m%d")
+    start_date_str = (datetime.now() - timedelta(days=30)).strftime("%Y%m%d")
+    fred_start     = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")  # 月频多取60天保险
 
-    # ── A股国债 ───────────────────────────────────────
+    print("=" * 60)
+    print(f"增量更新 [{start_date_str} -> {end_date_str}]")
+
+    # 1. 获取各国债增量
+    print("\n--- 1. 获取国债增量 ---")
+    bonds = {}
+
     try:
-        bond_df = ak.bond_china_yield(start_date=start_date, end_date=end_date)
-        bond_df = bond_df[bond_df['曲线名称'] == '中债国债收益率曲线'][['日期', '10年']]
-        bond_df.columns = ['Date', 'Bond_Yield_10Y']
-        bond_df['Date'] = pd.to_datetime(bond_df['Date'])
-        bond_df['Bond_Yield_10Y'] = bond_df['Bond_Yield_10Y'] / 100
-        print("   ✓ 中国国债收益率抓取成功")
+        bonds['CN10Y'] = fetch_cn_bond_incremental(start_date_str, end_date_str)
+        print(f"   ✓ 中国国债: {len(bonds['CN10Y'])} 条")
     except Exception as e:
-        print(f"   ❌ 中国国债抓取失败: {e}")
-        bond_df = pd.DataFrame()
+        print(f"   ❌ 中国国债失败: {e}")
 
-    # ── A股PE增量 ─────────────────────────────────────
-    print("\n--- 2. 更新A股指数PE ---")
-    cn_indices = {
-        "000300": "沪深300",
-        "000688": "科创50",
-        "000922": "中证红利",
-        "399989": "中证医疗",
-        "931071": "人工智能",
-    }
-    if not bond_df.empty:
-        for code, name in cn_indices.items():
-            try:
-                print(f"   正在更新 {name}...")
-                pe_csi = ak.stock_zh_index_hist_csindex(
-                    symbol=code,
-                    start_date=start_date,
-                    end_date=end_date
-                )[['日期', '滚动市盈率']]
-                pe_csi.columns = ['Date', 'PE']
-                process_incremental(pe_csi, bond_df, code, name, currency='CNY', bond_code='CN10Y')
-                time.sleep(1)
-            except Exception as e:
-                print(f"   ❌ {name} 更新失败: {e}")
-
-    # 增量脚本里替换原来的 ak.bond_gb_us_sina 部分
-    print("\n--- 3. 更新美债收益率 ---")
-    try:
-        API_KEY = "a8ce66c09bbcedfb9e33de739a0dcbfb"
-        url = "https://api.stlouisfed.org/fred/series/observations"
-        params = {
-            "series_id": "DGS10",
-            "api_key": API_KEY,
-            "file_type": "json",
-            "observation_start": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
-        }
-        r = requests.get(url, params=params)
-        us_bond_df = pd.DataFrame(r.json()["observations"])[["date", "value"]]
-        us_bond_df.columns = ["Date", "Bond_Yield_10Y"]
-        us_bond_df["Date"] = pd.to_datetime(us_bond_df["Date"])
-        us_bond_df["Bond_Yield_10Y"] = pd.to_numeric(us_bond_df["Bond_Yield_10Y"], errors="coerce") / 100
-        us_bond_df = us_bond_df.dropna()
-        print(f"   ✓ 美债获取成功，{len(us_bond_df)} 条记录")
-    except Exception as e:
-        print(f"   ❌ 美债抓取失败: {e}")
-        us_bond_df = pd.DataFrame()
-
-    # ── 美股PE增量 ────────────────────────────────────
-    print("\n--- 4. 更新美股指数PE ---")
-    if not us_bond_df.empty:
+    for bond_code, series_id in BOND_CONFIG.items():
+        if bond_code == 'CN10Y':
+            continue
         try:
-            pe_today = fetch_us_pe_today()
-            us_indices = [("SPY", "S&P 500")]
-            for code, name in us_indices:
-                pe_df = pe_today[pe_today['symbol'] == code][['Date', 'PE']].copy()
-                process_incremental(pe_df, us_bond_df, code, name, currency='USD', bond_code='US10Y')
+            bonds[bond_code] = fetch_fred_bond_incremental(series_id, fred_start)
+            print(f"   ✓ {bond_code}: {len(bonds[bond_code])} 条")
         except Exception as e:
-            print(f"   ❌ 美股PE更新失败: {e}")
+            print(f"   ❌ {bond_code} 失败: {e}")
 
-    print("\n增量同步完成。")
+    # 2. 获取今日所有 PE（一次请求）
+    print("\n--- 2. 获取今日 PE ---")
+    try:
+        pe_today_dict = fetch_worldpe_today()
+        # 打印美股和欧日的今日PE
+        for sym in ['SPY', 'QQQ', 'EWQ', 'EWG', 'EWJ', 'EEM']:
+            if sym in pe_today_dict:
+                print(f"   ✓ {sym}: {pe_today_dict[sym]}")
+    except Exception as e:
+        print(f"   ❌ worldperatio 失败: {e}")
+        pe_today_dict = {}
+
+    # 3. 更新各指数
+    print("\n--- 3. 更新各指数 ERP ---")
+    today = pd.Timestamp(datetime.now().date())
+
+    for code, name, currency, bond_code, pe_source in INDEX_CONFIG:
+        if bond_code not in bonds:
+            print(f"   ⚠️ [{code}] 国债 {bond_code} 未获取，跳过")
+            continue
+        try:
+            if pe_source == 'csindex':
+                pe_df = ak.stock_zh_index_hist_csindex(
+                    symbol=code,
+                    start_date=start_date_str,
+                    end_date=end_date_str
+                )[['日期', '滚动市盈率']]
+                pe_df.columns = ['Date', 'PE']
+                time.sleep(1)
+
+            elif pe_source == 'worldpe':
+                if code not in pe_today_dict:
+                    raise ValueError(f"worldperatio 未返回 {code}")
+                pe_df = pd.DataFrame({
+                    'Date': [today],
+                    'PE':   [pe_today_dict[code]]
+                })
+
+            else:
+                raise ValueError(f"未知 pe_source: {pe_source}")
+
+            process_incremental(pe_df, bonds[bond_code], code, name, currency, bond_code)
+
+        except Exception as e:
+            print(f"   ❌ [{code}] {name} 失败: {e}")
+
+    print("\n" + "=" * 60)
+    print("增量同步完成。")
 
 if __name__ == "__main__":
     main()
