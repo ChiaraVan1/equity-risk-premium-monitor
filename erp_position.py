@@ -135,16 +135,16 @@ def analyze_and_suggest(code, name):
 """
     print(md)
 
-
-def main():
+if __name__ == "__main__":
+    # 定义你要监控的指数列表
     indices = [
         ("000300", "沪深300"),
         ("000688", "科创50"),
         ("000922", "中证红利"),
         ("399989", "中证医疗"),
-        ("931071", "人工智能")  
+        ("931071", "人工智能")
     ]
-
+    
     report_list = []
     for code, name in indices:
         report_md = analyze_and_suggest(code, name)
@@ -153,8 +153,11 @@ def main():
     
     if report_list:
         full_report = "# 🚀 ERP 策略每日监控报告\n" + "".join(report_list)
-        print(full_report)
-        send_to_wechat(full_report)
-
-if __name__ == "__main__":
-    main()
+        
+        # 1. 在日志里打印（方便在 GitHub Action Logs 里调试）
+        print("正在生成报告并准备推送...")
+        
+        # 2. 调用推送函数 (确保你之前定义了 send_to_wechat)
+        send_to_wechat(full_report) 
+    else:
+        print("❌ 未生成任何有效报告，请检查数据文件。")
