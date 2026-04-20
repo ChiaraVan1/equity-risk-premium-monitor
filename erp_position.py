@@ -134,6 +134,7 @@ def analyze_and_suggest(code, name):
 (泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%)
 """
     print(md)
+    return md
 
 if __name__ == "__main__":
     # 定义你要监控的指数列表
