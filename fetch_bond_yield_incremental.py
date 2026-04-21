@@ -6,7 +6,7 @@ import time
 from datetime import datetime, timedelta
 from io import StringIO
 
-# ── 配置表（与历史脚本保持一致）────────────────────────────────────────────────
+# ── 配置表 ────────────────────────────────────────────────────────────────────
 
 FRED_API_KEY = "a8ce66c09bbcedfb9e33de739a0dcbfb"
 
@@ -25,12 +25,19 @@ INDEX_CONFIG = [
     ("399989", "中证医疗",       "CNY", "CN10Y", "csindex"),
     ("931071", "人工智能",       "CNY", "CN10Y", "csindex"),
     ("SPY",    "S&P 500",       "USD", "US10Y", "worldpe"),
-    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "worldpe"),
+    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "manual"),   # ✅ 改为手动填入
     ("EWQ",    "MSCI France",   "EUR", "FR10Y", "worldpe"),
     ("EWG",    "MSCI Germany",  "EUR", "DE10Y", "worldpe"),
     ("EWJ",    "MSCI Japan",    "JPY", "JP10Y", "worldpe"),
     ("EEM",    "MSCI Emerging", "USD", "CN10Y", "worldpe"),
 ]
+
+# ── ⚠️  每次运行前手动填入 QQQ 今日 PE ────────────────────────────────────────
+# 查询地址: https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio
+
+# 优先从环境变量读（GitHub Actions），没有则用硬编码值（本地调试）
+_qqq_pe_env = os.environ.get("QQQ_PE_TODAY")
+QQQ_PE_TODAY = float(_qqq_pe_env) if _qqq_pe_env else None
 
 # ── 国债增量获取 ───────────────────────────────────────────────────────────────
 
@@ -43,7 +50,6 @@ def fetch_cn_bond_incremental(start_date, end_date):
     return df
 
 def fetch_fred_bond_incremental(series_id, start_date_str):
-    """start_date_str 格式: YYYY-MM-DD"""
     url = "https://api.stlouisfed.org/fred/series/observations"
     params = {
         "series_id": series_id,
@@ -64,7 +70,6 @@ def fetch_fred_bond_incremental(series_id, start_date_str):
 # ── PE 增量获取 ────────────────────────────────────────────────────────────────
 
 def fetch_worldpe_today():
-    """从 worldperatio 获取今日所有指数 PE，返回 dict {symbol: pe}"""
     url = "https://worldperatio.com/major-stock-index-pe-ratios"
     headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
     r = requests.get(url, headers=headers)
@@ -103,7 +108,6 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
         combined = new_data
         action = "全新创建"
 
-    # 月频PE前向填充（欧日及美股）
     combined['PE'] = combined['PE'].ffill()
     combined['ERP'] = (1 / combined['PE']) - combined['Bond_Yield_10Y']
 
@@ -116,17 +120,24 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
 def main():
     os.makedirs('./data', exist_ok=True)
 
+    # 检查 QQQ 今日值
+    if QQQ_PE_TODAY is None:
+        print("⚠️  警告: QQQ_PE_TODAY 未填写，今日 QQQ ERP 将不会更新！")
+        print("    请访问 https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio")
+        print("    查询今日值后填入脚本顶部的 QQQ_PE_TODAY 再运行。\n")
+    else:
+        print(f"✅ QQQ 今日 PE: {QQQ_PE_TODAY}（来源: GuruFocus TTM）\n")
+
     end_date_str   = datetime.now().strftime("%Y%m%d")
     start_date_str = (datetime.now() - timedelta(days=30)).strftime("%Y%m%d")
-    fred_start     = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")  # 月频多取60天保险
+    fred_start     = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
 
     print("=" * 60)
     print(f"增量更新 [{start_date_str} -> {end_date_str}]")
 
-    # 1. 获取各国债增量
+    # 1. 国债增量
     print("\n--- 1. 获取国债增量 ---")
     bonds = {}
-
     try:
         bonds['CN10Y'] = fetch_cn_bond_incremental(start_date_str, end_date_str)
         print(f"   ✓ 中国国债: {len(bonds['CN10Y'])} 条")
@@ -142,14 +153,15 @@ def main():
         except Exception as e:
             print(f"   ❌ {bond_code} 失败: {e}")
 
-    # 2. 获取今日所有 PE（一次请求）
+    # 2. 今日 PE
     print("\n--- 2. 获取今日 PE ---")
     try:
         pe_today_dict = fetch_worldpe_today()
-        # 打印美股和欧日的今日PE
-        for sym in ['SPY', 'QQQ', 'EWQ', 'EWG', 'EWJ', 'EEM']:
+        for sym in ['SPY', 'EWQ', 'EWG', 'EWJ', 'EEM']:
             if sym in pe_today_dict:
                 print(f"   ✓ {sym}: {pe_today_dict[sym]}")
+        if QQQ_PE_TODAY is not None:
+            print(f"   ✓ QQQ: {QQQ_PE_TODAY} (手动填入, GuruFocus TTM)")
     except Exception as e:
         print(f"   ❌ worldperatio 失败: {e}")
         pe_today_dict = {}
@@ -175,10 +187,13 @@ def main():
             elif pe_source == 'worldpe':
                 if code not in pe_today_dict:
                     raise ValueError(f"worldperatio 未返回 {code}")
-                pe_df = pd.DataFrame({
-                    'Date': [today],
-                    'PE':   [pe_today_dict[code]]
-                })
+                pe_df = pd.DataFrame({'Date': [today], 'PE': [pe_today_dict[code]]})
+
+            elif pe_source == 'manual':
+                if QQQ_PE_TODAY is None:
+                    print(f"   ⚠️ [{code}] QQQ_PE_TODAY 未填写，跳过今日更新")
+                    continue
+                pe_df = pd.DataFrame({'Date': [today], 'PE': [float(QQQ_PE_TODAY)]})
 
             else:
                 raise ValueError(f"未知 pe_source: {pe_source}")
