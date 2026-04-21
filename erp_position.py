@@ -131,6 +131,8 @@ if __name__ == "__main__":
         ("EWG",    "MSCI Germany"),
         ("EWJ",    "MSCI Japan"),
         ("EEM",    "MSCI Emerging"),
+        # ========== 新增恒生科技指数 ==========
+        ("HSTECH", "恒生科技指数"),
     ]
 
     report_list = []
