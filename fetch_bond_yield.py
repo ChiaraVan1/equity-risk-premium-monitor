@@ -26,22 +26,22 @@ INDEX_CONFIG = [
     ("399989", "中证医疗",       "CNY", "CN10Y", "csindex"),
     ("931071", "人工智能",       "CNY", "CN10Y", "csindex"),
     ("SPY",    "S&P 500",       "USD", "US10Y", "multpl"),
-    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "gurufocus_csv"),  # ✅ 改用 GuruFocus CSV
+    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "gurufocus_csv"),
     ("EWQ",    "MSCI France",   "EUR", "FR10Y", "worldpe_ratio"),
     ("EWG",    "MSCI Germany",  "EUR", "DE10Y", "worldpe_ratio"),
     ("EWJ",    "MSCI Japan",    "JPY", "JP10Y", "worldpe_ratio"),
     ("EEM",    "MSCI Emerging", "USD", "CN10Y", "worldpe_ratio"),
+    # ========== 新增恒生科技指数 ==========
+    ("HSTECH", "恒生科技指数",   "CNY", "CN10Y", "hstech_csv"),
 ]
 
-# ── ⚠️  每次运行前手动填入 QQQ 今日 PE ────────────────────────────────────────
-# 查询地址: https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio
-# 填入格式示例: QQQ_PE_TODAY = 37.62
-QQQ_PE_TODAY = None   # ← 每次运行前填这里，填 None 则只用 CSV 历史不追加今日
+# ── 手动填入今日 PE（与 QQQ 一致）─────────────────────────────────────────────
+QQQ_PE_TODAY = None          # 每次运行前填写
+HS_TECH_PE_TODAY = None      # 恒生科技今日 PE，查询来源：用户提供的 CSV 或 GuruFocus 类似网站
 
-# ── GuruFocus CSV 路径 ────────────────────────────────────────────────────────
-# 把下载的 xlsx 放到 ./data/ 目录，改名为 qqq_pe_gurufocus.xlsx
-# 下载地址: https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio
+# ── 本地 CSV 路径 ────────────────────────────────────────────────────────────
 QQQ_PE_CSV_PATH = "./data/qqq_pe_gurufocus.xlsx"
+HS_TECH_CSV_PATH = "./data/hstech_pe.csv"   # 用户提供的 CSV 文件，请重命名为此并放入 ./data/
 
 # ── 国债获取 ──────────────────────────────────────────────────────────────────
 
@@ -121,6 +121,59 @@ def fetch_qqq_pe_from_csv():
         print(f"      ✓ QQQ PE: {len(df)} 条, {df['Date'].min().date()} ~ {df['Date'].max().date()}，今日值: {QQQ_PE_TODAY}")
     else:
         print(f"      ✓ QQQ PE: {len(df)} 条, {df['Date'].min().date()} ~ {df['Date'].max().date()}（今日值未填，使用最近历史值）")
+
+    return df
+
+def fetch_hstech_pe_from_csv():
+    """
+    从本地 CSV 读取恒生科技指数 PE 历史
+    列名要求：日期 和 PE-TTM等权
+    自动处理：
+      - 跳过非数据行（如末尾的说明文字）
+      - 清理 PE 值中的等号前缀
+      - 如果设置了 HS_TECH_PE_TODAY，追加今日值
+    """
+    if not os.path.exists(HS_TECH_CSV_PATH):
+        raise FileNotFoundError(
+            f"找不到恒生科技 PE 文件: {HS_TECH_CSV_PATH}\n"
+            f"请将用户提供的 CSV 文件重命名为 hstech_pe.csv 并放入 ./data/ 目录"
+        )
+
+    # 读取 CSV，不跳过任何行，后续手动清洗
+    df = pd.read_csv(HS_TECH_CSV_PATH, encoding='utf-8-sig')
+    df.columns = df.columns.str.strip()
+
+    if '日期' not in df.columns or 'PE-TTM等权' not in df.columns:
+        raise ValueError("CSV 文件中必须包含 '日期' 和 'PE-TTM等权' 列")
+
+    df = df[['日期', 'PE-TTM等权']].copy()
+    df.columns = ['Date', 'PE']
+
+    # 1. 清理 PE 列：去掉等号，转为数值
+    df['PE'] = df['PE'].astype(str).str.replace('=', '', regex=False)
+    df['PE'] = pd.to_numeric(df['PE'], errors='coerce')
+
+    # 2. 清理日期列：转为 datetime，无效的变成 NaT
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+
+    # 3. 删除日期或 PE 无效的行（包括末尾的说明文字行）
+    df = df.dropna(subset=['Date', 'PE'])
+
+    # 4. 按日期排序
+    df = df.sort_values('Date').reset_index(drop=True)
+
+    # 5. 追加今日手动值（如果有）
+    if HS_TECH_PE_TODAY is not None:
+        today_row = pd.DataFrame({
+            'Date': [pd.Timestamp(datetime.now().date())],
+            'PE':   [float(HS_TECH_PE_TODAY)]
+        })
+        df = pd.concat([df, today_row], ignore_index=True)
+        df = df.drop_duplicates(subset=['Date'], keep='last')
+        df = df.sort_values('Date').reset_index(drop=True)
+        print(f"      ✓ 恒生科技 PE: {len(df)} 条, {df['Date'].min().date()} ~ {df['Date'].max().date()}，今日值: {HS_TECH_PE_TODAY}")
+    else:
+        print(f"      ✓ 恒生科技 PE: {len(df)} 条, {df['Date'].min().date()} ~ {df['Date'].max().date()}（今日值未填，使用最近历史值）")
 
     return df
 
@@ -222,6 +275,9 @@ def main():
     if QQQ_PE_TODAY is None:
         print("⚠️  提示: QQQ_PE_TODAY 未填写，将使用 CSV 中最近的历史值。")
         print("    请访问 https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio 查询今日值后填入。\n")
+    if HS_TECH_PE_TODAY is None:
+        print("⚠️  提示: HS_TECH_PE_TODAY 未填写，将使用 CSV 中最近的历史值。")
+        print("    请根据最新数据手动填写（例如从 GuruFocus 或其它数据源获取）。\n")
 
     print("=" * 60)
     print("--- 1. 获取国债历史 ---")
@@ -261,6 +317,13 @@ def main():
     except Exception as e:
         print(f"   ❌ QQQ PE CSV读取失败: {e}")
 
+    hstech_pe_df = None
+    try:
+        print("   正在读取 恒生科技 PE 历史 (本地 CSV)...")
+        hstech_pe_df = fetch_hstech_pe_from_csv()
+    except Exception as e:
+        print(f"   ❌ 恒生科技 PE CSV读取失败: {e}")
+
     for code, name, currency, bond_code, pe_source in INDEX_CONFIG:
         print(f"\n   [{code}] {name}")
         if bond_code not in bonds:
@@ -285,6 +348,10 @@ def main():
                 if spy_pe_df is None:
                     raise ValueError("SPY历史未获取，无法估算")
                 pe_df = fetch_pe_history_by_ratio(code, spy_pe_df, pe_today_dict)
+            elif pe_source == 'hstech_csv':        # 新增恒生科技处理
+                if hstech_pe_df is None:
+                    raise ValueError("恒生科技 PE CSV 未加载")
+                pe_df = hstech_pe_df
             else:
                 raise ValueError(f"未知 pe_source: {pe_source}")
             process_and_save(pe_df, bonds[bond_code], code, name, currency, bond_code)
