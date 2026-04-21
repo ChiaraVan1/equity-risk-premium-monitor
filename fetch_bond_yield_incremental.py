@@ -25,19 +25,22 @@ INDEX_CONFIG = [
     ("399989", "中证医疗",       "CNY", "CN10Y", "csindex"),
     ("931071", "人工智能",       "CNY", "CN10Y", "csindex"),
     ("SPY",    "S&P 500",       "USD", "US10Y", "worldpe"),
-    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "manual"),   # ✅ 改为手动填入
+    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "manual"),   # 手动填入
     ("EWQ",    "MSCI France",   "EUR", "FR10Y", "worldpe"),
     ("EWG",    "MSCI Germany",  "EUR", "DE10Y", "worldpe"),
     ("EWJ",    "MSCI Japan",    "JPY", "JP10Y", "worldpe"),
     ("EEM",    "MSCI Emerging", "USD", "CN10Y", "worldpe"),
+    # ========== 新增恒生科技指数 ==========
+    ("HSTECH", "恒生科技指数",   "CNY", "CN10Y", "manual"),   # 手动填入，与 QQQ 一致
 ]
 
-# ── ⚠️  每次运行前手动填入 QQQ 今日 PE ────────────────────────────────────────
-# 查询地址: https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio
-
+# ── 手动填入今日 PE（与 QQQ 一致）─────────────────────────────────────────────
 # 优先从环境变量读（GitHub Actions），没有则用硬编码值（本地调试）
 _qqq_pe_env = os.environ.get("QQQ_PE_TODAY")
 QQQ_PE_TODAY = float(_qqq_pe_env) if _qqq_pe_env else None
+
+_hstech_pe_env = os.environ.get("HS_TECH_PE_TODAY")
+HS_TECH_PE_TODAY = float(_hstech_pe_env) if _hstech_pe_env else None
 
 # ── 国债增量获取 ───────────────────────────────────────────────────────────────
 
@@ -128,6 +131,13 @@ def main():
     else:
         print(f"✅ QQQ 今日 PE: {QQQ_PE_TODAY}（来源: GuruFocus TTM）\n")
 
+    # 检查恒生科技今日值
+    if HS_TECH_PE_TODAY is None:
+        print("⚠️  警告: HS_TECH_PE_TODAY 未填写，今日恒生科技 ERP 将不会更新！")
+        print("    请根据最新数据手动填写（例如从 GuruFocus 或其它数据源获取）。\n")
+    else:
+        print(f"✅ 恒生科技 今日 PE: {HS_TECH_PE_TODAY}\n")
+
     end_date_str   = datetime.now().strftime("%Y%m%d")
     start_date_str = (datetime.now() - timedelta(days=30)).strftime("%Y%m%d")
     fred_start     = (datetime.now() - timedelta(days=60)).strftime("%Y-%m-%d")
@@ -162,6 +172,8 @@ def main():
                 print(f"   ✓ {sym}: {pe_today_dict[sym]}")
         if QQQ_PE_TODAY is not None:
             print(f"   ✓ QQQ: {QQQ_PE_TODAY} (手动填入, GuruFocus TTM)")
+        if HS_TECH_PE_TODAY is not None:
+            print(f"   ✓ HSTECH: {HS_TECH_PE_TODAY} (手动填入)")
     except Exception as e:
         print(f"   ❌ worldperatio 失败: {e}")
         pe_today_dict = {}
@@ -190,10 +202,19 @@ def main():
                 pe_df = pd.DataFrame({'Date': [today], 'PE': [pe_today_dict[code]]})
 
             elif pe_source == 'manual':
-                if QQQ_PE_TODAY is None:
-                    print(f"   ⚠️ [{code}] QQQ_PE_TODAY 未填写，跳过今日更新")
-                    continue
-                pe_df = pd.DataFrame({'Date': [today], 'PE': [float(QQQ_PE_TODAY)]})
+                # QQQ 和恒生科技都走这个分支
+                if code == 'QQQ':
+                    if QQQ_PE_TODAY is None:
+                        print(f"   ⚠️ [{code}] QQQ_PE_TODAY 未填写，跳过今日更新")
+                        continue
+                    pe_df = pd.DataFrame({'Date': [today], 'PE': [float(QQQ_PE_TODAY)]})
+                elif code == 'HSTECH':
+                    if HS_TECH_PE_TODAY is None:
+                        print(f"   ⚠️ [{code}] HS_TECH_PE_TODAY 未填写，跳过今日更新")
+                        continue
+                    pe_df = pd.DataFrame({'Date': [today], 'PE': [float(HS_TECH_PE_TODAY)]})
+                else:
+                    raise ValueError(f"未知 manual 指数: {code}")
 
             else:
                 raise ValueError(f"未知 pe_source: {pe_source}")
