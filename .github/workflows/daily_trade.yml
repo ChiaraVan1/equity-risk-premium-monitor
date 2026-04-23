@@ -36,7 +36,7 @@ jobs:
       - name: Fetch Data
         env:
           QQQ_PE_TODAY: ${{ secrets.QQQ_PE_TODAY }}
-        run: python fetch_bond_yield_incremental_v4.py
+        run: python fetch_bond_yield_incremental.py
 
       # 5. 执行分析并推送到微信
       - name: Analyze and Push to WeChat
