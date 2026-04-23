@@ -31,7 +31,7 @@ def analyze_and_suggest(code, name):
     erp_series = df['ERP'].dropna()
 
     # 月频数据（欧日美）样本数少，门槛降低
-    min_samples = 50 if code in ('SPY', 'QQQ', 'EWQ', 'EWG', 'EWJ', 'EEM') else 250
+    min_samples = 50 if code in ('SPY', 'QQQ', 'EWQ', 'EWG', 'EWJ', 'EEM', 'HSTECH') else 250
     if len(erp_series) < min_samples:
         print(f"\n⚠️ {name} ({code}) 有效样本不足 ({len(erp_series)} < {min_samples})，跳过分析。")
         return
