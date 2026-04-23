@@ -1,6 +1,8 @@
 import akshare as ak
+import yfinance as yf
 import requests
 import pandas as pd
+import numpy as np
 import os
 import time
 from datetime import datetime, timedelta
@@ -84,6 +86,169 @@ def fetch_worldpe_today():
     })
     df['PE'] = pd.to_numeric(df['PE'], errors='coerce')
     return dict(zip(df['symbol'], df['PE']))
+
+# ── HSTECH PS 增量更新 ────────────────────────────────────────────────────────
+
+HSTECH_TICKERS = [
+    "0700.HK","9988.HK","3690.HK","9618.HK","1810.HK",
+    "9999.HK","2382.HK","0981.HK","9626.HK","0020.HK",
+    "1024.HK","0268.HK","2015.HK","9868.HK","9888.HK",
+    "0241.HK","0285.HK","2518.HK","0522.HK","0780.HK",
+    "0909.HK","2013.HK","9961.HK","6690.HK","0799.HK",
+    "2359.HK","0669.HK","1347.HK","0763.HK",
+]
+
+def _get_single_quarter_revenue(code):
+    """累计季报 -> 单季度营收 Series"""
+    df = ak.stock_financial_hk_report_em(stock=code, symbol="利润表", indicator="季度")
+    df = df[df["STD_ITEM_NAME"] == "营业额"][["REPORT_DATE", "AMOUNT"]].copy()
+    df["REPORT_DATE"] = pd.to_datetime(df["REPORT_DATE"])
+    df = df.sort_values("REPORT_DATE").set_index("REPORT_DATE")
+    df = df[~df.index.duplicated(keep="last")]
+
+    single_q = []
+    for d in df.index:
+        val = df.loc[d, "AMOUNT"]
+        if d.month == 12:
+            q3 = pd.Timestamp(d.year, 9, 30)
+            q3v = df.loc[q3, "AMOUNT"] if q3 in df.index else np.nan
+            single_q.append({"date": d, "rev": val - q3v if pd.notna(q3v) else np.nan})
+        elif d.month == 9:
+            q2 = pd.Timestamp(d.year, 6, 30)
+            q2v = df.loc[q2, "AMOUNT"] if q2 in df.index else np.nan
+            single_q.append({"date": d, "rev": val - q2v if pd.notna(q2v) else np.nan})
+        elif d.month == 6:
+            q1 = pd.Timestamp(d.year, 3, 31)
+            q1v = df.loc[q1, "AMOUNT"] if q1 in df.index else np.nan
+            single_q.append({"date": d, "rev": val - q1v if pd.notna(q1v) else np.nan})
+        elif d.month == 3:
+            single_q.append({"date": d, "rev": val})
+
+    return pd.DataFrame(single_q).set_index("date")["rev"].sort_index()
+
+
+def update_hstech_ps(cn10y_series=None):
+    """
+    增量更新 ps_HSTECH.csv。
+    - 文件不存在：全量重算（从2020-07开始）
+    - 文件已存在：重算最近3个月（覆盖营收修订），再合并去重
+    月末频率：
+      PS  = 当月末总市值 / TTM总营收
+      PSY = 1/PS - CN10Y（类比ERP，衡量相对无风险利率的销售收益率溢价）
+    cn10y_series: 已获取的中国国债收益率 DataFrame（含Date/Bond_Yield_10Y列），
+                  若传入则直接复用，否则重新拉取。
+    """
+    ps_path = "./data/ps_HSTECH.csv"
+    os.makedirs("./data", exist_ok=True)
+
+    if os.path.exists(ps_path):
+        old_ps = pd.read_csv(ps_path, index_col=0, parse_dates=True)
+        last_date = old_ps.index.max()
+        calc_start = last_date - pd.DateOffset(months=3)
+        action = "增量"
+    else:
+        old_ps = pd.DataFrame()
+        calc_start = pd.Timestamp("2020-07-01")
+        action = "全量"
+
+    calc_end = pd.Timestamp.today()
+    date_range = pd.date_range(calc_start, calc_end, freq="ME")
+
+    if len(date_range) == 0:
+        print("   HSTECH PS 已是最新，无需更新")
+        return
+
+    print(f"   -> HSTECH PS {action}计算：{date_range[0].date()} ~ {date_range[-1].date()}，共{len(date_range)}个月末")
+
+    all_mktcap = {}
+    all_ttm_rev = {}
+
+    for t in HSTECH_TICKERS:
+        code = t.replace(".HK", "").zfill(5)
+        try:
+            # 营收（akshare）
+            sq = _get_single_quarter_revenue(code)
+            ttm = sq.rolling(4, min_periods=4).sum()
+            ttm.index = ttm.index.to_period("M").to_timestamp("M")
+            all_ttm_rev[t] = ttm[~ttm.index.duplicated(keep="last")]
+
+            # 市值（yfinance fast_info + 历史价格）
+            tk = yf.Ticker(t)
+            hist = tk.history(start=str(calc_start.date()))
+            shares = tk.fast_info.shares
+            if shares and len(hist) > 0:
+                hist.index = hist.index.tz_localize(None)
+                mc = hist["Close"] * shares
+                mc.index = mc.index.to_period("M").to_timestamp("M")
+                all_mktcap[t] = mc.groupby(mc.index).last()
+
+            print(f"      ok {t}")
+            time.sleep(1.2)
+
+        except Exception as e:
+            print(f"      skip {t}: {e}")
+            time.sleep(1.5)
+
+    # 国债月末收益率序列（用于PSY）
+    if cn10y_series is not None:
+        bond_df = cn10y_series.copy()
+    else:
+        try:
+            start_str = calc_start.strftime("%Y%m%d")
+            end_str   = calc_end.strftime("%Y%m%d")
+            bond_df = fetch_cn_bond_incremental(start_str, end_str)
+        except Exception as e:
+            print(f"   ⚠️  国债数据获取失败，PSY将为空: {e}")
+            bond_df = pd.DataFrame(columns=["Date", "Bond_Yield_10Y"])
+
+    bond_df["Date"] = pd.to_datetime(bond_df["Date"])
+    bond_df = bond_df.set_index("Date")["Bond_Yield_10Y"].sort_index()
+    # 月末对齐：取每月最后一个交易日的值
+    bond_monthly = bond_df.resample("ME").last()
+
+    # 按月末合并计算PS和PSY
+    new_rows = []
+    for d in date_range:
+        total_mc = np.nansum([
+            all_mktcap[t].get(d, np.nan)
+            for t in HSTECH_TICKERS if t in all_mktcap
+        ])
+        total_rev = np.nansum([
+            all_ttm_rev[t].asof(d)
+            if (t in all_ttm_rev and not all_ttm_rev[t].empty)
+            else 0
+            for t in HSTECH_TICKERS
+        ])
+        if total_rev > 0 and total_mc > 0:
+            ps = total_mc / total_rev
+            # PSY = 1/PS - 无风险利率（类比ERP）
+            rf = bond_monthly.asof(d) if not bond_monthly.empty else np.nan
+            psy = (1 / ps) - rf if pd.notna(rf) else np.nan
+            new_rows.append({"date": d, "ps": ps, "rf": rf, "psy": psy})
+
+    new_ps = pd.DataFrame(new_rows).set_index("date")
+
+    if not old_ps.empty:
+        combined = pd.concat([old_ps, new_ps])
+        combined = combined[~combined.index.duplicated(keep="last")].sort_index()
+    else:
+        combined = new_ps.sort_index()
+
+    # 若旧文件没有psy列（首次升级），补算
+    if "psy" not in combined.columns and "ps" in combined.columns and not bond_monthly.empty:
+        combined["rf"]  = bond_monthly.reindex(combined.index, method="ffill")
+        combined["psy"] = (1 / combined["ps"]) - combined["rf"]
+
+    combined.to_csv(ps_path, encoding="utf-8-sig")
+    current_ps  = combined["ps"].iloc[-1]
+    current_psy = combined["psy"].iloc[-1] if "psy" in combined.columns else np.nan
+    ps_pct  = (combined["ps"]  < current_ps).mean()
+    psy_pct = (combined["psy"] < current_psy).mean() if "psy" in combined.columns else np.nan
+    print(f"   [OK] HSTECH PS {action}完成！共{len(combined)}条")
+    print(f"        PS  = {current_ps:.2f}x  (历史{ps_pct*100:.0f}%分位)")
+    if pd.notna(current_psy):
+        print(f"        PSY = {current_psy:.2%}  (历史{psy_pct*100:.0f}%分位，无风险利率={combined['rf'].iloc[-1]:.2%})")
+
 
 # ── 增量合并保存 ───────────────────────────────────────────────────────────────
 
@@ -223,6 +388,13 @@ def main():
 
         except Exception as e:
             print(f"   ❌ [{code}] {name} 失败: {e}")
+
+    print("\n--- 4. 更新 HSTECH PS/PSY ---")
+    try:
+        # 复用已拉取的CN10Y，避免重复请求
+        update_hstech_ps(cn10y_series=bonds.get("CN10Y"))
+    except Exception as e:
+        print(f"   ❌ HSTECH PS 更新失败: {e}")
 
     print("\n" + "=" * 60)
     print("增量同步完成。")
