@@ -37,6 +37,12 @@ def analyze_and_suggest(code, name):
         return
 
     mean_erp = erp_series.mean()
+    # 欧日美负利率指数，用2022年后数据做锚
+    if code in ('EWQ', 'EWG', 'EWJ', 'SPY', 'QQQ'):
+        anchor = df[df['Date'] >= pd.Timestamp('2022-01-01')]['ERP'].dropna()
+        if len(anchor) >= 30:
+            erp_series = anchor
+
     quantiles = {
         "P95": erp_series.quantile(0.95),
         "P90": erp_series.quantile(0.90),
@@ -89,6 +95,63 @@ def analyze_and_suggest(code, name):
 
     total_pct = v_pct + b_pct + t_pct
 
+    # ── HSTECH 专属：PS / PSY 补充模块 ──────────────────────────────────────
+    ps_block = ""
+    if code == "HSTECH":
+        ps_path = "./data/ps_HSTECH.csv"
+        if os.path.exists(ps_path):
+            ps_df = pd.read_csv(ps_path, index_col=0, parse_dates=True).dropna(subset=["ps"])
+            if len(ps_df) >= 6:
+                cur_ps  = ps_df["ps"].iloc[-1]
+                ps_pct  = (ps_df["ps"] < cur_ps).mean()
+                ps_zone = (
+                    "🟢 极度低估 (历史低位)" if ps_pct <= 0.10 else
+                    "🟢 显著低估"            if ps_pct <= 0.25 else
+                    "🟡 合理偏低"            if ps_pct <= 0.50 else
+                    "🟠 合理偏高"            if ps_pct <= 0.75 else
+                    "🔴 严重高估"            if ps_pct <= 0.90 else
+                    "🚨 危险泡沫 (历史高位)"
+                )
+
+                psy_rows = ""
+                cur_psy = np.nan
+                psy_zone = "N/A"
+                psy_pct = np.nan
+                if "psy" in ps_df.columns:
+                    psy_s = ps_df["psy"].dropna()
+                    if len(psy_s) >= 6:
+                        cur_psy  = psy_s.iloc[-1]
+                        cur_rf   = ps_df["rf"].iloc[-1] if "rf" in ps_df.columns else np.nan
+                        psy_pct  = (psy_s < cur_psy).mean()
+                        psy_zone = (
+                            "🟢 极度低估" if psy_pct >= 0.90 else
+                            "🟢 显著低估" if psy_pct >= 0.75 else
+                            "🟡 合理偏低" if psy_pct >= 0.50 else
+                            "🟠 合理偏高" if psy_pct >= 0.25 else
+                            "🔴 严重高估" if psy_pct >= 0.10 else
+                            "🚨 危险泡沫"
+                        )
+                        rf_str = f"{cur_rf:.2%}" if pd.notna(cur_rf) else "N/A"
+                        psy_rows = f"""
+| 当前 PSY | **{cur_psy:.2%}** | **{psy_zone}（历史{psy_pct*100:.0f}%分位）** |
+| PSY 历史均值 | {psy_s.mean():.2%} | 无风险利率={rf_str} |
+| PSY P75 | {psy_s.quantile(0.75):.2%} | 显著低估门槛 |
+| PSY P25 | {psy_s.quantile(0.25):.2%} | 进入高估门槛 |"""
+
+                ps_block = f"""
+---
+### 📦 PS / PSY 估值（恒生科技补充，基于营收口径）
+
+| 指标 | 数值 | 估值区间 |
+|:-----|-----:|:---------|
+| 当前 PS | **{cur_ps:.2f}x** | **{ps_zone}（历史{ps_pct*100:.0f}%分位）** |
+| PS 历史均值 | {ps_df["ps"].mean():.2f}x | 样本{len(ps_df)}个月 |
+| PS 历史最低 | {ps_df["ps"].min():.2f}x | |
+| PS 历史最高 | {ps_df["ps"].max():.2f}x |{psy_rows} |
+
+> PSY = 1/PS − 中国10年期国债收益率，衡量营收口径下相对无风险利率的超额回报，适用于PE因亏损公司失真时的替代指标。
+"""
+
     md = f"""## 📊 {name} ({code}) 决策报告
 📅 日期: {current_date}
 
@@ -114,7 +177,7 @@ def analyze_and_suggest(code, name):
 ---
 ### 📌 建议总仓位：**{total_pct}%**
 (泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%)
-"""
+{ps_block}"""
     print(md)
     return md
 
