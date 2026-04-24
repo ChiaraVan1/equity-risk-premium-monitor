@@ -1,165 +1,138 @@
-## 一、指标定义
+## 一、各指数数据源与更新方式
 
-本系统计算的**核心指标为股权风险溢价（ERP）**：
+### 1. 中国国债（CN10Y）
 
-| 指标名称 | 计算公式 | 说明 |
-|---------|---------|------|
-| **ERP** (Equity Risk Premium) | ERP = (1/PE) - 国债收益率_10Y | 股票相对于无风险资产的超额收益 |
-| **PE** (市盈率) | 指数收盘价 / 指数成分股净利润(TTM) | 指数估值水平的倒数 |
-| **国债收益率_10Y** | 各国家10年期国债到期收益率 | 无风险利率基准 |
-
----
-
-## 二、数据接口来源
-
-### 2.1 国债收益率数据
-
-| 国债代码 | 国家/地区 | 数据来源 | 接口/地址 |
-|---------|----------|---------|----------|
-| CN10Y | 中国 | akshare | `ak.bond_china_yield()`，筛选"中债国债收益率曲线"的"10年"数据 |
-| US10Y | 美国 | FRED API | `https://api.stlouisfed.org/fred/series/observations`，序列ID: `DGS10` |
-| FR10Y | 法国 | FRED API | 同上，序列ID: `IRLTLT01FRM156N` |
-| DE10Y | 德国 | FRED API | 同上，序列ID: `IRLTLT01DEM156N` |
-| JP10Y | 日本 | FRED API | 同上，序列ID: `IRLTLT01JPM156N` |
-
-### 2.2 市盈率(PE)数据
-
-| 指数代码 | 指数名称 | 数据来源 | 接口/地址 | 备注 |
-|---------|---------|---------|----------|------|
-| 000300 | 沪深300 | 中证指数官网 | `ak.stock_zh_index_hist_csindex()` | 字段: `滚动市盈率` |
-| 000688 | 科创50 | 中证指数官网 | `ak.stock_zh_index_hist_csindex()` | 字段: `滚动市盈率` |
-| 000922 | 中证红利 | 中证指数官网 | `ak.stock_zh_index_hist_csindex()` | 字段: `滚动市盈率` |
-| 399989 | 中证医疗 | 中证指数官网 | `ak.stock_zh_index_hist_csindex()` | 字段: `滚动市盈率` |
-| 931071 | 人工智能 | 中证指数官网 | `ak.stock_zh_index_hist_csindex()` | 字段: `滚动市盈率` |
-| SPY | S&P 500 | multpl.com | `https://www.multpl.com/s-p-500-pe-ratio/table/by-month` | 月频数据 |
-| QQQ | Nasdaq 100 | GuruFocus | 本地文件 `./data/qqq_pe_gurufocus.xlsx` | 需手动下载 |
-| EWQ | MSCI France | worldperatio.com | `https://worldperatio.com/major-stock-index-pe-ratios` | 仅今日值 |
-| EWG | MSCI Germany | worldperatio.com | 同上 | 仅今日值 |
-| EWJ | MSCI Japan | worldperatio.com | 同上 | 仅今日值 |
-| EEM | MSCI Emerging | worldperatio.com | 同上 | 仅今日值 |
+| 项目 | 说明 |
+|------|------|
+| **数据源** | akshare：`bond_china_yield` |
+| **更新频率** | 日频（交易日） |
+| **全量获取** | 循环 2006 年至今，每年拉取一次 |
+| **增量获取** | 近 30 天 |
+| **取值字段** | 中债国债收益率曲线 → 10 年 |
+| **单位转换** | 原始值 ÷ 100 |
 
 ---
 
-## 三、估算方法说明
+### 2. 美国 / 法国 / 德国 / 日本 10 年国债
 
-### 3.1 需要估算的指标
-
-| 指数代码 | 指数名称 | 是否估算 | 估算方法 | 估算原因 |
-|---------|---------|---------|---------|---------|
-| EWQ | MSCI France | **是** | 基于SPY历史PE × (EWQ今日PE / SPY今日PE) | worldperatio.com仅提供今日值，无历史数据 |
-| EWG | MSCI Germany | **是** | 基于SPY历史PE × (EWG今日PE / SPY今日PE) | 同上 |
-| EWJ | MSCI Japan | **是** | 基于SPY历史PE × (EWJ今日PE / SPY今日PE) | 同上 |
-| EEM | MSCI Emerging | **是** | 基于SPY历史PE × (EEM今日PE / SPY今日PE) | 同上 |
-| QQQ | Nasdaq 100 | 部分 | 历史数据从GuruFocus CSV获取，今日值需手动填入 | 无免费实时API |
-
-### 3.2 估算公式
-
-```
-估算历史PE(symbol) = SPY历史PE × [symbol今日PE / SPY今日PE]
-```
-
-**示例**：假设今日EWQ的PE为18，SPY的PE为22，则比例 = 18/22 = 0.818
-
-若SPY在某历史日期的PE为25，则估算EWQ当日PE = 25 × 0.818 ≈ 20.45
-
-### 3.3 估算局限性
-
-> ⚠️ **已知限制**：
-> - 假设各指数与SPY的PE比值在历史上保持恒定
-> - 实际情况中，估值水平会随市场风格、经济周期变化
-> - 估算值仅供参考，不代表真实历史估值
+| 项目 | 说明 |
+|------|------|
+| **数据源** | FRED API（圣路易斯联储） |
+| **API Key** | `a8ce66c09bbcedfb9e33de739a0dcbfb` |
+| **更新频率** | 日频 |
+| **全量获取** | 2005‑01‑01 至今 |
+| **增量获取** | 近 60 天 |
+| **映射关系** | `US10Y` → `DGS10`<br>`FR10Y` → `IRLTLT01FRM156N`<br>`DE10Y` → `IRLTLT01DEM156N`<br>`JP10Y` → `IRLTLT01JPM156N` |
+| **单位转换** | 原始值 ÷ 100 |
 
 ---
 
-## 四、数据更新机制
+### 3. 中国 A 股指数（沪深300 / 科创50 / 中证红利 / 中证医疗 / 人工智能）
 
-| 脚本 | 用途 | 更新频率 | 数据范围 |
-|-----|------|---------|---------|
-| `fetch_bond_yield_v5.py` | 全量初始化 | 一次性 | 2005年至今历史数据 |
-| `fetch_bond_yield_incremental_v5.py` | 增量更新 | 每日 | 最近30天数据 |
-
----
-
-## 五、配置对照表
-
-### 5.1 国债配置
-
-```python
-BOND_CONFIG = {
-    'CN10Y': 'bond_china',        # 中国 - akshare
-    'US10Y': 'DGS10',            # 美国 - FRED
-    'FR10Y': 'IRLTLT01FRM156N',  # 法国 - FRED
-    'DE10Y': 'IRLTLT01DEM156N',  # 德国 - FRED
-    'JP10Y': 'IRLTLT01JPM156N',  # 日本 - FRED
-}
-```
-
-### 5.2 指数与PE来源配置
-
-| 指数代码 | 名称 | 货币 | 对应国债 | PE数据源类型 |
-|---------|-----|-----|---------|-------------|
-| 000300 | 沪深300 | CNY | CN10Y | `csindex` (中证指数) |
-| 000688 | 科创50 | CNY | CN10Y | `csindex` |
-| 000922 | 中证红利 | CNY | CN10Y | `csindex` |
-| 399989 | 中证医疗 | CNY | CN10Y | `csindex` |
-| 931071 | 人工智能 | CNY | CN10Y | `csindex` |
-| SPY | S&P 500 | USD | US10Y | `multpl` / `worldpe` |
-| QQQ | Nasdaq 100 | USD | US10Y | `manual` / `gurufocus_csv` |
-| EWQ | MSCI France | EUR | FR10Y | `worldpe` (估算) |
-| EWG | MSCI Germany | EUR | DE10Y | `worldpe` (估算) |
-| EWJ | MSCI Japan | JPY | JP10Y | `worldpe` (估算) |
-| EEM | MSCI Emerging | USD | CN10Y | `worldpe` (估算) |
+| 项目 | 说明 |
+|------|------|
+| **数据源** | akshare：`stock_zh_index_hist_csindex` |
+| **更新频率** | 日频 |
+| **全量获取** | 2005‑04‑08 至今 |
+| **增量获取** | 近 30 天 |
+| **取值字段** | 滚动市盈率（TTM PE） |
+| **国债锚定** | CN10Y |
 
 ---
 
-## 六、第三方API密钥
+### 4. S&P 500（SPY）
 
-| 服务商 | 用途 | API Key | 备注 |
-|-------|-----|---------|-----|
-| FRED (美联储) | 获取海外国债数据 | `a8ce66c09bbcedfb9e33de739a0dcbfb` | 圣路易斯联储银行 |
-
----
-
-## 七、文件输出
-
-| 文件路径 | 内容 | 字段 |
-|---------|-----|------|
-| `./data/erp_{code}.csv` | 各指数ERP数据 | Date, PE, Bond_Yield_10Y, ERP, IndexCode, IndexName, Currency, BondCode |
+| 项目 | 说明 |
+|------|------|
+| **数据源** | multpl.com（历史月频） + worldperatio.com（今日值） |
+| **更新频率** | 月频 → 日频（今日值单独填充） |
+| **全量获取** | 爬取 multpl 表格（by month） |
+| **增量获取** | 今日值从 worldperatio 获取 |
+| **计算方式** | 历史月频数据 + 今日 PE 追加 |
+| **国债锚定** | US10Y |
 
 ---
 
-## 八、数据源质量评估
+### 5. Nasdaq 100（QQQ）
 
-| 数据源 | 数据完整性 | 实时性 | 可靠性 | 推荐度 |
-|-------|----------|--------|--------|--------|
-| 中证指数 (csindex) | ★★★★★ | ★★★★☆ | ★★★★★ | 优先使用 |
-| FRED API | ★★★★★ | ★★★☆☆ | ★★★★★ | 优先使用 |
-| multpl.com | ★★★★☆ | ★★★☆☆ | ★★★★☆ | 可用 |
-| worldperatio.com | ★★☆☆☆ | ★★★★☆ | ★★★☆☆ | 仅获取今日值 |
-| GuruFocus | ★★★★★ | ★★☆☆☆ | ★★★★☆ | 需手动更新 |
+| 项目 | 说明 |
+|------|------|
+| **数据源** | GuruFocus 下载的 Excel（本地 `./data/qqq_pe_gurufocus.xlsx`） |
+| **更新频率** | 日频 |
+| **全量获取** | 读取本地 Excel（skiprows=4，取前两列） |
+| **增量获取** | 手动填写 `QQQ_PE_TODAY`（环境变量或硬编码） |
+| **数据说明** | TTM PE，与 GuruFocus 网站一致 |
+| **国债锚定** | US10Y |
 
 ---
 
-## 九、相关脚本说明
+### 6. MSCI 各国 / 新兴市场（EWQ / EWG / EWJ / EEM）
 
-### 9.1 fetch_bond_yield_v5.py（全量初始化脚本）
+| 项目 | 说明 |
+|------|------|
+| **数据源** | worldperatio.com（今日值） + SPY 历史 × 今日比值（历史估算） |
+| **更新频率** | 今日值 → 日频，历史为估算 |
+| **全量获取** | `PE_history = SPY_history × (PE_today_local / PE_today_SPY)` |
+| **增量获取** | 今日值从 worldperatio 获取 |
+| **局限性** | 历史数据为线性缩放估算，非真实历史 |
+| **国债锚定** | EWQ → FR10Y<br>EWG → DE10Y<br>EWJ → JP10Y<br>EEM → CN10Y |
 
-- **用途**：首次运行时获取所有历史数据
-- **数据范围**：2005年至今
-- **主要函数**：
-  - `fetch_cn_bond_history()` - 获取中国国债历史
-  - `fetch_fred_bond_history()` - 获取海外国债历史
-  - `fetch_qqq_pe_from_csv()` - 读取QQQ PE历史
-  - `fetch_spy_pe_history()` - 获取SPY PE历史
-  - `fetch_pe_history_by_ratio()` - 估算海外指数PE历史
+---
 
-### 9.2 fetch_bond_yield_incremental_v5.py（增量更新脚本）
+### 7. 恒生科技指数（HSTECH）
 
-- **用途**：每日定时更新最新数据
-- **数据范围**：最近30天
-- **主要函数**：
-  - `fetch_cn_bond_incremental()` - 增量获取中国国债
-  - `fetch_fred_bond_incremental()` - 增量获取海外国债
-  - `fetch_worldpe_today()` - 获取今日PE
+#### 数据源
+
+| 类型 | 数据源 |
+|------|--------|
+| **成分股财务** | akshare：`stock_financial_hk_report_em`（利润表） |
+| **成分股市值** | yfinance：`Ticker.history` + `fast_info.shares` |
+
+#### 更新频率与方式
+
+| 项目 | 说明 |
+|------|------|
+| **全量计算** | `fetch_ps_20260424.py`（一次性） |
+| **增量更新** | `fetch_bond_yield_incremental_20260424.py` 自动执行 |
+| **更新触发** | 每次增量脚本运行，重新计算最近 3 个月 |
+| **计算频率** | 月末频率 |
+
+#### 计算逻辑
+
+| 指标 | 公式 |
+|------|------|
+| **TTM 营收** | 单季度营收滚动 4 个季度求和 |
+| **TTM 净利润** | 单季度净利润滚动 4 个季度求和 |
+| **月末总市值** | 收盘价 × 总股本（取月末最后一天） |
+| **PS** | 总市值 ÷ TTM 总营收 |
+| **PE** | 总市值 ÷ TTM 总净利润 |
+| **PSY** | 1/PS − 中国 10 年国债收益率 |
+| **ERP** | 1/PE − 中国 10 年国债收益率 |
+
+#### 特殊处理
+
+- 累计利润表 → 单季度转换（Q1/Q2/Q3/Q4 差分）
+- 成分股共 29 只（0700.HK 等）
+- 若 PE 缺失，ERP 为空；PSY 作为替代估值指标
+- 国债收益率复用 CN10Y 月末值
+
+---
+
+## 二、完整指数清单
+
+| 代码 | 名称 | PE 来源 | 国债锚定 |
+|------|------|---------|----------|
+| 000300 | 沪深300 | csindex（akshare） | CN10Y |
+| 000688 | 科创50 | csindex（akshare） | CN10Y |
+| 000922 | 中证红利 | csindex（akshare） | CN10Y |
+| 399989 | 中证医疗 | csindex（akshare） | CN10Y |
+| 931071 | 人工智能 | csindex（akshare） | CN10Y |
+| SPY | S&P 500 | multpl + worldperatio | US10Y |
+| QQQ | Nasdaq 100 | GuruFocus CSV + 手动 | US10Y |
+| EWQ | MSCI France | worldperatio（今日） + SPY 估算（历史） | FR10Y |
+| EWG | MSCI Germany | worldperatio（今日） + SPY 估算（历史） | DE10Y |
+| EWJ | MSCI Japan | worldperatio（今日） + SPY 估算（历史） | JP10Y |
+| EEM | MSCI Emerging | worldperatio（今日） + SPY 估算（历史） | CN10Y |
+| HSTECH | 恒生科技指数 | akshare（财务） + yfinance（市值） | CN10Y |
 
 ---
