@@ -4,6 +4,129 @@ import os
 from datetime import datetime
 import requests
 
+
+# ══════════════════════════════════════════════════════════════════════
+#  Shiller CAPE 长期回报锚模块
+#  数据源: Shiller ie_data.xls (Data sheet)
+#  逻辑:
+#    1. 读取历史 CAPE 和 Real 10Y Excess Annualized Returns
+#    2. 按 CAPE 区间分组，直接取同组的历史回报分布
+#    3. 输出当前 CAPE 所在组的均值、分位、样本数
+# ══════════════════════════════════════════════════════════════════════
+
+SHILLER_PATH = os.getenv("SHILLER_PATH", "./data/ie_data.xls")
+
+_shiller_cache = {}   # 避免多次读文件
+
+# CAPE 分组区间定义
+_CAPE_BINS   = [0,  10,  15,  20,  25,  30,  35,  40,  999]
+_CAPE_LABELS = ['<10', '10-15', '15-20', '20-25', '25-30', '30-35', '35-40', '>40']
+
+
+def _load_shiller():
+    """读取并缓存 Shiller 数据，返回 (grouped_stats, full_valid_df, cape_now)"""
+    if _shiller_cache:
+        return _shiller_cache["grouped"], _shiller_cache["valid"], _shiller_cache["cape_now"]
+
+    if not os.path.exists(SHILLER_PATH):
+        return None, None, None
+
+    df = pd.read_excel(SHILLER_PATH, engine="xlrd", sheet_name="Data",
+                       header=7, skiprows=[8])
+    df.columns = df.columns.str.strip()
+    df = df.rename(columns={
+        "CAPE":      "cape",
+        "Returns.2": "excess_return_10y",   # Real 10Y Excess Annualized Returns
+    })
+    df = df[pd.to_numeric(df["Date"], errors="coerce").notna()].copy()
+
+    valid = df[["cape", "excess_return_10y"]].dropna().copy()
+    valid["cape_bin"] = pd.cut(valid["cape"], bins=_CAPE_BINS, labels=_CAPE_LABELS)
+
+    grouped = valid.groupby("cape_bin", observed=True)["excess_return_10y"].agg(
+        count="count",
+        mean="mean",
+        p10=lambda x: x.quantile(0.10),
+        p25=lambda x: x.quantile(0.25),
+        p50=lambda x: x.quantile(0.50),
+        p75=lambda x: x.quantile(0.75),
+        p90=lambda x: x.quantile(0.90),
+    )
+
+    cape_now = df["cape"].dropna().iloc[-1]
+
+    _shiller_cache["grouped"]  = grouped
+    _shiller_cache["valid"]    = valid
+    _shiller_cache["cape_now"] = cape_now
+    return grouped, valid, cape_now
+
+
+def build_shiller_block(code):
+    """
+    仅对 SPY / QQQ 生成 Shiller 补充模块。
+    返回 markdown 字符串，失败时返回空字符串。
+    """
+    if code != "SPY":  # CAPE 是 S&P 500 专属指标，不适用于 QQQ
+        return ""
+
+    grouped, valid, cape_now = _load_shiller()
+    if grouped is None:
+        return "\n> ⚠️ 未找到 Shiller 数据文件，跳过长期回报锚分析。\n"
+
+    # 找到当前 CAPE 对应的分组
+    cape_bin_series = pd.cut([cape_now], bins=_CAPE_BINS, labels=_CAPE_LABELS)
+    current_bin = cape_bin_series[0]
+
+    if current_bin not in grouped.index:
+        return "\n> ⚠️ 当前 CAPE 超出历史分组范围，无法匹配。\n"
+
+    g = grouped.loc[current_bin]
+    n = int(g["count"])
+
+    # 当前组均值在全部历史 excess_return 中的分位
+    mean_pct = (valid["excess_return_10y"] < g["mean"]).mean()
+
+    # 区间判断（基于组均值的历史分位）
+    if mean_pct >= 0.90:
+        zone = "🟢 极度乐观（历史顶部）"
+    elif mean_pct >= 0.75:
+        zone = "🟢 显著乐观"
+    elif mean_pct >= 0.50:
+        zone = "🟡 中性偏好"
+    elif mean_pct >= 0.25:
+        zone = "🟠 中性偏差"
+    elif mean_pct >= 0.10:
+        zone = "🔴 长期回报预期偏低"
+    else:
+        zone = "🚨 历史罕见低回报区"
+
+    # 样本数警示
+    sample_warning = f"\n> ⚠️ 当前 CAPE 区间（{current_bin}x）历史样本仅 {n} 个月，参考时请注意统计可靠性。" if n < 30 else ""
+
+    block = f"""
+---
+### 📐 Shiller 长期回报锚（基于150年历史分组均值）
+
+> 方法：将历史所有月份按 CAPE 区间分组，取当前 CAPE 所在组的实际回报分布。
+> 当前 CAPE **{cape_now:.1f}x**，落入分组：**{current_bin}x**（共 {n} 个历史月份）
+{sample_warning}
+
+| 指标 | 数值 | 说明 |
+|:-----|-----:|:-----|
+| 当前 CAPE | **{cape_now:.1f}x** | Shiller 最新值 |
+| 同区间历史均值 | **{g['mean']:.2%}** | **{zone}** |
+| 均值的全历史分位 | **P{mean_pct*100:.0f}** | 历史 {mean_pct*100:.0f}% 时间比现在更悲观 |
+
+| 同 CAPE 区间的历史回报分布 | 超额回报 |
+|:--------------------------|--------:|
+| P90（乐观情景） | {g['p90']:.2%} |
+| P75 | {g['p75']:.2%} |
+| P50（中位数） | {g['p50']:.2%} |
+| P25 | {g['p25']:.2%} |
+| P10（悲观情景） | {g['p10']:.2%} |
+"""
+    return block
+
 def send_to_wechat(content):
     sct_key = os.getenv("SCT_KEY")
     if not sct_key:
@@ -152,6 +275,8 @@ def analyze_and_suggest(code, name):
 > PSY = 1/PS − 中国10年期国债收益率，衡量营收口径下相对无风险利率的超额回报，适用于PE因亏损公司失真时的替代指标。
 """
 
+    shiller_block = build_shiller_block(code)
+
     md = f"""## 📊 {name} ({code}) 决策报告
 📅 日期: {current_date}
 
@@ -177,7 +302,7 @@ def analyze_and_suggest(code, name):
 ---
 ### 📌 建议总仓位：**{total_pct}%**
 (泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%)
-{ps_block}"""
+{shiller_block}{ps_block}"""
     print(md)
     return md
 
