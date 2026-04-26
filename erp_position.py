@@ -23,6 +23,23 @@ _CAPE_BINS   = [0,  10,  15,  20,  25,  30,  35,  40,  999]
 _CAPE_LABELS = ['<10', '10-15', '15-20', '20-25', '25-30', '30-35', '35-40', '>40']
 
 
+# ── 颜色图例（插入报告顶部一次） ──────────────────────────────────────────────
+LEGEND_BLOCK = """---
+**估值颜色说明**（适用于全报告所有 ERP / PS / PSY 区间标注）
+
+| 颜色 | 含义 | ERP 对应分位 |
+|:----:|:-----|:------------|
+| 🟢 | 低估（便宜） | >= P75 |
+| 🟡 | 合理偏低 | P50 – P75 |
+| 🟠 | 合理偏高 / 开始高估 | P25 – P50 |
+| 🔴 | 高估 | P10 – P25 |
+| 🚨 | 极度高估 / 危险泡沫 | < P10 |
+
+> ERP（股权风险溢价）= 1/PE − 无风险利率。ERP 越高表示股票相对债券越便宜，ERP 越低（尤其负值）表示估值越贵。
+---
+"""
+
+
 def _load_shiller():
     """读取并缓存 Shiller 数据，返回 (grouped_stats, full_valid_df, cape_now)"""
     if _shiller_cache:
@@ -63,7 +80,7 @@ def _load_shiller():
 
 def build_shiller_block(code):
     """
-    仅对 SPY / QQQ 生成 Shiller 补充模块。
+    仅对 SPY 生成 Shiller 补充模块。
     返回 markdown 字符串，失败时返回空字符串。
     """
     if code != "SPY":  # CAPE 是 S&P 500 专属指标，不适用于 QQQ
@@ -73,7 +90,6 @@ def build_shiller_block(code):
     if grouped is None:
         return "\n> ⚠️ 未找到 Shiller 数据文件，跳过长期回报锚分析。\n"
 
-    # 找到当前 CAPE 对应的分组
     cape_bin_series = pd.cut([cape_now], bins=_CAPE_BINS, labels=_CAPE_LABELS)
     current_bin = cape_bin_series[0]
 
@@ -83,10 +99,8 @@ def build_shiller_block(code):
     g = grouped.loc[current_bin]
     n = int(g["count"])
 
-    # 当前组均值在全部历史 excess_return 中的分位
     mean_pct = (valid["excess_return_10y"] < g["mean"]).mean()
 
-    # 区间判断（基于组均值的历史分位）
     if mean_pct >= 0.90:
         zone = "🟢 极度乐观（历史顶部）"
     elif mean_pct >= 0.75:
@@ -100,12 +114,11 @@ def build_shiller_block(code):
     else:
         zone = "🚨 历史罕见低回报区"
 
-    # 样本数警示
     sample_warning = f"\n> ⚠️ 当前 CAPE 区间（{current_bin}x）历史样本仅 {n} 个月，参考时请注意统计可靠性。" if n < 30 else ""
 
     block = f"""
 ---
-### 📐 Shiller 长期回报锚（基于150年历史分组均值）
+### Shiller 长期回报锚（基于150年历史分组均值）
 
 > 方法：将历史所有月份按 CAPE 区间分组，取当前 CAPE 所在组的实际回报分布。
 > 当前 CAPE **{cape_now:.1f}x**，落入分组：**{current_bin}x**（共 {n} 个历史月份）
@@ -127,6 +140,102 @@ def build_shiller_block(code):
 """
     return block
 
+
+def build_trend_block(df, erp_series, code, quantiles):
+    """
+    生成近10个有效 ERP 数据点的趋势模块。
+    - 日频指数（A股/美股）取最近10个交易日
+    - 月频指数（EWQ/EWG/EWJ/EEM/HSTECH）取最近10个月末
+    HSTECH 额外展示 PSY 近期趋势。
+    """
+    monthly_codes = {'EWQ', 'EWG', 'EWJ', 'EEM', 'HSTECH'}
+
+    recent = df[df['ERP'].notna()][['Date', 'ERP', 'PE', 'Bond_Yield_10Y']].tail(10).copy()
+    if len(recent) < 2:
+        return ""
+
+    x = np.arange(len(recent))
+    slope = np.polyfit(x, recent['ERP'].values, 1)[0]
+    n_days = len(recent)
+    span_label = "月" if code in monthly_codes else "交易日"
+
+    if slope > 0.0005:
+        trend_icon = "持续走高"
+    elif slope < -0.0005:
+        trend_icon = "持续走低"
+    else:
+        trend_icon = "基本横盘"
+
+    delta = recent['ERP'].iloc[-1] - recent['ERP'].iloc[0]
+    delta_str = f"+{delta:.2%}" if delta >= 0 else f"{delta:.2%}"
+
+    rows = []
+    prev_erp = None
+    for _, row in recent.iterrows():
+        erp_val = row['ERP']
+        pe_val  = row['PE']
+
+        if erp_val >= quantiles["P75"]:
+            zone_icon = "🟢"
+        elif erp_val >= quantiles["P50"]:
+            zone_icon = "🟡"
+        elif erp_val >= quantiles["P25"]:
+            zone_icon = "🟠"
+        else:
+            zone_icon = "🔴"
+
+        if prev_erp is not None:
+            diff = erp_val - prev_erp
+            arrow = f"▲{diff:.2%}" if diff > 0 else (f"▼{abs(diff):.2%}" if diff < 0 else "─")
+        else:
+            arrow = "─"
+        prev_erp = erp_val
+
+        date_str = row['Date'].strftime("%m-%d") if code not in monthly_codes else row['Date'].strftime("%Y-%m")
+        pe_str   = f"{pe_val:.1f}x" if pd.notna(pe_val) else "N/A"
+        rows.append(f"| {date_str} | {pe_str} | **{erp_val:.2%}** {zone_icon} | {arrow} |")
+
+    rows_md = "\n".join(rows)
+
+    # HSTECH 额外展示 PSY 趋势
+    psy_section = ""
+    if code == "HSTECH":
+        ps_path = "./data/ps_HSTECH.csv"
+        if os.path.exists(ps_path):
+            ps_df = pd.read_csv(ps_path, index_col=0, parse_dates=True)
+            if "psy" in ps_df.columns:
+                recent_psy = ps_df[ps_df["psy"].notna()][["ps", "psy"]].tail(10)
+                if len(recent_psy) >= 2:
+                    psy_rows = []
+                    prev_psy = None
+                    for d, r in recent_psy.iterrows():
+                        arrow = "─"
+                        if prev_psy is not None:
+                            diff = r["psy"] - prev_psy
+                            arrow = f"▲{diff:.2%}" if diff > 0 else (f"▼{abs(diff):.2%}" if diff < 0 else "─")
+                        prev_psy = r["psy"]
+                        psy_rows.append(f"| {d.strftime('%Y-%m')} | {r['ps']:.2f}x | **{r['psy']:.2%}** | {arrow} |")
+                    psy_section = f"""
+#### PSY 近期趋势（营收口径）
+
+| 月份 | PS | PSY | 环比 |
+|:-----|---:|----:|:-----|
+{chr(10).join(psy_rows)}
+"""
+
+    block = f"""
+---
+### 近{n_days}{span_label} ERP 趋势
+
+> 趋势方向：**{trend_icon}**，区间变化：**{delta_str}**
+
+| 日期 | PE | ERP | 环比变化 |
+|:-----|---:|----:|:---------|
+{rows_md}
+{psy_section}"""
+    return block
+
+
 def send_to_wechat(content):
     sct_key = os.getenv("SCT_KEY")
     if not sct_key:
@@ -134,7 +243,7 @@ def send_to_wechat(content):
         return
     url = f"https://sctapi.ftqq.com/{sct_key}.send"
     data = {
-        "title": f"📊 ERP 决策报告 ({datetime.now().strftime('%Y-%m-%d')})",
+        "title": f"ERP 决策报告 ({datetime.now().strftime('%Y-%m-%d')})",
         "desp": content
     }
     try:
@@ -142,6 +251,7 @@ def send_to_wechat(content):
         print(f"✅ 方糖推送结果: {res.text}")
     except Exception as e:
         print(f"❌ 推送失败: {e}")
+
 
 def analyze_and_suggest(code, name):
     file_path = f"./data/erp_{code}.csv"
@@ -153,7 +263,6 @@ def analyze_and_suggest(code, name):
     df['Date'] = pd.to_datetime(df['Date'])
     erp_series = df['ERP'].dropna()
 
-    # 月频数据（欧日美）样本数少，门槛降低
     min_samples = 50 if code in ('SPY', 'QQQ', 'EWQ', 'EWG', 'EWJ', 'EEM', 'HSTECH') else 250
     if len(erp_series) < min_samples:
         print(f"\n⚠️ {name} ({code}) 有效样本不足 ({len(erp_series)} < {min_samples})，跳过分析。")
@@ -192,29 +301,29 @@ def analyze_and_suggest(code, name):
         erp_zone = "🚨 危险泡沫 (<P10)"
 
     if current_erp >= quantiles["P50"]:
-        b_msg, b_pct = "🌳 **泡沫仓**: 已进入相对便宜击球区，30% 底仓应长期锁定", 30
+        b_msg, b_pct = "泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定", 30
     elif current_erp >= quantiles["P25"]:
-        b_msg, b_pct = "⏳ **泡沫仓**: 尚未达到远期目标价，底仓持有不动", 30
+        b_msg, b_pct = "泡沫仓: 尚未达到远期目标价，底仓持有不动", 30
     else:
-        b_msg, b_pct = "🔥 **泡沫仓**: 触发极致远期溢价，考虑收割最后的筹码", 5
+        b_msg, b_pct = "泡沫仓: 触发极致远期溢价，考虑收割最后的筹码", 5
 
     if current_erp >= quantiles["P75"]:
-        v_msg, v_pct = "🛡️ **价值仓**: 足够便宜的价格，40% 核心主力必须在场", 40
+        v_msg, v_pct = "价值仓: 足够便宜的价格，40% 核心主力必须在场", 40
     elif current_erp >= quantiles["P50"]:
-        v_msg, v_pct = "⚖️ **价值仓**: 估值修复中，建议持有 30%-40% 主力仓位", 35
+        v_msg, v_pct = "价值仓: 估值修复中，建议持有 30%-40% 主力仓位", 35
     elif current_erp >= quantiles["P25"]:
-        v_msg, v_pct = "📤 **价值仓**: 回到合理估值区间，开始减持主力仓位", 10
+        v_msg, v_pct = "价值仓: 回到合理估值区间，开始减持主力仓位", 10
     else:
-        v_msg, v_pct = "🚫 **价值仓**: 估值已高，价值段位应已全部离场", 0
+        v_msg, v_pct = "价值仓: 估值已高，价值段位应已全部离场", 0
 
     if current_erp >= quantiles["P95"]:
-        t_msg, t_pct = "⚔️ **投机仓**: 触发极端惯性下跌，30% 预备队全额出击", 30
+        t_msg, t_pct = "投机仓: 触发极端惯性下跌，30% 预备队全额出击", 30
     elif current_erp >= quantiles["P90"]:
-        t_msg, t_pct = "💹 **投机仓**: 极低估区，保持 20% 仓位积极做T降本", 20
+        t_msg, t_pct = "投机仓: 极低估区，保持 20% 仓位积极做T降本", 20
     elif current_erp >= quantiles["P50"]:
-        t_msg, t_pct = "↔️ **投机仓**: 震荡区间，维持 10% 灵活部做T", 10
+        t_msg, t_pct = "投机仓: 震荡区间，维持 10% 灵活部做T", 10
     else:
-        t_msg, t_pct = "📤 **投机仓**: 溢价区基本只卖不买，缩减至 5% 观察", 5
+        t_msg, t_pct = "投机仓: 溢价区基本只卖不买，缩减至 5% 观察", 5
 
     total_pct = v_pct + b_pct + t_pct
 
@@ -263,7 +372,7 @@ def analyze_and_suggest(code, name):
 
                 ps_block = f"""
 ---
-### 📦 PS / PSY 估值（恒生科技补充，基于营收口径）
+### PS / PSY 估值（恒生科技补充，基于营收口径）
 
 | 指标 | 数值 | 估值区间 |
 |:-----|-----:|:---------|
@@ -276,9 +385,10 @@ def analyze_and_suggest(code, name):
 """
 
     shiller_block = build_shiller_block(code)
+    trend_block   = build_trend_block(df, erp_series, code, quantiles)
 
-    md = f"""## 📊 {name} ({code}) 决策报告
-📅 日期: {current_date}
+    md = f"""## {name} ({code}) 决策报告
+日期: {current_date}
 
 | 指标 | 数值 | 估值区间 |
 |:-----|-----:|:---------|
@@ -292,19 +402,19 @@ def analyze_and_suggest(code, name):
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
 | P25 | {quantiles["P25"]:.2%} | 进入高估 |
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
-
-### 🎯 仓位建议
-
-{b_msg} **({b_pct}%)**
-{v_msg} **({v_pct}%)**
-{t_msg} **({t_pct}%)**
-
+{trend_block}
 ---
-### 📌 建议总仓位：**{total_pct}%**
-(泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%)
+### 仓位建议
+
+**{b_msg}** ({b_pct}%)
+**{v_msg}** ({v_pct}%)
+**{t_msg}** ({t_pct}%)
+
+建议总仓位：**{total_pct}%**（泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%）
 {shiller_block}{ps_block}"""
     print(md)
     return md
+
 
 if __name__ == "__main__":
     indices = [
@@ -319,7 +429,6 @@ if __name__ == "__main__":
         ("EWG",    "MSCI Germany"),
         ("EWJ",    "MSCI Japan"),
         ("EEM",    "MSCI Emerging"),
-        # ========== 新增恒生科技指数 ==========
         ("HSTECH", "恒生科技指数"),
     ]
 
@@ -330,7 +439,11 @@ if __name__ == "__main__":
             report_list.append(report_md)
 
     if report_list:
-        full_report = "# 🚀 ERP 策略每日监控报告\n" + "".join(report_list)
+        full_report = (
+            "# ERP 策略每日监控报告\n"
+            + LEGEND_BLOCK
+            + "".join(report_list)
+        )
         print("正在生成报告并准备推送...")
         send_to_wechat(full_report)
     else:
