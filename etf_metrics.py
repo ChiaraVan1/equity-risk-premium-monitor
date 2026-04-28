@@ -2,8 +2,7 @@
 etf_metrics.py
 ──────────────────────────────────────────────────────────────────────────────
 ETF 执行质量补充模块
-数据源: etf_metrics_daily_report.csv（每日更新，放 ./data/ 目录）
-
+数据源: etf_metrics_daily_report.csv
 补充维度（不替代 ERP 估值判断，仅辅助执行决策）：
   1. 折溢价率   — 当前买入/卖出的执行成本
   2. 换手背离   — 价格走势是否有成交量支撑
@@ -21,10 +20,6 @@ ETF 执行质量补充模块
 import os
 import pandas as pd
 
-ETF_METRICS_PATH = os.getenv(
-    "ETF_METRICS_URL",
-    "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/etf_metrics_daily_report.csv"
-)
 
 # ── ERP code → A股 ETF ts_code 映射 ──────────────────────────────────────────
 # 一个 ERP 标的可能对应多只 ETF，取流动性最好的主力品种
@@ -48,29 +43,15 @@ ERP_TO_ETF = {
 _metrics_cache = {}
 
 
-def load_etf_metrics(path: str = ETF_METRICS_PATH) -> pd.DataFrame | None:
-    """
-    加载 ETF 指标 CSV，返回以 ts_code 为索引的 DataFrame。
-    失败时返回 None（不影响主流程）。
-    缓存结果，避免重复读盘。
-    """
+def load_etf_metrics() -> pd.DataFrame | None:
     if _metrics_cache:
         return _metrics_cache.get("df")
-
-    if not os.path.exists(path):
-        print(f"⚠️ [etf_metrics] 未找到指标文件: {path}，跳过 ETF 执行质量分析。")
-        _metrics_cache["df"] = None
-        return None
-
-    try:
-        df = pd.read_csv(path, encoding="utf-8-sig")
-        df = df.set_index("ts_code")
-        _metrics_cache["df"] = df
-        return df
-    except Exception as e:
-        print(f"⚠️ [etf_metrics] 读取失败: {e}")
-        _metrics_cache["df"] = None
-        return None
+    import urllib.request, pandas as pd, io
+    url = "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/etf_metrics_daily_report.csv"
+    with urllib.request.urlopen(url) as resp:
+        df = pd.read_csv(io.StringIO(resp.read().decode()), index_col="ts_code")
+    _metrics_cache["df"] = df
+    return df
 
 
 # ── 单项指标解读辅助 ──────────────────────────────────────────────────────────
@@ -262,3 +243,13 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 **{exec_summary}**
 """
     return block
+
+# ── 本地测试 ──────────────────────────────────────────────────────────────────
+if __name__ == "__main__":
+    df = load_etf_metrics()
+    if df is not None:
+        for code in ["000688", "000300", "399989"]:
+            block = build_etf_metrics_block(code, df)
+            if block:
+                print(block)
+                print("\n" + "="*80 + "\n")
