@@ -4,6 +4,8 @@ import os
 from datetime import datetime
 import requests
 
+from etf_metrics import load_etf_metrics, build_etf_metrics_block
+
 
 # ══════════════════════════════════════════════════════════════════════
 #  Shiller CAPE 长期回报锚模块
@@ -253,7 +255,7 @@ def send_to_wechat(content):
         print(f"❌ 推送失败: {e}")
 
 
-def analyze_and_suggest(code, name):
+def analyze_and_suggest(code, name, etf_df=None):
     file_path = f"./data/erp_{code}.csv"
     if not os.path.exists(file_path):
         print(f"❌ 未找到 {name} ({code}) 的数据文件")
@@ -386,6 +388,7 @@ def analyze_and_suggest(code, name):
 
     shiller_block = build_shiller_block(code)
     trend_block   = build_trend_block(df, erp_series, code, quantiles)
+    etf_block     = build_etf_metrics_block(code, etf_df)
 
     md = f"""## {name} ({code}) 决策报告
 日期: {current_date}
@@ -411,12 +414,15 @@ def analyze_and_suggest(code, name):
 **{t_msg}** ({t_pct}%)
 
 建议总仓位：**{total_pct}%**（泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%）
-{shiller_block}{ps_block}"""
+{etf_block}{shiller_block}{ps_block}"""
     print(md)
     return md
 
 
 if __name__ == "__main__":
+    # 启动时加载一次 ETF 指标数据（失败不影响主流程）
+    _etf_df = load_etf_metrics()
+
     indices = [
         ("000300", "沪深300"),
         ("000688", "科创50"),
@@ -434,7 +440,7 @@ if __name__ == "__main__":
 
     report_list = []
     for code, name in indices:
-        report_md = analyze_and_suggest(code, name)
+        report_md = analyze_and_suggest(code, name, _etf_df)
         if report_md:
             report_list.append(report_md)
 
