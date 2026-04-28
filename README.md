@@ -1,3 +1,5 @@
+# ERP 监控系统技术说明文档
+
 ## 一、各指数数据源与更新方式
 
 ### 1. 中国国债（CN10Y）
@@ -136,3 +138,122 @@
 | HSTECH | 恒生科技指数 | akshare（财务） + yfinance（市值） | CN10Y |
 
 ---
+
+## 三、ETF 执行质量指标（simple_etf_metrics.py）
+
+### 1. 数据接口
+
+| 项目 | 说明 |
+|------|------|
+| **数据源** | Tushare Pro |
+| **接口函数** | `fund_daily`（日行情）、`fund_nav`（净值） |
+| **认证方式** | 环境变量 `TUSHARE_TOKEN` |
+| **拉取范围** | 最近 365 天 |
+| **更新频率** | 每次运行全量拉取过去 1 年 |
+
+### 2. ETF 标的映射
+
+| ERP 代码 | 名称 | Tushare 代码 |
+|----------|------|--------------|
+| 000300 | 沪深300 | 510300.SH |
+| 000688 | 科创50 | 588000.SH |
+| 000922 | 中证红利 | 515180.SH |
+| 399989 | 中证医疗 | 512170.SH |
+| 931071 | 人工智能 | 159819.SZ |
+| HSTECH | 恒生科技 | 513180.SH |
+| SPY | 标普500 | 513500.SH |
+| QQQ | 纳斯达克 | 159696.SZ |
+| EWQ | 法国ETF | 513080.SH |
+| EWJ | 日本ETF | 513880.SH |
+
+### 3. 计算指标
+
+| 指标 | 公式 | 数据来源字段 |
+|------|------|--------------|
+| 折溢价率 | `(unit_nav - close) / unit_nav` | `fund_daily.close` + `fund_nav.unit_nav` |
+| 成交额（万元） | `amount / 10000` | `fund_daily.amount`（单位：千元） |
+| 5日/10日平均成交额 | 最近 N 个交易日成交额均值 | `fund_daily.amount` |
+| 年化波动率 | `日收益率标准差 × √252` | `fund_daily.pct_chg` |
+| 最大回撤 | `max((峰值-当前)/峰值)` | `fund_daily.close` 计算累积收益 |
+| 最新涨跌幅 | 当日涨跌幅 | `fund_daily.pct_chg` |
+
+### 4. 输出文件
+
+| 文件 | 格式 | 更新方式 |
+|------|------|----------|
+| `simple_etf_metrics.csv` | CSV | 每次运行全量覆盖 |
+
+---
+
+## 四、ERP 决策报告（erp_position.py）
+
+### 1. 数据来源整合
+
+| 数据 | 来源文件 |
+|------|----------|
+| 各指数 ERP | `data/erp_{code}.csv` |
+| 恒生科技 PS/PSY | `data/ps_HSTECH.csv` |
+| ETF 执行质量 | `simple_etf_metrics.csv` |
+| Shiller CAPE | `data/ie_data.xls`（手动维护） |
+
+### 2. 核心判断逻辑
+
+| 判断项 | 计算方式 |
+|--------|----------|
+| 估值区间 | 当前 ERP 在历史序列中的分位（P90/P75/P50/P25/P10） |
+| 趋势判断 | 最近 10 个有效 ERP 点的线性回归斜率 |
+| 仓位建议 | 三层结构：泡沫仓（5-30%）+ 价值仓（0-40%）+ 投机仓（5-30%） |
+| 颜色映射 | ≥P75 🟢 / P50-P75 🟡 / P25-P50 🟠 / P10-P25 🔴 / <P10 🚨 |
+
+### 3. 特殊处理
+
+| 场景 | 处理方式 |
+|------|----------|
+| 欧日美负利率指数 | 用 2022‑01‑01 至今数据做锚 |
+| 境外 PE 历史缺失 | 用 SPY 历史 × 今日比值估算 |
+| 恒生科技 PE 缺失 | 用 PSY 替代估值 |
+| 日频/月频指数 | 日频取最近 10 个交易日，月频取最近 10 个月末 |
+
+### 4. 输出
+
+| 输出方式 | 内容 |
+|----------|------|
+| 控制台打印 | Markdown 格式报告 |
+| 微信推送（方糖） | 全量报告，需 `SCT_KEY` 环境变量 |
+| 报告标题 | `ERP 决策报告 (YYYY-MM-DD)` |
+
+---
+
+## 五、自动化部署（daily_trade.yml）
+
+| 项目 | 说明 |
+|------|------|
+| **运行平台** | GitHub Actions |
+| **触发时间** | 每天 `30 10 * * *`（UTC 10:30 = 北京时间 18:30） |
+| **手动触发** | 支持 `workflow_dispatch` |
+| **Python 版本** | 3.10 |
+
+### 执行步骤
+
+| 步骤 | 命令 / 说明 |
+|------|-------------|
+| 1. 检出代码 | `actions/checkout@v4` |
+| 2. 设置 Python | `actions/setup-python@v5` |
+| 3. 安装依赖 | `pip install -r requirements.txt` |
+| 4. 增量抓取数据 | `python fetch_bond_yield_incremental_20260424.py` |
+| 5. 分析并推送 | `python erp_position.py`（需 `SCT_KEY` 和 `ETF_METRICS_URL`） |
+| 6. 提交更新 | `git add data/` → `git commit` → `git push` |
+
+### 环境变量
+
+| 变量 | 用途 | 来源 |
+|------|------|------|
+| `SCT_KEY` | 方糖微信推送 | GitHub Secrets |
+| `TUSHARE_TOKEN` | Tushare API | GitHub Secrets |
+| `QQQ_PE_TODAY` | QQQ 今日 PE | GitHub Secrets |
+| `ETF_METRICS_URL` | ETF 指标 CSV 地址 | 硬编码（外部 Release） |
+
+---
+
+**文档版本**：v2.0  
+**最后更新**：2026-04-28
