@@ -47,7 +47,7 @@ def load_etf_metrics() -> pd.DataFrame | None:
     if _metrics_cache:
         return _metrics_cache.get("df")
     import urllib.request, pandas as pd, io
-    url = "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/etf_metrics_daily_report.csv"
+    url = "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/simple_etf_metrics.csv"
     with urllib.request.urlopen(url) as resp:
         df = pd.read_csv(io.StringIO(resp.read().decode()), index_col="ts_code")
     _metrics_cache["df"] = df
