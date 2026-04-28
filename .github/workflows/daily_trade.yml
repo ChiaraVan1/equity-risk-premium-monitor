@@ -1,26 +1,22 @@
 name: Equity Risk Premium Monitor Bot
-
 on:
   schedule:
     # 每天 18:30 运行 (北京时间 18:30 = UTC 10:30)
     - cron: '30 10 * * *'
   workflow_dispatch: # 允许手动点击运行
-
 jobs:
   run-erp-strategy:
     runs-on: ubuntu-latest
     
-    # --- ADD THIS SECTION ---
     permissions:
-      contents: write  # Allows the bot to push changes to the repo
-    # ------------------------
+      contents: write
 
     steps:
-      # 1. 检出代码 (升级到 v4)
+      # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2. 设置 Python 环境 (升级到 v5)
+      # 2. 设置 Python 环境
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -39,9 +35,11 @@ jobs:
         run: python fetch_bond_yield_incremental.py
 
       # 5. 执行分析并推送到微信
+      #    ETF_METRICS_URL 指向另一个 repo 的 latest release，每次运行自动拉最新版
       - name: Analyze and Push to WeChat
         env:
-          SCT_KEY: ${{ secrets.SCT_KEY }}  # 注入环境变量
+          SCT_KEY: ${{ secrets.SCT_KEY }}
+          ETF_METRICS_URL: "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/etf_metrics_daily_report.csv"
         run: python erp_position.py
 
       # 6. 将更新后的数据保存回 GitHub 仓库
