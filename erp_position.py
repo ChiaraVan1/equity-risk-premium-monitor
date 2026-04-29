@@ -25,6 +25,31 @@ _CAPE_BINS   = [0,  10,  15,  20,  25,  30,  35,  40,  999]
 _CAPE_LABELS = ['<10', '10-15', '15-20', '20-25', '25-30', '30-35', '35-40', '>40']
 
 
+# ── 顶部总览表 ────────────────────────────────────────────────────────────────
+def build_summary_block(summary_list: list) -> str:
+    """所有标的的信号灯 + 仓位一览，放在报告最顶部"""
+    if not summary_list:
+        return ""
+    rows = []
+    for r in summary_list:
+        zone_short = r["erp_zone"].split("(")[0].strip()   # 去掉 (P75-P90) 括号
+        rows.append(
+            f"| {r['name']} ({r['code']}) "
+            f"| {zone_short} "
+            f"| **{r['total_pct']}%** "
+            f"| {r['b_pct']}+{r['v_pct']}+{r['t_pct']} |"
+        )
+    rows_md = "\n".join(rows)
+    return f"""## 📊 今日总览 · {datetime.now().strftime('%m-%d')}
+
+| 标的 | 估值 | 总仓位 | 底仓+价值+投机 |
+|:----|:-----|------:|:-------------|
+{rows_md}
+
+---
+"""
+
+
 # ── 颜色图例（插入报告顶部一次） ──────────────────────────────────────────────
 LEGEND_BLOCK = """---
 **估值颜色说明**（适用于全报告所有 ERP / PS / PSY 区间标注）
@@ -255,7 +280,7 @@ def send_to_wechat(content):
         print(f"❌ 推送失败: {e}")
 
 
-def analyze_and_suggest(code, name, etf_df=None):
+def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     file_path = f"./data/erp_{code}.csv"
     if not os.path.exists(file_path):
         print(f"❌ 未找到 {name} ({code}) 的数据文件")
@@ -390,6 +415,15 @@ def analyze_and_suggest(code, name, etf_df=None):
     trend_block   = build_trend_block(df, erp_series, code, quantiles)
     etf_block     = build_etf_metrics_block(code, etf_df)
 
+    # ── 追加到顶部总览 ────────────────────────────────────────────────────────
+    if summary_list is not None:
+        summary_list.append({
+            "name": name, "code": code,
+            "erp_zone": erp_zone,
+            "total_pct": total_pct,
+            "b_pct": b_pct, "v_pct": v_pct, "t_pct": t_pct,
+        })
+
     md = f"""## {name} ({code}) 决策报告
 日期: {current_date}
 
@@ -421,7 +455,11 @@ def analyze_and_suggest(code, name, etf_df=None):
 
 if __name__ == "__main__":
     # 启动时加载一次 ETF 指标数据（失败不影响主流程）
-    _etf_df = load_etf_metrics()
+    try:
+        _etf_df = load_etf_metrics()
+    except Exception as e:
+        print(f"⚠️ ETF 指标加载意外失败：{e}，主报告继续运行。")
+        _etf_df = None
 
     indices = [
         ("000300", "沪深300"),
@@ -438,15 +476,17 @@ if __name__ == "__main__":
         ("HSTECH", "恒生科技指数"),
     ]
 
+    summary_list = []
     report_list = []
     for code, name in indices:
-        report_md = analyze_and_suggest(code, name, _etf_df)
+        report_md = analyze_and_suggest(code, name, _etf_df, summary_list)
         if report_md:
             report_list.append(report_md)
 
     if report_list:
         full_report = (
             "# ERP 策略每日监控报告\n"
+            + build_summary_block(summary_list)   # ← 总览在最前
             + LEGEND_BLOCK
             + "".join(report_list)
         )
