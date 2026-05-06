@@ -141,8 +141,114 @@ def calc_win_rate_and_odds(df: pd.DataFrame, current_erp: float,
     }
 
 
+def build_valuation_space_block(df: pd.DataFrame, current_erp: float, code: str) -> str:
+    """
+    方案一：基于ERP分位的估值空间法（你图中的逻辑）
+    
+    方法：
+    - 当前ERP分位 = 历史上ERP低于当前的比例
+    - 胜率（图中定义）= 1 - ERP分位（历史上比现在更贵的概率）
+    - 赔率（图中定义）= 上行空间 = (历史高估区阈值 - 当前) / 当前（用ERP反向推算价格空间）
+    """
+    erp_series = df['ERP'].dropna()
+    if len(erp_series) < 100:
+        return "\n> ⚠️ ERP数据不足，无法计算估值空间。\n"
+    
+    current_erp = erp_series.iloc[-1]
+    
+    # 计算分位
+    percentile = (erp_series < current_erp).mean()
+    win_rate_by_percentile = 1 - percentile  # 图中定义的胜率
+    
+    # 历史极端值（用ERP分位）
+    erp_high_90 = erp_series.quantile(0.90)   # 高ERP = 便宜区
+    erp_low_10  = erp_series.quantile(0.10)   # 低ERP = 昂贵区
+    erp_median  = erp_series.median()
+    
+    # 上行空间：从当前ERP到"昂贵区"（低ERP）的差值
+    # 注意：ERP下降 = 价格上涨
+    # 上行空间 ≈ (当前ERP - 历史低ERP区) / 当前ERP × 弹性系数
+    # 简化：直接用ERP变化率，假设1% ERP变化对应1%价格变化
+    upside_pct = (current_erp - erp_low_10) / abs(current_erp) if current_erp > erp_low_10 else 0
+    downside_pct = (erp_high_90 - current_erp) / abs(current_erp) if erp_high_90 > current_erp else 0
+    
+    # 估值区间判断
+    if percentile >= 0.75:
+        zone_icon = "🟢"
+        zone_name = "极度低估"
+        zone_desc = "ERP处于历史高位，股票相对债券很便宜"
+        action = "极佳买点，建议重仓"
+    elif percentile >= 0.50:
+        zone_icon = "🟡"
+        zone_name = "合理偏低"
+        zone_desc = "中性偏便宜，可以逐步建仓"
+        action = "可分批买入"
+    elif percentile >= 0.25:
+        zone_icon = "🟠"
+        zone_name = "合理偏高"
+        zone_desc = "中性偏贵，谨慎加仓"
+        action = "持有或减仓"
+    else:
+        zone_icon = "🔴"
+        zone_name = "严重高估"
+        zone_desc = "ERP处于历史低位，股票很贵"
+        action = "建议规避"
+    
+    # 样本警告
+    n_samples = len(erp_series)
+    sample_warning = f"\n> ⚠️ 样本量 {n_samples} 天，历史区间可能不包含完整周期。" if n_samples < 500 else ""
+    
+    # 期望值（简化版）
+    expected = win_rate_by_percentile * upside_pct - (1 - win_rate_by_percentile) * downside_pct
+    
+    # 综合评级
+    if win_rate_by_percentile >= 0.30 and upside_pct >= 0.15:
+        rating = "🟢 高胜率 + 高赔率，极佳买点"
+    elif win_rate_by_percentile >= 0.30 and upside_pct >= 0.10:
+        rating = "🟢 胜率尚可 + 赔率合理，较好买点"
+    elif win_rate_by_percentile >= 0.25 and upside_pct >= 0.10:
+        rating = "🟡 胜率中等 + 赔率一般，可参与"
+    elif win_rate_by_percentile >= 0.20 and upside_pct >= 0.05:
+        rating = "🟡 胜率赔率均衡，中性"
+    elif win_rate_by_percentile < 0.15 and upside_pct < 0.05:
+        rating = "🚨 低胜率 + 低赔率，双杀，规避"
+    elif win_rate_by_percentile < 0.15:
+        rating = "🔴 低胜率，谨慎"
+    else:
+        rating = "🟠 中性偏弱"
+    
+    block = f"""
+---
+### 方案一：估值空间法（基于ERP分位）
+
+> 方法：利用ERP历史分位判断当前估值位置。
+> 当前ERP = **{current_erp:.2%}**，历史分位 = **{percentile:.1%}**
+{sample_warning}
+
+| 指标 | 数值 | 说明 |
+|:-----|-----:|:-----|
+| 当前ERP分位 | **{percentile:.1%}** | {zone_icon} **{zone_name}** |
+| 图中定义胜率 | **{win_rate_by_percentile:.1%}** | 历史上比现在更贵的概率 |
+| 上行空间（赔率） | **{upside_pct:.1%}** | 假设回到历史10%分位的涨幅 |
+| 下行风险 | **{downside_pct:.1%}** | 假设回到历史90%分位的跌幅 |
+| 期望值 | **{expected:+.1%}** | 胜率×上行空间 − 败率×下行风险 |
+
+| 分位点 | ERP值 | 估值状态 |
+|:-------|------:|:---------|
+| P90 | {erp_series.quantile(0.90):.2%} | 极度低估（便宜区） |
+| P75 | {erp_series.quantile(0.75):.2%} | 显著低估 |
+| P50 | {erp_series.quantile(0.50):.2%} | 价值中枢 |
+| P25 | {erp_series.quantile(0.25):.2%} | 进入高估 |
+| P10 | {erp_series.quantile(0.10):.2%} | 极度高估（昂贵区） |
+
+**综合评级：{rating}**
+> 📌 提示：方案一基于历史分位假设估值会回归；方案二（下方）基于真实历史回测。
+"""
+    return block
+
+
 def build_win_rate_block(df: pd.DataFrame, current_erp: float, code: str) -> str:
-    """生成胜率赔率 markdown 模块"""
+    """方案二：生成胜率赔率 markdown 模块（基于历史回测）"""
     monthly_codes = {'EWQ', 'EWG', 'EWJ', 'EEM', 'HSTECH'}
     forward_days = 12 if code in monthly_codes else 252
     span_label = "个月" if code in monthly_codes else "个交易日"
@@ -193,7 +299,7 @@ def build_win_rate_block(df: pd.DataFrame, current_erp: float, code: str) -> str
 
     block = f"""
 ---
-### 胜率 · 赔率分析（持有{forward_days}{span_label}维度）
+### 方案二：历史回测法（持有{forward_days}{span_label}维度）
 
 > 方法：历史上 ERP 在当前值 ±{window:.0%} 范围内的时点（共 **{n}** 个），
 > 持有 {forward_days}{span_label} 后的回报分布。数据来源：**{data_source}**。
@@ -601,7 +707,12 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     shiller_block   = build_shiller_block(code)
     trend_block     = build_trend_block(df, erp_series, code, quantiles)
     etf_block       = build_etf_metrics_block(code, etf_df)
-    win_rate_block  = build_win_rate_block(df, current_erp, code)
+    
+    # 方案一：估值空间法（基于ERP分位）
+    valuation_space_block = build_valuation_space_block(df, current_erp, code)
+    
+    # 方案二：历史回测法
+    win_rate_block = build_win_rate_block(df, current_erp, code)
 
     # ── 追加到顶部总览 ────────────────────────────────────────────────────────
     if summary_list is not None:
@@ -627,7 +738,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
 | P25 | {quantiles["P25"]:.2%} | 进入高估 |
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
-{win_rate_block}{trend_block}
+{valuation_space_block}{win_rate_block}{trend_block}
 ---
 ### 仓位建议
 
