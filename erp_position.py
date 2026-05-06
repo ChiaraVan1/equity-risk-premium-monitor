@@ -26,6 +26,148 @@ _CAPE_LABELS = ['<10', '10-15', '15-20', '20-25', '25-30', '30-35', '35-40', '>4
 
 
 # ── 顶部总览表 ────────────────────────────────────────────────────────────────
+def calc_win_rate_and_odds(df: pd.DataFrame, current_erp: float,
+                           window_pct: float = 0.03,
+                           forward_days: int = 252) -> dict | None:
+    """
+    基于历史ERP序列，计算当前估值位置的胜率和赔率。
+
+    方法：
+    - 找出历史上所有 ERP 在 current_erp ± window_pct 范围内的时点
+    - 看这些时点 forward_days 个交易日后，ERP 的变化方向（ERP升=便宜=赚钱）
+    - 胜率 = ERP升高（估值变便宜/股价下跌接回来）的比例
+    - 赔率 = 赢时 ERP 变化中位数 / 输时 ERP 变化中位数（绝对值之比）
+
+    注意：这里用ERP变化代理价格回报，ERP↑意味着估值更便宜（价格相对低），
+    但更直观的理解是：ERP高时买入，未来持有期内ERP回落（股价上涨）才算赚。
+    所以实际用 price_return 更准确，但需要价格数据。
+
+    参数:
+        df: 包含 Date, ERP 列的 DataFrame（日频或月频）
+        current_erp: 当前 ERP 值
+        window_pct: 历史匹配窗口，current_erp ± window_pct（默认 ±0.03）
+        forward_days: 向前看多少个数据点（日频=252≈1年，月频用12）
+
+    返回:
+        dict with: win_rate, median_gain, median_loss, odds_ratio, n_samples
+        or None if insufficient data
+    """
+    erp_col = df[['Date', 'ERP']].dropna().reset_index(drop=True)
+    if len(erp_col) < forward_days + 10:
+        return None
+
+    returns = []
+    for i, row in erp_col.iterrows():
+        erp_val = row['ERP']
+        # 匹配历史上ERP和当前相近的时点（排除最近的数据）
+        if abs(erp_val - current_erp) > window_pct:
+            continue
+        future_idx = i + forward_days
+        if future_idx >= len(erp_col):
+            continue
+        # 用价格回报近似：1/ERP 近似 PE，ERP下降意味着估值贵了（亏钱）
+        # 直接用 ERP 变化方向：ERP 升高 = 更便宜 = 原来买的人被套
+        # 所以用 -(ERP变化) 来代理价格方向，即 ERP↓ → 股价↑ → 赚钱
+        future_erp = erp_col.loc[future_idx, 'ERP']
+        erp_change = future_erp - erp_val  # ERP 变化
+        # ERP 下降 = 股价上涨（估值变贵），对持有者是赚钱
+        price_proxy = -erp_change / abs(erp_val) if erp_val != 0 else 0
+        returns.append(price_proxy)
+
+    if len(returns) < 5:
+        return None
+
+    r = pd.Series(returns)
+    wins = r[r > 0]
+    losses = r[r <= 0]
+
+    win_rate = len(wins) / len(r)
+    median_gain = wins.median() if len(wins) > 0 else 0.0
+    median_loss = abs(losses.median()) if len(losses) > 0 else 0.0
+    odds_ratio = (median_gain / median_loss) if median_loss > 0 else float('inf')
+
+    return {
+        "win_rate": win_rate,
+        "median_gain": median_gain,
+        "median_loss": median_loss,
+        "odds_ratio": odds_ratio,
+        "n_samples": len(r),
+        "window_pct": window_pct,
+        "forward_days": forward_days,
+    }
+
+
+def build_win_rate_block(df: pd.DataFrame, current_erp: float, code: str) -> str:
+    """生成胜率赔率 markdown 模块"""
+    monthly_codes = {'EWQ', 'EWG', 'EWJ', 'EEM', 'HSTECH'}
+    # 月频指数用12个月（约1年），日频用252个交易日
+    forward_days = 12 if code in monthly_codes else 252
+    span_label = "个月" if code in monthly_codes else "个交易日"
+
+    # 先用默认窗口，如果样本不够就放宽
+    result = None
+    for window in [0.03, 0.05, 0.08]:
+        result = calc_win_rate_and_odds(df, current_erp,
+                                        window_pct=window,
+                                        forward_days=forward_days)
+        if result and result["n_samples"] >= 8:
+            break
+
+    if result is None or result["n_samples"] < 5:
+        return "\n> ⚠️ 历史样本不足，无法计算胜率赔率。\n"
+
+    win_rate = result["win_rate"]
+    median_gain = result["median_gain"]
+    median_loss = result["median_loss"]
+    odds_ratio = result["odds_ratio"]
+    n = result["n_samples"]
+    window = result["window_pct"]
+
+    # 期望值 = 胜率×赔率 - 败率×1（单位：倍）
+    expected_value = win_rate * odds_ratio - (1 - win_rate)
+
+    # 综合评级
+    if win_rate >= 0.6 and odds_ratio >= 1.5:
+        rating = "🟢 高胜率 + 高赔率，极佳买点"
+    elif win_rate >= 0.6 and odds_ratio >= 1.0:
+        rating = "🟢 高胜率 + 合理赔率，较好买点"
+    elif win_rate >= 0.5 and odds_ratio >= 1.5:
+        rating = "🟡 胜率中等 + 赔率较高，可参与"
+    elif win_rate >= 0.5 and odds_ratio >= 1.0:
+        rating = "🟡 胜率赔率均衡，中性"
+    elif win_rate < 0.4 and odds_ratio < 1.0:
+        rating = "🚨 低胜率 + 低赔率，双杀，规避"
+    elif win_rate < 0.4:
+        rating = "🔴 低胜率，谨慎"
+    elif odds_ratio < 1.0:
+        rating = "🟠 低赔率，涨幅有限"
+    else:
+        rating = "🟠 中性偏弱"
+
+    sample_warning = f"\n> ⚠️ 样本量仅 {n} 个，统计可靠性有限，仅供参考。" if n < 15 else ""
+
+    block = f"""
+---
+### 胜率 · 赔率分析（持有{forward_days}{span_label}维度）
+
+> 方法：历史上 ERP 在当前值 ±{window:.0%} 范围内的时点（共 **{n}** 个），
+> 持有 {forward_days}{span_label} 后的回报分布。
+{sample_warning}
+
+| 指标 | 数值 | 说明 |
+|:-----|-----:|:-----|
+| 胜率 | **{win_rate:.0%}** | 持有后上涨的历史概率 |
+| 赔率（盈亏比） | **{odds_ratio:.2f}x** | 赢时中位涨幅 / 输时中位跌幅 |
+| 赢时中位回报 | +{median_gain:.1%} | 历史赢局的典型涨幅 |
+| 输时中位回报 | -{median_loss:.1%} | 历史输局的典型跌幅 |
+| 期望值 | **{expected_value:+.2f}** | 胜率×赔率−败率，>0 值得参与 |
+
+**综合评级：{rating}**
+"""
+    return block
+
+
+# ── 顶部总览表 ────────────────────────────────────────────────────────────────
 def build_summary_block(summary_list: list) -> str:
     """所有标的的信号灯 + 仓位一览，放在报告最顶部"""
     if not summary_list:
@@ -411,9 +553,10 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 > PSY = 1/PS − 中国10年期国债收益率，衡量营收口径下相对无风险利率的超额回报，适用于PE因亏损公司失真时的替代指标。
 """
 
-    shiller_block = build_shiller_block(code)
-    trend_block   = build_trend_block(df, erp_series, code, quantiles)
-    etf_block     = build_etf_metrics_block(code, etf_df)
+    shiller_block   = build_shiller_block(code)
+    trend_block     = build_trend_block(df, erp_series, code, quantiles)
+    etf_block       = build_etf_metrics_block(code, etf_df)
+    win_rate_block  = build_win_rate_block(df, current_erp, code)
 
     # ── 追加到顶部总览 ────────────────────────────────────────────────────────
     if summary_list is not None:
@@ -439,7 +582,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
 | P25 | {quantiles["P25"]:.2%} | 进入高估 |
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
-{trend_block}
+{win_rate_block}{trend_block}
 ---
 ### 仓位建议
 
