@@ -272,8 +272,8 @@ def build_win_rate_block(df: pd.DataFrame, current_erp: float, code: str) -> str
     n = result["n_samples"]
     window = result["window_pct"]
 
-    # 期望值 = 胜率×赔率 - 败率×1（单位：倍）
-    expected_value = win_rate * odds_ratio - (1 - win_rate)
+    # 期望收益（正确公式）
+    expected_return = win_rate * median_gain - (1 - win_rate) * median_loss
 
     # 综合评级
     if win_rate >= 0.6 and odds_ratio >= 1.5:
@@ -311,9 +311,200 @@ def build_win_rate_block(df: pd.DataFrame, current_erp: float, code: str) -> str
 | 赔率（盈亏比） | **{odds_ratio:.2f}x** | 赢时中位涨幅 / 输时中位跌幅 |
 | 赢时中位回报 | +{median_gain:.1%} | 历史赢局的典型涨幅 |
 | 输时中位回报 | -{median_loss:.1%} | 历史输局的典型跌幅 |
-| 期望值 | **{expected_value:+.2f}** | 胜率×赔率−败率，>0 值得参与 |
+| 期望收益 | **{expected_return:+.1%}** | 胜率×赢时收益 − 败率×输时损失 |
 
 **综合评级：{rating}**
+"""
+    return block
+
+
+def build_integrated_block(df: pd.DataFrame, current_erp: float, code: str) -> str:
+    """
+    方案三：整合评估方案（结合方案一和方案二）
+    使用更合理的区间划分：P75-P90（低估区）、P25-P75（中性区）、P10-P25（高估区）
+    """
+    erp_series = df['ERP'].dropna()
+    if len(erp_series) < 100:
+        return "\n> ⚠️ ERP数据不足，无法计算整合方案。\n"
+    
+    current_erp = erp_series.iloc[-1]
+    percentile = (erp_series < current_erp).mean()
+    
+    # 定义三个核心区间（更严格的划分）
+    # 便宜区：P75-P90（前25%的位置）
+    # 昂贵区：P10-P25（后25%的位置）
+    # 中性区：P25-P75（中间50%）
+    
+    cheap_threshold = erp_series.quantile(0.75)        # P75
+    very_cheap_threshold = erp_series.quantile(0.90)   # P90
+    expensive_threshold = erp_series.quantile(0.25)    # P25
+    very_expensive_threshold = erp_series.quantile(0.10)  # P10
+    
+    # ============================================================
+    # 第一部分：估值区间判断（基于更严格的阈值）
+    # ============================================================
+    if current_erp >= very_cheap_threshold:
+        zone = "🚀 极度低估区（>P90）"
+        zone_color = "🟢🟢"
+        multiple = 1.5
+    elif current_erp >= cheap_threshold:
+        zone = "🟢 低估区（P75-P90）"
+        zone_color = "🟢"
+        multiple = 1.2
+    elif current_erp >= erp_series.quantile(0.50):
+        zone = "🟡 合理偏低区（P50-P75）"
+        zone_color = "🟡"
+        multiple = 0.9
+    elif current_erp >= expensive_threshold:
+        zone = "🟠 合理偏高区（P25-P50）"
+        zone_color = "🟠"
+        multiple = 0.7
+    elif current_erp >= very_expensive_threshold:
+        zone = "🔴 高估区（P10-P25）"
+        zone_color = "🔴"
+        multiple = 0.5
+    else:
+        zone = "🚨 泡沫区（<P10）"
+        zone_color = "🚨"
+        multiple = 0.3
+    
+    # ============================================================
+    # 第二部分：历史回测（方案二的核心）
+    # ============================================================
+    monthly_codes = {'EWQ', 'EWG', 'EWJ', 'EEM', 'HSTECH'}
+    forward_days = 12 if code in monthly_codes else 252
+    span_label = "个月" if code in monthly_codes else "个交易日"
+    
+    result = None
+    for window in [0.03, 0.05, 0.08]:
+        result = calc_win_rate_and_odds(df, current_erp, code=code,
+                                        window_pct=window, forward_days=forward_days)
+        if result and result["n_samples"] >= 8:
+            break
+    
+    if result is None or result["n_samples"] < 5:
+        return "\n> ⚠️ 历史样本不足，无法计算整合方案。\n"
+    
+    win_rate = result["win_rate"]
+    median_gain = result["median_gain"]
+    median_loss = result["median_loss"]
+    odds_ratio = result["odds_ratio"]
+    n = result["n_samples"]
+    
+    # 期望收益（正确公式）
+    expected_return = win_rate * median_gain - (1 - win_rate) * median_loss
+    
+    # ============================================================
+    # 第三部分：整合评级（结合理论和实际）
+    # ============================================================
+    
+    # 理论评级（基于分位）
+    if current_erp >= cheap_threshold:
+        theory_rating = "🟢 理论估值便宜"
+        theory_score = 2
+    elif current_erp >= erp_series.quantile(0.50):
+        theory_rating = "🟡 理论估值中性"
+        theory_score = 1
+    else:
+        theory_rating = "🔴 理论估值昂贵"
+        theory_score = 0
+    
+    # 实际评级（基于回测）
+    if win_rate >= 0.55 and odds_ratio >= 1.2:
+        actual_rating = "🟢 实际表现优秀"
+        actual_score = 2
+    elif win_rate >= 0.50 and odds_ratio >= 1.0:
+        actual_rating = "🟡 实际表现一般"
+        actual_score = 1
+    else:
+        actual_rating = "🔴 实际表现差"
+        actual_score = 0
+    
+    # 综合得分
+    total_score = theory_score + actual_score
+    if total_score >= 3:
+        final_rating = "🟢🟢 强烈推荐买入"
+        action = "建议重仓（70-80%）"
+    elif total_score >= 2:
+        final_rating = "🟢 推荐买入"
+        action = "建议分批建仓（40-60%）"
+    elif total_score >= 1:
+        final_rating = "🟡 中性持有"
+        action = "持有观望，不加减仓"
+    else:
+        final_rating = "🔴 建议规避"
+        action = "减仓或空仓"
+    
+    # ============================================================
+    # 第四部分：置信度（考虑样本量和区间位置）
+    # ============================================================
+    
+    # 样本量置信度
+    if n >= 50:
+        sample_confidence = "高"
+    elif n >= 20:
+        sample_confidence = "中"
+    else:
+        sample_confidence = "低"
+    
+    # 区间位置置信度（越极端越可信）
+    if current_erp >= very_cheap_threshold or current_erp <= very_expensive_threshold:
+        position_confidence = "高（极端位置）"
+    elif current_erp >= cheap_threshold or current_erp <= expensive_threshold:
+        position_confidence = "中（接近极端）"
+    else:
+        position_confidence = "低（中间位置）"
+    
+    # ============================================================
+    # 输出整合报告
+    # ============================================================
+    
+    block = f"""
+---
+### 方案三：整合评估（理论+实际）
+
+> 整合方案一（理论估值）和方案二（历史回测），给出综合判断。
+
+#### 📊 输入数据
+
+| 指标 | 数值 | 说明 |
+|:-----|-----:|:-----|
+| 当前ERP | **{current_erp:.2%}** | |
+| ERP历史分位 | **{percentile:.1%}** | 历史上{percentile:.0%}时间比现在便宜 |
+| 理论估值区间 | **{zone}** | {zone_color} |
+| 历史回测胜率 | **{win_rate:.1%}** | 类似ERP买入后上涨概率 |
+| 历史回测盈亏比 | **{odds_ratio:.2f}x** | 赢时收益 / 输时损失 |
+| 期望收益 | **{expected_return:+.1%}** | 历史类似位置的平均期望 |
+| 有效样本数 | **{n}** 个 | |
+
+#### 🎯 评估得分
+
+| 维度 | 评分 | 说明 |
+|:-----|:----:|:-----|
+| 理论估值 | {theory_score}/2 | {theory_rating} |
+| 历史回测 | {actual_score}/2 | {actual_rating} |
+| **综合得分** | **{total_score}/4** | |
+
+#### 📌 最终结论
+
+**{final_rating}**
+
+> {action}
+>
+> 置信度：样本量置信度【{sample_confidence}】、位置置信度【{position_confidence}】
+>
+> 💡 提示：当理论与实际一致时（如都看好或都看空），结论可靠性更高。
+
+---
+### 补充：历史回测细节
+
+| 指标 | 数值 | 说明 |
+|:-----|-----:|:-----|
+| 胜率 | **{win_rate:.1%}** | 上涨概率 |
+| 赢时中位回报 | **+{median_gain:.1%}** | 典型涨幅 |
+| 输时中位回报 | **-{median_loss:.1%}** | 典型跌幅 |
+| 盈亏比 | **{odds_ratio:.2f}x** | 盈亏不对称性 |
+| 期望收益 | **{expected_return:+.1%}** | 长期平均结果 |
 """
     return block
 
@@ -713,6 +904,9 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     
     # 方案二：历史回测法
     win_rate_block = build_win_rate_block(df, current_erp, code)
+    
+    # 方案三：整合评估方案
+    integrated_block = build_integrated_block(df, current_erp, code)
 
     # ── 追加到顶部总览 ────────────────────────────────────────────────────────
     if summary_list is not None:
@@ -738,7 +932,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
 | P25 | {quantiles["P25"]:.2%} | 进入高估 |
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
-{valuation_space_block}{win_rate_block}{trend_block}
+{valuation_space_block}{win_rate_block}{integrated_block}{trend_block}
 ---
 ### 仓位建议
 
