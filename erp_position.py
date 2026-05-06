@@ -26,32 +26,65 @@ _CAPE_LABELS = ['<10', '10-15', '15-20', '20-25', '25-30', '30-35', '35-40', '>4
 
 
 # ── 顶部总览表 ────────────────────────────────────────────────────────────────
+_price_cache = {}   # 避免重复读文件
+
+PRICE_CSV_URL = os.getenv(
+    "PRICE_CSV_URL",
+    "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/etf_price.csv"
+)
+
+def _load_price_series(code: str) -> pd.Series | None:
+    """
+    读取 etf_price.csv 中对应指数的价格序列。
+    优先读本地文件，不存在时从 GitHub Release 下载（与 load_etf_metrics 同样模式）。
+    """
+    if code in _price_cache:
+        return _price_cache[code]
+
+    # 先试本地
+    for local_path in ["./etf_price.csv", "./data/etf_price.csv"]:
+        if os.path.exists(local_path):
+            try:
+                df = pd.read_csv(local_path, index_col=0, parse_dates=True)
+                if code in df.columns:
+                    s = df[code].dropna()
+                    _price_cache[code] = s
+                    return s
+            except Exception:
+                pass
+
+    # 本地没有，从 Release 下载
+    try:
+        resp = requests.get(PRICE_CSV_URL, timeout=15)
+        resp.raise_for_status()
+        from io import StringIO
+        df = pd.read_csv(StringIO(resp.text), index_col=0, parse_dates=True)
+        if code not in df.columns:
+            return None
+        # 缓存所有列，下次不再下载
+        for col in df.columns:
+            _price_cache[col] = df[col].dropna()
+        return _price_cache.get(code)
+    except Exception as e:
+        print(f"⚠️ etf_price.csv 下载失败: {e}")
+        return None
+
+
 def calc_win_rate_and_odds(df: pd.DataFrame, current_erp: float,
+                           code: str = "",
                            window_pct: float = 0.03,
                            forward_days: int = 252) -> dict | None:
     """
-    基于历史ERP序列，计算当前估值位置的胜率和赔率。
+    基于历史ERP序列 + 真实ETF价格，计算当前估值位置的胜率和赔率。
 
     方法：
-    - 找出历史上所有 ERP 在 current_erp ± window_pct 范围内的时点
-    - 看这些时点 forward_days 个交易日后，ERP 的变化方向（ERP升=便宜=赚钱）
-    - 胜率 = ERP升高（估值变便宜/股价下跌接回来）的比例
-    - 赔率 = 赢时 ERP 变化中位数 / 输时 ERP 变化中位数（绝对值之比）
-
-    注意：这里用ERP变化代理价格回报，ERP↑意味着估值更便宜（价格相对低），
-    但更直观的理解是：ERP高时买入，未来持有期内ERP回落（股价上涨）才算赚。
-    所以实际用 price_return 更准确，但需要价格数据。
-
-    参数:
-        df: 包含 Date, ERP 列的 DataFrame（日频或月频）
-        current_erp: 当前 ERP 值
-        window_pct: 历史匹配窗口，current_erp ± window_pct（默认 ±0.03）
-        forward_days: 向前看多少个数据点（日频=252≈1年，月频用12）
-
-    返回:
-        dict with: win_rate, median_gain, median_loss, odds_ratio, n_samples
-        or None if insufficient data
+    - 找出历史上所有 ERP 在 current_erp ± window_pct 范围内的日期
+    - 查这些日期 forward_days 个交易日后的真实价格涨跌幅
+    - 胜率 = 上涨次数 / 总次数
+    - 赢时赔率 = 赢时中位涨幅 / 输时中位跌幅绝对值
     """
+    price_series = _load_price_series(code)
+
     erp_col = df[['Date', 'ERP']].dropna().reset_index(drop=True)
     if len(erp_col) < forward_days + 10:
         return None
@@ -59,55 +92,65 @@ def calc_win_rate_and_odds(df: pd.DataFrame, current_erp: float,
     returns = []
     for i, row in erp_col.iterrows():
         erp_val = row['ERP']
-        # 匹配历史上ERP和当前相近的时点（排除最近的数据）
         if abs(erp_val - current_erp) > window_pct:
             continue
-        future_idx = i + forward_days
-        if future_idx >= len(erp_col):
-            continue
-        # 用价格回报近似：1/ERP 近似 PE，ERP下降意味着估值贵了（亏钱）
-        # 直接用 ERP 变化方向：ERP 升高 = 更便宜 = 原来买的人被套
-        # 所以用 -(ERP变化) 来代理价格方向，即 ERP↓ → 股价↑ → 赚钱
-        future_erp = erp_col.loc[future_idx, 'ERP']
-        erp_change = future_erp - erp_val  # ERP 变化
-        # ERP 下降 = 股价上涨（估值变贵），对持有者是赚钱
-        price_proxy = -erp_change / abs(erp_val) if erp_val != 0 else 0
-        returns.append(price_proxy)
+        date = row['Date']
+
+        if price_series is not None:
+            # 用真实价格计算回报
+            future_idx = price_series.index.searchsorted(date) + forward_days
+            if future_idx >= len(price_series):
+                continue
+            price_now    = price_series.asof(date)
+            price_future = price_series.iloc[future_idx]
+            if price_now is None or price_now == 0:
+                continue
+            ret = (price_future - price_now) / price_now
+        else:
+            # 降级方案：用ERP变化近似（无价格数据时）
+            future_i = i + forward_days
+            if future_i >= len(erp_col):
+                continue
+            future_erp = erp_col.loc[future_i, 'ERP']
+            ret = -(future_erp - erp_val) / abs(erp_val) if erp_val != 0 else 0
+
+        returns.append(ret)
 
     if len(returns) < 5:
         return None
 
     r = pd.Series(returns)
-    wins = r[r > 0]
+    wins   = r[r > 0]
     losses = r[r <= 0]
 
-    win_rate = len(wins) / len(r)
-    median_gain = wins.median() if len(wins) > 0 else 0.0
-    median_loss = abs(losses.median()) if len(losses) > 0 else 0.0
-    odds_ratio = (median_gain / median_loss) if median_loss > 0 else float('inf')
+    win_rate     = len(wins) / len(r)
+    median_gain  = wins.median()   if len(wins)   > 0 else 0.0
+    median_loss  = abs(losses.median()) if len(losses) > 0 else 0.0
+    odds_ratio   = (median_gain / median_loss) if median_loss > 0 else float('inf')
+    used_price   = price_series is not None
 
     return {
-        "win_rate": win_rate,
+        "win_rate":    win_rate,
         "median_gain": median_gain,
         "median_loss": median_loss,
-        "odds_ratio": odds_ratio,
-        "n_samples": len(r),
-        "window_pct": window_pct,
+        "odds_ratio":  odds_ratio,
+        "n_samples":   len(r),
+        "window_pct":  window_pct,
         "forward_days": forward_days,
+        "used_price":  used_price,   # True=真实价格，False=ERP近似
     }
 
 
 def build_win_rate_block(df: pd.DataFrame, current_erp: float, code: str) -> str:
     """生成胜率赔率 markdown 模块"""
     monthly_codes = {'EWQ', 'EWG', 'EWJ', 'EEM', 'HSTECH'}
-    # 月频指数用12个月（约1年），日频用252个交易日
     forward_days = 12 if code in monthly_codes else 252
     span_label = "个月" if code in monthly_codes else "个交易日"
 
-    # 先用默认窗口，如果样本不够就放宽
     result = None
     for window in [0.03, 0.05, 0.08]:
         result = calc_win_rate_and_odds(df, current_erp,
+                                        code=code,
                                         window_pct=window,
                                         forward_days=forward_days)
         if result and result["n_samples"] >= 8:
@@ -146,12 +189,14 @@ def build_win_rate_block(df: pd.DataFrame, current_erp: float, code: str) -> str
 
     sample_warning = f"\n> ⚠️ 样本量仅 {n} 个，统计可靠性有限，仅供参考。" if n < 15 else ""
 
+    data_source = "真实ETF价格" if result.get("used_price") else "ERP变化近似（价格数据缺失）"
+
     block = f"""
 ---
 ### 胜率 · 赔率分析（持有{forward_days}{span_label}维度）
 
 > 方法：历史上 ERP 在当前值 ±{window:.0%} 范围内的时点（共 **{n}** 个），
-> 持有 {forward_days}{span_label} 后的回报分布。
+> 持有 {forward_days}{span_label} 后的回报分布。数据来源：**{data_source}**。
 {sample_warning}
 
 | 指标 | 数值 | 说明 |
