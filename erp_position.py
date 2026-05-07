@@ -70,9 +70,9 @@ def build_unified_valuation_block(df, code):
     cur_val = val_series.iloc[-1]
     cur_p_metric = price_metric_series.iloc[-1]
     
-    # 1. 胜率：1 - Percentile (ERP/PSY 越高越便宜，故分位即胜率)
+    # 1. 胜率：ERP/PSY 越高越便宜，分位数本身即胜率（高分位 = 高胜率）
     percentile = (val_series < cur_val).mean()
-    win_rate = 1 - percentile
+    win_rate = percentile
     
     # 2. 赔率：空间法
     avg_p = price_metric_series.mean()
@@ -104,18 +104,18 @@ def build_unified_valuation_block(df, code):
         zone_icon = "🔴"
         zone_name = "严重高估"
     
-    # 综合评级
-    if win_rate >= 0.30 and odds_ratio >= 1.5:
+    # 综合评级（win_rate = ERP历史分位，越高代表越便宜，胜率越高）
+    if win_rate >= 0.75 and odds_ratio >= 1.5:
         rating = "🟢 高胜率 + 高赔率，极佳买点"
-    elif win_rate >= 0.30 and odds_ratio >= 1.0:
+    elif win_rate >= 0.75 and odds_ratio >= 1.0:
         rating = "🟢 胜率尚可 + 赔率合理，较好买点"
-    elif win_rate >= 0.25 and odds_ratio >= 1.0:
+    elif win_rate >= 0.50 and odds_ratio >= 1.0:
         rating = "🟡 胜率中等 + 赔率一般，可参与"
-    elif win_rate >= 0.20 and odds_ratio >= 0.8:
+    elif win_rate >= 0.50 and odds_ratio >= 0.8:
         rating = "🟡 胜率赔率均衡，中性"
-    elif win_rate < 0.15 and odds_ratio < 0.5:
+    elif win_rate < 0.25 and odds_ratio < 0.5:
         rating = "🚨 低胜率 + 低赔率，双杀，规避"
-    elif win_rate < 0.15:
+    elif win_rate < 0.25:
         rating = "🔴 低胜率，谨慎"
     else:
         rating = "🟠 中性偏弱"
@@ -127,12 +127,12 @@ def build_unified_valuation_block(df, code):
 ---
 ### 核心估值决策（基于 {m_name} 框架）
 
-> 方法：胜率 = 1 - {m_name}历史分位；赔率 = 均值回归空间 / 历史极值风险
+> 方法：胜率 = {m_name}历史分位（越高越便宜）；赔率 = 均值回归空间 / 历史极值风险
 > 当前 {m_name} = **{cur_val:.2%}**，历史分位 = **{percentile:.1%}** {zone_icon} **{zone_name}**
 
 | 指标 | 数值 | 说明 |
 |:-----|-----:|:-----|
-| **胜率** | **{win_rate:.1%}** | 1 - {m_name} 历史分位 |
+| **胜率** | **{win_rate:.1%}** | {m_name} 历史分位（高分位 = 高胜率） |
 | **赔率（盈亏比）** | **{odds_ratio:.2f}x** | 均值回归空间 / 历史极值风险 |
 | 预期回归涨幅 | **+{reward:.1%}** | 回归 {p_name} 历史均值的理论空间 |
 | 潜在回撤风险 | **-{risk:.1%}** | 跌至 {p_name} 历史最高位的风险 |
