@@ -85,8 +85,11 @@ def build_unified_valuation_block(df, code):
     # 上行空间：当前 ERP/PSY 距离历史 P90 还有多少余地（越便宜越大）
     erp_upside   = max(p90_val - cur_val, 0)
     # 下行风险：当前 ERP/PSY 距离历史 P10 还有多少空间（越贵越大）
-    # 兜底用 ERP 区间的 5%，避免极端情况赔率爆炸
-    erp_downside = max(cur_val - p10_val, erp_range * 0.05)
+    # 若已跌破或贴近 P10（历史最贵），说明风险已极大，用全区间作为下行风险锚
+    if cur_val <= p10_val:
+        erp_downside = erp_range   # 已破历史最贵边界，全区间为风险
+    else:
+        erp_downside = cur_val - p10_val   # 正常区间：距P10的实际距离
 
     # 赔率 = 上行空间 / 下行风险（均用 ERP 绝对值，量纲一致）
     odds_ratio = erp_upside / erp_downside
@@ -160,29 +163,55 @@ def build_unified_valuation_block(df, code):
     return block
 
 
-# ── 顶部总览表 ────────────────────────────────────────────────────────────────
+# ── 顶部总览表（飞行仪表盘）────────────────────────────────────────────────
 def build_summary_block(summary_list: list) -> str:
-    """所有标的的信号灯 + 仓位一览，放在报告最顶部"""
+    """决策仪表盘：胜率/赔率/四象限/趋势/ETF折溢价一屏决策"""
     if not summary_list:
         return ""
+
+    def zone_short(z):
+        return z.split("(")[0].strip()
+
     rows = []
     for r in summary_list:
-        zone_short = r["erp_zone"].split("(")[0].strip()
+        win      = r.get("win_rate", float("nan"))
+        odds     = r.get("odds",     float("nan"))
+        trend    = r.get("trend",    "─")
+        quadrant = r.get("quadrant", "─")
+        etf_sig  = r.get("etf_signal", "─")
+        win_str  = f"{win:.0%}"    if win  == win  else "─"
+        odds_str = f"{odds:.1f}x"  if odds == odds else "─"
+        pos_str  = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}={r['total_pct']}%"
         rows.append(
             f"| {r['name']} ({r['code']}) "
-            f"| {zone_short} "
-            f"| **{r['total_pct']}%** "
-            f"| {r['b_pct']}+{r['v_pct']}+{r['t_pct']} |"
+            f"| {zone_short(r['erp_zone'])} "
+            f"| {win_str} "
+            f"| {odds_str} "
+            f"| {trend} "
+            f"| {quadrant} "
+            f"| {etf_sig} "
+            f"| {pos_str} |"
         )
+
     rows_md = "\n".join(rows)
-    return f"""## 📊 今日总览 · {datetime.now().strftime('%m-%d')}
+    date_str = datetime.now().strftime("%m-%d")
 
-| 标的 | 估值 | 总仓位 | 底仓+价值+投机 |
-|:----|:-----|------:|:-------------|
-{rows_md}
+    legend = (
+        "**四象限**：胜率≥50% = 历史上便宜的时候；赔率≥1x = 上行空间 > 下行风险\n"
+        "🟢持有/加仓（高胜率+高赔率）· 🟡持有勿追（高胜率+低赔率，空间薄）· "
+        "🟠观望/投机（低胜率+高赔率，估值贵但有反弹）· 🔴减仓/规避（低胜率+低赔率）\n"
+        "**趋势**：近10日ERP斜率方向，↗↗快速走便宜 · ↗缓慢走便宜 · ─横盘 · ↘缓慢走贵 · ↘↘快速走贵\n"
+        "**ETF**：💎显著折价 · 🟢轻微折价 · 🟡平价 · 🟠轻微溢价 · 🔴显著溢价"
+    )
 
----
-"""
+    return (
+        f"## 📊 决策仪表盘 · {date_str}\n\n"
+        f"{legend}\n\n"
+        f"| 标的 | 估值区间 | 胜率 | 赔率 | 趋势 | 四象限操作 | ETF | 仓位(底+值+投) |\n"
+        f"|:----|:--------|-----:|-----:|:----:|:----------|:---:|:-------------|\n"
+        f"{rows_md}\n\n"
+        f"---\n"
+    )
 
 
 # ── 颜色图例（插入报告顶部一次） ──────────────────────────────────────────────
@@ -552,12 +581,63 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     unified_block = build_unified_valuation_block(df, code)
 
     # ── 追加到顶部总览 ────────────────────────────────────────────────────────
+    _p10 = quantiles["P10"]; _p90 = quantiles["P90"]
+    _win  = (erp_series < current_erp).mean()
+    _rng  = max(_p90 - _p10, 1e-4)
+    _up   = max(_p90 - current_erp, 0)
+    _dn   = _rng if current_erp <= _p10 else (current_erp - _p10)
+    _odds = _up / _dn if _dn > 0 else 0.0
+
+    # 趋势：用近10日ERP线性斜率，标准化到ERP区间，判断强弱方向
+    _erp_recent = df["ERP"].dropna().tail(10)
+    if len(_erp_recent) >= 3:
+        _slope = np.polyfit(np.arange(len(_erp_recent)), _erp_recent.values, 1)[0]
+        _slope_norm = _slope / _rng  # 标准化：每步变动占ERP区间的比例
+        if   _slope_norm >  0.02: _trend = "↗↗"   # 快速走便宜
+        elif _slope_norm >  0.005: _trend = "↗"   # 缓慢走便宜
+        elif _slope_norm < -0.02: _trend = "↘↘"   # 快速走贵
+        elif _slope_norm < -0.005: _trend = "↘"   # 缓慢走贵
+        else:                      _trend = "─"    # 横盘
+    else:
+        _trend = "─"
+
+    # 四象限操作建议（胜率阈值=50%，赔率阈值=1.0x）
+    _high_win  = _win  >= 0.50
+    _high_odds = _odds >= 1.0
+    if   _high_win and _high_odds:    _quadrant = "🟢持有/加仓"    # 便宜且空间大
+    elif _high_win and not _high_odds: _quadrant = "🟡持有勿追"    # 便宜但空间薄
+    elif not _high_win and _high_odds: _quadrant = "🟠观望/投机"   # 贵但有反弹空间
+    else:                              _quadrant = "🔴减仓/规避"   # 贵且空间小
+
+    # ETF折溢价执行信号（从 etf_df 取，找不到则省略）
+    _etf_signal = "─"
+    if etf_df is not None:
+        try:
+            _row = etf_df[etf_df["code"].str.contains(code, na=False)]
+            if len(_row) == 0:  # 尝试用名字匹配
+                _row = etf_df[etf_df["name"].str.contains(code, na=False)]
+            if len(_row) > 0:
+                _prem = float(_row.iloc[0].get("premium_rate", float("nan")))
+                if _prem == _prem:  # not nan
+                    if   _prem < -0.02: _etf_signal = "💎"
+                    elif _prem < -0.005: _etf_signal = "🟢"
+                    elif _prem <  0.005: _etf_signal = "🟡"
+                    elif _prem <  0.02:  _etf_signal = "🟠"
+                    else:                _etf_signal = "🔴"
+        except Exception:
+            pass
+
     if summary_list is not None:
         summary_list.append({
             "name": name, "code": code,
             "erp_zone": erp_zone,
             "total_pct": total_pct,
             "b_pct": b_pct, "v_pct": v_pct, "t_pct": t_pct,
+            "win_rate": _win,
+            "odds": _odds,
+            "quadrant": _quadrant,
+            "trend": _trend,
+            "etf_signal": _etf_signal,
         })
 
     md = f"""## {name} ({code}) 决策报告
