@@ -74,21 +74,31 @@ def build_unified_valuation_block(df, code):
     percentile = (val_series < cur_val).mean()
     win_rate = percentile
     
-    # 2. 赔率：空间法
+    # 2. 赔率：ERP 分位空间法（与胜率口径统一，避免PE极端值失真）
+    mean_val = val_series.mean()
+    p10_val  = val_series.quantile(0.10)   # 历史最贵边界（下行风险锚）
+    p90_val  = val_series.quantile(0.90)   # 历史最便宜边界（上行空间锚）
+
+    # ERP 历史区间（用于赔率兜底）
+    erp_range = max(p90_val - p10_val, 1e-4)
+
+    # 上行空间：当前 ERP/PSY 距离历史 P90 还有多少余地（越便宜越大）
+    erp_upside   = max(p90_val - cur_val, 0)
+    # 下行风险：当前 ERP/PSY 距离历史 P10 还有多少空间（越贵越大）
+    # 兜底用 ERP 区间的 5%，避免极端情况赔率爆炸
+    erp_downside = max(cur_val - p10_val, erp_range * 0.05)
+
+    # 赔率 = 上行空间 / 下行风险（均用 ERP 绝对值，量纲一致）
+    odds_ratio = erp_upside / erp_downside
+
+    # 期望收益展示用：ERP 回归均值 / 跌到P10 对应的涨跌估算（有界不超过100%）
+    reward = max(cur_val - mean_val, 0) / (1 + abs(cur_val)) if cur_val > mean_val else 0
+    risk   = min(erp_downside / (1 + abs(p10_val)), 1.0)
+
+    # PE 统计（仅用于展示，不参与赔率计算）
     avg_p = price_metric_series.mean()
     max_p = price_metric_series.max()
     min_p = price_metric_series.min()
-    
-    # 预期涨幅 = (当前PE - 均值PE) / 当前PE (PE 下降 = 价格上涨)
-    reward = (cur_p_metric - avg_p) / cur_p_metric if cur_p_metric > avg_p else 0
-    
-    # 潜在跌幅 = (当前PE - 历史最高PE) / 当前PE（绝对值）
-    risk = abs((cur_p_metric - max_p) / cur_p_metric) if cur_p_metric < max_p else 0.05
-    
-    if cur_p_metric >= max_p:
-        risk = 0.05
-    
-    odds_ratio = reward / risk if risk > 0 else float('inf')
     
     # 估值区间判断
     if percentile >= 0.75:
@@ -127,16 +137,16 @@ def build_unified_valuation_block(df, code):
 ---
 ### 核心估值决策（基于 {m_name} 框架）
 
-> 方法：胜率 = {m_name}历史分位（越高越便宜）；赔率 = 均值回归空间 / 历史极值风险
+> 方法：胜率 = {m_name}历史分位；赔率 = {m_name}上行空间(距P90) / 下行风险(距P10)
 > 当前 {m_name} = **{cur_val:.2%}**，历史分位 = **{percentile:.1%}** {zone_icon} **{zone_name}**
 
 | 指标 | 数值 | 说明 |
 |:-----|-----:|:-----|
 | **胜率** | **{win_rate:.1%}** | {m_name} 历史分位（高分位 = 高胜率） |
-| **赔率（盈亏比）** | **{odds_ratio:.2f}x** | 均值回归空间 / 历史极值风险 |
-| 预期回归涨幅 | **+{reward:.1%}** | 回归 {p_name} 历史均值的理论空间 |
-| 潜在回撤风险 | **-{risk:.1%}** | 跌至 {p_name} 历史最高位的风险 |
-| 期望收益 | **{expected_return:+.1%}** | 胜率×涨幅 − 败率×跌幅 |
+| **赔率（盈亏比）** | **{odds_ratio:.2f}x** | {m_name} 距P90上行空间 / 距P10下行风险 |
+| {m_name} 上行空间 | **+{erp_upside:.2%}** | 距历史P90（{p90_val:.2%}）的 {m_name} 差值 |
+| {m_name} 下行风险 | **-{erp_downside:.2%}** | 距历史P10（{p10_val:.2%}）的 {m_name} 差值 |
+| 期望收益(估算) | **{expected_return:+.1%}** | 胜率×涨幅估算 − 败率×跌幅估算 |
 
 | {p_name} 统计 | 数值 |
 |:-------------|-----:|
