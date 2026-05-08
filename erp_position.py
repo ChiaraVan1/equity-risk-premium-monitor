@@ -202,10 +202,9 @@ def build_summary_block(summary_list: list) -> str:
         etf  = r.get("etf_signal", "─")
         pos  = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}={r['total_pct']}%"
 
-        lines.append(
-            f"**{r['name']}（{r['code']}）** {zone}\n"
-            f"胜率 {wi} {win_str}　赔率 {oi} {odds_str}　ETF {etf}　仓位 {pos}"
-        )
+        lines.append(f"- **{r['name']}（{r['code']}）** {zone}")
+        lines.append(f"  - 胜率 {wi} {win_str}　赔率 {oi} {odds_str}")
+        lines.append(f"  - ETF {etf}　仓位 {pos}")
 
     lines.append("\n---")
     return "\n".join(lines) + "\n"
