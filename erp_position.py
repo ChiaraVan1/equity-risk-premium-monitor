@@ -597,7 +597,27 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 
     # HSTECH 报告头部只用 PSY zone，其余用 ERP 分位表
     if code == "HSTECH":
-        header_block = f"""
+        if _hstech_psy_s is not None:
+            header_block = f"""
+---
+# ═══ {name} ({code}) ═══
+> 数据源：PS / PSY（营收口径），ERP 数据已停止更新不再展示。　{current_date}
+
+| 指标 | 数值 | 估值区间 |
+|:-----|-----:|:---------|
+| 当前 PSY | **{current_erp:.2%}** | **{erp_zone}** |
+| 历史均值 | {erp_series.mean():.2%} | {len(erp_series)}条样本 |
+
+| 分位点 | PSY值 | 估值状态 |
+|:-------|------:|:---------|
+| P90 | {quantiles["P90"]:.2%} | 极度低估 |
+| P75 | {quantiles["P75"]:.2%} | 显著低估 |
+| P50 | {quantiles["P50"]:.2%} | 价值中枢 |
+| P25 | {quantiles["P25"]:.2%} | 进入高估 |
+| P10 | {quantiles["P10"]:.2%} | 极度高估 |
+"""
+        else:
+            header_block = f"""
 ---
 # ═══ {name} ({code}) ═══
 > 数据源：PS / PSY（营收口径），ERP 数据已停止更新不再展示。　{current_date}
