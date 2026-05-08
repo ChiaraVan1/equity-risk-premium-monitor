@@ -211,7 +211,7 @@ def build_summary_block(summary_list: list) -> str:
             f"{r['name']} {zone} · 胜{wi}{win_str} 赔{oi}{odds_str} · ETF{etf} · 仓{pos}"
         )
 
-    body = "\n".join(rows)
+    body = "\n\n".join(rows)
     return f"{header}\n{legend}\n\n{body}\n\n---\n"
 
 
@@ -580,14 +580,15 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 
     # HSTECH 报告头部只用 PSY zone，其余用 ERP 分位表
     if code == "HSTECH":
-        header_block = f"""## {name} ({code}) 决策报告
-日期: {current_date}
-
-> 数据源：PS / PSY（营收口径），ERP 数据已停止更新不再展示。
+        header_block = f"""
+---
+# ═══ {name} ({code}) ═══
+> 数据源：PS / PSY（营收口径），ERP 数据已停止更新不再展示。　{current_date}
 """
     else:
-        header_block = f"""## {name} ({code}) 决策报告
-日期: {current_date}
+        header_block = f"""
+---
+# ═══ {name} ({code}) ═══
 
 | 指标 | 数值 | 估值区间 |
 |:-----|-----:|:---------|
