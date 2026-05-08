@@ -483,6 +483,24 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     else:
         erp_zone = "🚨 危险泡沫 (<P10)"
 
+    # HSTECH：用 PSY 数据覆盖 current_erp / quantiles，确保仓位与估值区间一致
+    # 同时缓存供后续 summary_list 追加使用，避免重复加载
+    _hstech_psy_s = None
+    if code == "HSTECH":
+        _ps_df = load_ps_data()
+        if _ps_df is not None and "psy" in _ps_df.columns:
+            _hstech_psy_s = _ps_df["psy"].dropna()
+            current_erp = _hstech_psy_s.iloc[-1]
+            erp_series  = _hstech_psy_s
+            quantiles = {
+                "P95": _hstech_psy_s.quantile(0.95),
+                "P90": _hstech_psy_s.quantile(0.90),
+                "P75": _hstech_psy_s.quantile(0.75),
+                "P50": _hstech_psy_s.quantile(0.50),
+                "P25": _hstech_psy_s.quantile(0.25),
+                "P10": _hstech_psy_s.quantile(0.10),
+            }
+
     if current_erp >= quantiles["P50"]:
         b_msg, b_pct = "泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定", 30
     elif current_erp >= quantiles["P25"]:
@@ -518,11 +536,10 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     unified_block = build_unified_valuation_block(df, code)
 
     # ── 追加到顶部总览 ────────────────────────────────────────────────────────
-    # HSTECH：胜率/赔率/估值区间均从 PSY 数据计算，ERP 数据已停更
+    # HSTECH：胜率/赔率/估值区间均从 PSY 数据计算，复用上方已加载的 _hstech_psy_s
     if code == "HSTECH":
-        _ps_df = load_ps_data()
-        if _ps_df is not None and "psy" in _ps_df.columns:
-            _psy_s = _ps_df["psy"].dropna()
+        _psy_s = _hstech_psy_s
+        if _psy_s is not None:
             _cur_psy = _psy_s.iloc[-1]
             _p10_psy = _psy_s.quantile(0.10)
             _p90_psy = _psy_s.quantile(0.90)
