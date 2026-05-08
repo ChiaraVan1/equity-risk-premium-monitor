@@ -203,4 +203,4 @@ Q4 单季 = 年报累计值   − 三季报累计值
 
 - **QQQ PE**：每日运行前从 [GuruFocus](https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio) 查询最新值，通过 `QQQ_PE_TODAY` 环境变量传入，或直接填写脚本顶部变量。
 - **QQQ PE 历史文件**：`./data/qqq_pe_gurufocus.xlsx` 需从 GuruFocus 手动下载，放入 `data/` 目录（仅全量初始化时需要）。
-- **Shiller CAPE**：`./data/ie_data.xls` 需从 [Robert Shiller 网站](http://www.econ.yale.edu/~shiller/data.htm) 手动下载，仅用于 SPY 的长期回报锚分析。
+- **Shiller CAPE**：`./data/ie_data.xls` 需从 [Robert Shiller 网站](http://www.econ.yale.edu/~shiller/data.htm) 手动下载，仅用于 SPY 的长期回报锚分析。数据按月更新但无固定日期，建议每月月初手动检查并替换文件。
