@@ -165,14 +165,13 @@ def build_unified_valuation_block(df, code):
 
 # ── 顶部总览表（飞行仪表盘）────────────────────────────────────────────────
 def build_summary_block(summary_list: list) -> str:
-    """决策仪表盘：卡片式格式，兼容 ServerChan 渲染"""
+    """决策仪表盘：每标的单行，兼容 ServerChan 渲染"""
     if not summary_list:
         return ""
 
     date_str = datetime.now().strftime("%Y-%m-%d")
 
     def graded_icon(val, thresholds, icons):
-        """通用分级图标，thresholds 从高到低"""
         if val != val:
             return "─"
         for t, i in zip(thresholds, icons):
@@ -186,11 +185,16 @@ def build_summary_block(summary_list: list) -> str:
     odds_icons      = ["🟢", "🟡", "🟠", "🔴"]
 
     def zone_short(z):
-        return z.split("(")[0].strip()
+        # 只取估值区间的 emoji + 核心词，去掉括号里的分位说明
+        # e.g. "🟢 显著低估 (P75-P90)" → "🟢低估"
+        part = z.split("(")[0].strip()
+        # 再压缩：去掉"合理偏低/合理偏高"里多余的空格
+        return part.replace(" ", "")
 
-    lines = [f"## 📊 决策仪表盘 · {date_str}\n"]
-    lines.append("> 🟢≥75% 🟡≥50% 🟠≥25% 🔴<25%（胜率/赔率同色标准）\n")
+    header = f"## 📊 决策仪表盘 · {date_str}"
+    legend = "> 胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正"
 
+    rows = []
     for r in summary_list:
         win  = r.get("win_rate", float("nan"))
         odds = r.get("odds",     float("nan"))
@@ -202,12 +206,13 @@ def build_summary_block(summary_list: list) -> str:
         etf  = r.get("etf_signal", "─")
         pos  = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}={r['total_pct']}%"
 
-        lines.append(f"- **{r['name']}（{r['code']}）** {zone}")
-        lines.append(f"  - 胜率 {wi} {win_str}　赔率 {oi} {odds_str}")
-        lines.append(f"  - ETF {etf}　仓位 {pos}")
+        # 全部压成一行，用中文间隔号分隔各项
+        rows.append(
+            f"{r['name']} {zone} · 胜{wi}{win_str} 赔{oi}{odds_str} · ETF{etf} · 仓{pos}"
+        )
 
-    lines.append("\n---")
-    return "\n".join(lines) + "\n"
+    body = "\n".join(rows)
+    return f"{header}\n{legend}\n\n{body}\n\n---\n"
 
 
 # ── 颜色图例（插入报告顶部一次） ──────────────────────────────────────────────
@@ -633,10 +638,6 @@ if __name__ == "__main__":
         ("EWJ",    "MSCI Japan"),
         ("EEM",    "MSCI Emerging"),
         ("HSTECH", "恒生科技指数"),
-        ("000069", "消费80"),
-        ("930781", "中证影视"),
-        ("000989", "全指可选"),
-        ("931139", "CS消费50"),
     ]
 
     summary_list = []
@@ -645,6 +646,27 @@ if __name__ == "__main__":
         report_md = analyze_and_suggest(code, name, _etf_df, summary_list)
         if report_md:
             report_list.append(report_md)
+
+    # 仪表盘排序：估值越低估排越前，同估值区间内按胜率降序
+    _zone_order = {
+        "🟢 极度低估": 0,
+        "🟢 显著低估": 1,
+        "🟡 合理偏低": 2,
+        "🟠 合理区间": 3,
+        "🔴 严重高估": 4,
+        "🚨 危险泡沫": 5,
+    }
+    def _sort_key(r):
+        zone_str = r.get("erp_zone", "")
+        zone_rank = next(
+            (v for k, v in _zone_order.items() if zone_str.startswith(k)),
+            99
+        )
+        win = r.get("win_rate", 0.0)
+        win = win if win == win else 0.0   # nan → 0
+        return (zone_rank, -win)
+
+    summary_list.sort(key=_sort_key)
 
     if report_list:
         full_report = (
