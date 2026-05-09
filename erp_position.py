@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 import requests
 
-from etf_metrics import load_etf_metrics, build_etf_metrics_block
+from etf_metrics import load_etf_metrics, build_etf_metrics_block, ERP_TO_ETF
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -566,17 +566,15 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
         _dn   = _rng if current_erp <= _p10 else (current_erp - _p10)
         _odds = _up / _dn if _dn > 0 else 0.0
 
-    # ETF折溢价执行信号（从 etf_df 取，找不到则省略）
+    # ETF折溢价执行信号（通过 ERP_TO_ETF 映射表定位，读取 latest_discount_rate）
     _etf_signal = "─"
     if etf_df is not None:
         try:
-            _row = etf_df[etf_df["code"].str.contains(code, na=False)]
-            if len(_row) == 0:  # 尝试用名字匹配
-                _row = etf_df[etf_df["name"].str.contains(code, na=False)]
-            if len(_row) > 0:
-                _prem = float(_row.iloc[0].get("premium_rate", float("nan")))
+            _ts = ERP_TO_ETF.get(code)          # erp_code → ts_code（如 510300.SH）
+            if _ts and _ts in etf_df.index:
+                _prem = float(etf_df.loc[_ts].get("latest_discount_rate", float("nan")))
                 if _prem == _prem:  # not nan
-                    if   _prem < -0.02: _etf_signal = "💎"
+                    if   _prem < -0.02:  _etf_signal = "💎"
                     elif _prem < -0.005: _etf_signal = "🟢"
                     elif _prem <  0.005: _etf_signal = "🟡"
                     elif _prem <  0.02:  _etf_signal = "🟠"
