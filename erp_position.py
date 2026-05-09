@@ -394,9 +394,9 @@ def build_summary_block(summary_list: list) -> str:
         return part.replace(" ", "")
 
     header = f"## 📊 决策仪表盘 · {date_str}"
-    legend  = "> 胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正"
-    legend += "\n> ETF折溢价：💎大幅折价 🟢折价 🟡平价 🟠溢价 🔴大幅溢价 ─无数据"
-    legend += "\n> 估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)"
+    legend  = "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正\n"
+    legend += "ETF折溢价：💎大幅折价 🟢折价 🟡平价 🟠溢价 🔴大幅溢价 ─无数据\n"
+    legend += "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)"
 
     rows = []
     for r in summary_list:
