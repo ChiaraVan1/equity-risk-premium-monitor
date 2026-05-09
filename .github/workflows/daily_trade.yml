@@ -3,11 +3,17 @@ on:
   schedule:
     # 每天 18:30 运行 (北京时间 18:30 = UTC 10:30)
     - cron: '30 10 * * *'
-  workflow_dispatch: # 允许手动点击运行
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '预览模式（只生成报告文件，不推送微信）'
+        type: boolean
+        default: false
+
 jobs:
   run-erp-strategy:
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: write
 
@@ -34,15 +40,22 @@ jobs:
           QQQ_PE_TODAY: ${{ secrets.QQQ_PE_TODAY }}
         run: python fetch_bond_yield_incremental.py
 
-      # 5. 执行分析并推送到微信
-      #    ETF_METRICS_URL 指向另一个 repo 的 latest release，每次运行自动拉最新版
+      # 5. 执行分析，正式运行推送微信，预览模式写文件不推送
       - name: Analyze and Push to WeChat
         env:
           SCT_KEY: ${{ secrets.SCT_KEY }}
-          ETF_METRICS_URL: "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/etf_metrics_daily_report.csv"
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: python erp_position.py
 
-      # 6. 将更新后的数据保存回 GitHub 仓库
+      # 6. 预览模式：上传报告文件供下载查看
+      - name: Upload preview report
+        if: ${{ github.event.inputs.dry_run == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-preview
+          path: output_preview.md
+
+      # 7. 将更新后的数据保存回 GitHub 仓库
       - name: Commit and Push changes
         run: |
           git config --global user.name "GitHub Action"
