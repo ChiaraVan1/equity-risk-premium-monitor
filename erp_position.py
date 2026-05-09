@@ -209,19 +209,25 @@ def build_unified_valuation_block(df, code):
     max_p = price_metric_series.max()
     min_p = price_metric_series.min()
 
-    # 估值区间判断
-    if percentile >= 0.75:
+    # 估值区间判断（与头部分位表标签保持一致）
+    if percentile >= 0.90:
         zone_icon = "🟢"
         zone_name = "极度低估"
+    elif percentile >= 0.75:
+        zone_icon = "🟢"
+        zone_name = "显著低估"
     elif percentile >= 0.50:
         zone_icon = "🟡"
         zone_name = "合理偏低"
     elif percentile >= 0.25:
         zone_icon = "🟠"
-        zone_name = "合理偏高"
-    else:
+        zone_name = "合理区间"
+    elif percentile >= 0.10:
         zone_icon = "🔴"
         zone_name = "严重高估"
+    else:
+        zone_icon = "🚨"
+        zone_name = "危险泡沫"
 
     # 综合评级（win_rate = ERP历史分位，越高代表越便宜，胜率越高）
     if win_rate >= 0.75 and odds_ratio >= 1.5:
@@ -256,13 +262,6 @@ def build_unified_valuation_block(df, code):
 | {m_name} 上行空间 | **+{erp_upside:.2%}** | 距历史P90（{p90_val:.2%}）的 {m_name} 差值 |
 | {m_name} 下行风险 | **-{erp_downside:.2%}** | 距历史P10（{p10_val:.2%}）的 {m_name} 差值 |
 | 期望收益(估算) | **{expected_return:+.1%}** | 胜率×涨幅估算 − 败率×跌幅估算 |
-
-| {p_name} 统计 | 数值 |
-|:-------------|-----:|
-| 当前 {p_name} | **{cur_p_metric:.2f}x** |
-| 历史均值 | {avg_p:.2f}x |
-| 历史最低 | {min_p:.2f}x |
-| 历史最高 | {max_p:.2f}x |
 
 **综合评级：{rating}**
 """
@@ -395,7 +394,9 @@ def build_summary_block(summary_list: list) -> str:
         return part.replace(" ", "")
 
     header = f"## 📊 决策仪表盘 · {date_str}"
-    legend = "> 胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · ETF折溢价：💎大幅折价 🟢折价 🟡平价 🟠溢价 🔴大幅溢价 ─无数据"
+    legend  = "> 胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正"
+    legend += "\n> ETF折溢价：💎大幅折价 🟢折价 🟡平价 🟠溢价 🔴大幅溢价 ─无数据"
+    legend += "\n> 估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)"
 
     rows = []
     for r in summary_list:
@@ -419,8 +420,8 @@ def build_summary_block(summary_list: list) -> str:
 
 
 # 估值区间 & 公式说明（插在仪表盘之后、详情之前）
-LEGEND_BLOCK = """---
-🟢 低估(≥P75) · 🟡 合理偏低(P50-P75) · 🟠 合理偏高(P25-P50) · 🔴 高估(P10-P25) · 🚨 危险泡沫(<P10) · ERP = 1/PE − 无风险利率；PSY = 1/PS − 无风险利率。越高越便宜。
+LEGEND_BLOCK = """
+ERP = 1/PE − 无风险利率；PSY = 1/PS − 无风险利率。越高越便宜。
 
 ---
 """
@@ -656,7 +657,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     etf_block     = build_etf_metrics_block(code, etf_df)
     shiller_block = build_shiller_block(code)
 
-    md = f"""{header_block}{unified_block}{trend_block}
+    md = f"""{header_block}
 ---
 ### 仓位建议
 
@@ -665,7 +666,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 **{t_msg}** ({t_pct}%)
 
 建议总仓位：**{total_pct}%**（泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%）
-{etf_block}{shiller_block}"""
+{unified_block}{trend_block}{etf_block}{shiller_block}"""
     print(md)
     return md
 
