@@ -736,7 +736,14 @@ if __name__ == "__main__":
             + LEGEND_BLOCK
             + "".join(report_list)
         )
-        print("正在生成报告并准备推送...")
-        send_to_wechat(full_report)
+        if os.getenv("DRY_RUN") == "true":
+            # 预览模式：写文件不推送，供 GitHub Actions artifact 下载查看
+            preview_path = "./output_preview.md"
+            with open(preview_path, "w", encoding="utf-8") as f:
+                f.write(full_report)
+            print(f"✅ dry-run 模式，报告已写入 {preview_path}，不推送微信。")
+        else:
+            print("正在生成报告并准备推送...")
+            send_to_wechat(full_report)
     else:
         print("❌ 未生成任何有效报告，请检查数据文件。")
