@@ -2,7 +2,7 @@
 etf_metrics.py
 ──────────────────────────────────────────────────────────────────────────────
 ETF 执行质量补充模块
-数据源: etf_metrics_daily_report.csv
+数据源: simple_etf_metrics.csv
 补充维度（不替代 ERP 估值判断，仅辅助执行决策）：
   1. 折溢价率   — 当前买入/卖出的执行成本
   2. 换手背离   — 价格走势是否有成交量支撑
@@ -189,15 +189,25 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     else:
         q_label = f"🔴 1年{q1y_pct:.0f}%分位 — 历史罕见高溢价，等待"
 
-    # 折溢价变化方向（窗口是否在开启/关闭）
+    # 折溢价变化方向（正值=溢价扩大/折价收窄，负值=折价扩大/溢价收窄）
     d5_str  = f"+{discount_5d_chg*100:.3f}%" if discount_5d_chg >= 0 else f"{discount_5d_chg*100:.3f}%"
     d10_str = f"+{discount_10d_chg*100:.3f}%" if discount_10d_chg >= 0 else f"{discount_10d_chg*100:.3f}%"
-    if discount_5d_chg < -0.001:
-        trend_label = "折价扩大 → 买入窗口正在打开"
-    elif discount_5d_chg > 0.001:
-        trend_label = "折价收窄 → 买入窗口趋于关闭，抓紧或等下次"
+    if discount_rate > 0:
+        # 当前是溢价状态
+        if discount_5d_chg > 0.001:
+            trend_label = "溢价扩大 → 买入成本上升，等折价窗口"
+        elif discount_5d_chg < -0.001:
+            trend_label = "溢价收窄 → 执行成本改善中"
+        else:
+            trend_label = "折溢价近期稳定"
     else:
-        trend_label = "折溢价近期稳定"
+        # 当前是折价状态
+        if discount_5d_chg < -0.001:
+            trend_label = "折价扩大 → 买入窗口正在打开"
+        elif discount_5d_chg > 0.001:
+            trend_label = "折价收窄 → 买入窗口趋于关闭，抓紧或等下次"
+        else:
+            trend_label = "折溢价近期稳定"
 
     # ══════════════════════════════════════════════════════
     # B. 这波量是否真实 — 资金流
@@ -314,16 +324,15 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 
     block = f"""
 ---
-### ETF 执行质量（{etf_name} · {ts_code}）
+### ETF 执行质量（{ts_code}）
 
 **{exec_line}**
 
 **A · 今天怎么下单（折溢价）**
 > 折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。
 
-- 当前：{disc_icon} {disc_label}（1年{q1y_pct:.0f}% / 3年{q3y_pct:.0f}%分位）→ {disc_action}
+- 当前：{disc_icon} {disc_label}（1年{q1y_pct:.0f}% / 3年{q3y_pct:.0f}%分位）— {q_label.split('—')[-1].strip()} → {disc_action}
 - 趋势：5日{d5_str} / 10日{d10_str} → {trend_label}
-- 历史：{q_label}
 
 **B · 这波量是否真实（资金流）**
 > 价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。
