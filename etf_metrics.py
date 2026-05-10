@@ -49,17 +49,19 @@ _metrics_cache = {}
 def load_etf_metrics() -> pd.DataFrame | None:
     if _metrics_cache:
         return _metrics_cache.get("df")
-    import urllib.request, urllib.error, io
+    
+    import requests, io
     url = "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/simple_etf_metrics.csv"
     try:
-        with urllib.request.urlopen(url, timeout=15) as resp:
-            df = pd.read_csv(io.StringIO(resp.read().decode("utf-8-sig")), index_col="ts_code")
+        resp = requests.get(url, timeout=15, allow_redirects=True)  # ← 关键
+        resp.raise_for_status()
+        df = pd.read_csv(io.StringIO(resp.content.decode("utf-8-sig")), index_col="ts_code")
         _metrics_cache["df"] = df
         return df
-    except urllib.error.HTTPError as e:
-        print(f"⚠️ ETF 指标文件下载失败（HTTP {e.code}）：{url}\n   ETF 执行质量模块将跳过，不影响主报告。")
-    except urllib.error.URLError as e:
-        print(f"⚠️ ETF 指标文件网络请求失败：{e.reason}\n   ETF 执行质量模块将跳过，不影响主报告。")
+    except requests.HTTPError as e:
+        print(f"⚠️ ETF 指标文件下载失败（HTTP {e.response.status_code}）：{url}\n   ETF 执行质量模块将跳过，不影响主报告。")
+    except requests.RequestException as e:
+        print(f"⚠️ ETF 指标文件网络请求失败：{e}\n   ETF 执行质量模块将跳过，不影响主报告。")
     except Exception as e:
         print(f"⚠️ ETF 指标文件加载异常：{e}\n   ETF 执行质量模块将跳过，不影响主报告。")
     _metrics_cache["df"] = None
