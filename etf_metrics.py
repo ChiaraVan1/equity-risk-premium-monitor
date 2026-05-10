@@ -51,7 +51,7 @@ def load_etf_metrics() -> pd.DataFrame | None:
         return _metrics_cache.get("df")
     
     import requests, io
-    url = "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/simple_etf_metrics.csv"
+    url = "https://github.com/ChiaraVan1/ETF_data_project/releases/download/latest/simple_etf_metrics.csv"
     try:
         resp = requests.get(url, timeout=15, allow_redirects=True)  # ← 关键
         resp.raise_for_status()
