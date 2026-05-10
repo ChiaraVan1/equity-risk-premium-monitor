@@ -53,7 +53,7 @@ def load_etf_metrics() -> pd.DataFrame | None:
     url = "https://github.com/ChiaraVan1/ETF_data_project/releases/latest/download/simple_etf_metrics.csv"
     try:
         with urllib.request.urlopen(url, timeout=15) as resp:
-            df = pd.read_csv(io.StringIO(resp.read().decode()), index_col="ts_code")
+            df = pd.read_csv(io.StringIO(resp.read().decode("utf-8-sig")), index_col="ts_code")
         _metrics_cache["df"] = df
         return df
     except urllib.error.HTTPError as e:
