@@ -270,10 +270,9 @@ def build_unified_valuation_block(df, code):
 
 def build_trend_block(df, erp_series, code, quantiles):
     """
-    生成近10个有效 ERP 数据点的趋势模块。
-    - 日频指数（A股/美股）取最近10个交易日
-    - 月频指数（EWQ/EWG/EWJ/EEM/HSTECH）取最近10个月末
-    HSTECH 仅展示 PSY 近期趋势（ERP 数据已停更）。
+    生成近10个月末 ERP 数据点的趋势模块。
+    - 所有指数统一取最近10个月末数据（每月最后一个有效交易日）
+    - HSTECH 仅展示 PSY 近期趋势（ERP 数据已停更）
     """
     monthly_codes = {'EWQ', 'EWG', 'EWJ', 'EEM', 'HSTECH'}
 
@@ -303,14 +302,17 @@ def build_trend_block(df, erp_series, code, quantiles):
 {chr(10).join(psy_rows)}
 """
 
-    recent = df[df['ERP'].notna()][['Date', 'ERP', 'PE', 'Bond_Yield_10Y']].tail(10).copy()
-    if len(recent) < 2:
+    valid = df[df['ERP'].notna()][['Date', 'ERP', 'PE']].copy()
+    if len(valid) < 2:
         return ""
+
+    # 取每月最后一个交易日，再取最近10个月末
+    valid['YM'] = valid['Date'].dt.to_period('M')
+    month_end = valid.groupby('YM').last().reset_index(drop=True)
+    recent = month_end.tail(10).copy()
 
     x = np.arange(len(recent))
     slope = np.polyfit(x, recent['ERP'].values, 1)[0]
-    n_days = len(recent)
-    span_label = "月" if code in monthly_codes else "交易日"
 
     if slope > 0.0005:
         trend_icon = "持续走高"
@@ -344,7 +346,7 @@ def build_trend_block(df, erp_series, code, quantiles):
             arrow = "─"
         prev_erp = erp_val
 
-        date_str = row['Date'].strftime("%m-%d") if code not in monthly_codes else row['Date'].strftime("%Y-%m")
+        date_str = row['Date'].strftime("%Y-%m")
         pe_str   = f"{pe_val:.1f}x" if pd.notna(pe_val) else "N/A"
         rows.append(f"| {date_str} | {pe_str} | **{erp_val:.2%}** {zone_icon} | {arrow} |")
 
@@ -352,11 +354,11 @@ def build_trend_block(df, erp_series, code, quantiles):
 
     block = f"""
 ---
-### 近{n_days}{span_label} ERP 趋势
+### 近10月 ERP 趋势
 
 > 趋势方向：**{trend_icon}**，区间变化：**{delta_str}**
 
-| 日期 | PE | ERP | 环比变化 |
+| 月份 | PE | ERP | 环比变化 |
 |:-----|---:|----:|:---------|
 {rows_md}
 """
