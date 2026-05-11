@@ -227,12 +227,12 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     # 资金流加速度（本周 ÷ 本月，正常≈0.25）
     if pd.notna(acceleration):
         acc_pct = acceleration * 100
-        if acceleration > 0.4:
-            acc_label = f"🔥 {acc_pct:.0f}% — 本周放量明显（正常≈25%），资金加速涌入"
-        elif acceleration > 0.25:
-            acc_label = f"🟡 {acc_pct:.0f}% — 本周略高于月均，温和放量"
-        elif acceleration > 0.1:
-            acc_label = f"🟠 {acc_pct:.0f}% — 本周低于月均，资金动能偏弱"
+        if acceleration > 1.6:
+            acc_label = f"🔥 {acc_pct:.0f}% — 本周放量明显（正常≈100%），资金加速涌入"
+        elif acceleration > 1.0:
+            acc_label = f"🟡 {acc_pct:.0f}% — 本周略高于近4周均值，温和放量"
+        elif acceleration > 0.4:
+            acc_label = f"🟠 {acc_pct:.0f}% — 本周低于近4周均值，资金动能偏弱"
         else:
             acc_label = f"🧊 {acc_pct:.0f}% — 本周明显缩量，谨慎追入"
     else:
