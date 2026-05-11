@@ -625,7 +625,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 | P90 | {quantiles["P90"]:.2%} | 极度低估 |
 | P75 | {quantiles["P75"]:.2%} | 显著低估 |
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
-| P25 | {quantiles["P25"]:.2%} | 价格偏贵 |
+| P25 | {quantiles["P25"]:.2%} | 进入高估 |
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
 """
         else:
