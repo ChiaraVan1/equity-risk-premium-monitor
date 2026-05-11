@@ -252,16 +252,16 @@ def build_unified_valuation_block(df, code):
 ---
 ### 核心估值决策（基于 {m_name} 框架）
 
-> 方法：胜率 = {m_name}历史分位；赔率 = {m_name}上行空间(距P90) / 下行风险(距P10)
+> 方法：胜率 = {m_name}历史分位；赔率 = {m_name}还能走高多少（距P90）/ {m_name}可能回落多少（距P10）
 > 当前 {m_name} = **{cur_val:.2%}**，历史分位 = **{percentile:.1%}** {zone_icon} **{zone_name}**
 
 | 指标 | 数值 | 说明 |
 |:-----|-----:|:-----|
-| **胜率** | **{win_rate:.1%}** | {m_name} 历史分位（高分位 = 高胜率） |
-| **赔率（盈亏比）** | **{odds_ratio:.2f}x** | {m_name} 距P90上行空间 / 距P10下行风险 |
-| {m_name} 上行空间 | **+{erp_upside:.2%}** | 距历史P90（{p90_val:.2%}）的 {m_name} 差值 |
-| {m_name} 下行风险 | **-{erp_downside:.2%}** | 距历史P10（{p10_val:.2%}）的 {m_name} 差值 |
-| 期望收益(估算) | **{expected_return:+.1%}** | 胜率×涨幅估算 − 败率×跌幅估算 |
+| **胜率** | **{win_rate:.1%}** | [{m_name}视角] 历史有{win_rate:.1%}的时间比现在更贵（ERP更低） |
+| **赔率（盈亏比）** | **{odds_ratio:.2f}x** | [价格视角] 潜在涨幅空间 / 潜在跌幅风险 |
+| {m_name} 还能走高 | **+{erp_upside:.2%}** | [{m_name}视角] 距历史P90（{p90_val:.2%}）还差多少，=0表示已超P90 |
+| {m_name} 可能回落 | **-{erp_downside:.2%}** | [{m_name}视角] 若回落至历史P10（{p10_val:.2%}），对应价格上涨空间 |
+| 期望收益(估算) | **{expected_return:+.1%}** | [价格视角] 胜率×涨幅估算 − 败率×跌幅估算 |
 
 **综合评级：{rating}**
 """
@@ -620,12 +620,12 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 | 当前 PSY | **{current_erp:.2%}** | **{erp_zone}** |
 | 历史均值 | {erp_series.mean():.2%} | {len(erp_series)}条样本 |
 
-| 分位点 | PSY值 | 估值状态 |
-|:-------|------:|:---------|
+| 分位点 | PSY值（越高越便宜） | 价格估值状态 |
+|:-------|-------------------:|:------------|
 | P90 | {quantiles["P90"]:.2%} | 极度低估 |
 | P75 | {quantiles["P75"]:.2%} | 显著低估 |
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
-| P25 | {quantiles["P25"]:.2%} | 进入高估 |
+| P25 | {quantiles["P25"]:.2%} | 价格偏贵 |
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
 """
         else:
@@ -644,8 +644,8 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 | 当前 ERP | **{current_erp:.2%}** | **{erp_zone}** |
 | 历史均值 | {mean_erp:.2%} | {len(erp_series)}条样本 |
 
-| 分位点 | ERP值 | 估值状态 |
-|:-------|------:|:---------|
+| 分位点 | ERP值（越高越便宜） | 价格估值状态 |
+|:-------|-------------------:|:------------|
 | P90 | {quantiles["P90"]:.2%} | 极度低估 |
 | P75 | {quantiles["P75"]:.2%} | 显著低估 |
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
