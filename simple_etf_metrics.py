@@ -67,12 +67,11 @@ def get_etf_metrics():
     end_str    = end_date.strftime('%Y%m%d')
 
     results = []
-    price_frames = []   # ← 新增：收集各ETF价格序列，用于胜率赔率计算
+    price_frames = []
 
     for erp_code, etf_code in ETF_LIST:
         print(f"\n处理 {erp_code} -> {etf_code}")
 
-        # 初始化所有指标为 NaN，与监控模型字段完全对齐
         m = {
             'ts_code':                       etf_code,
             'erp_code':                      erp_code,
@@ -80,7 +79,6 @@ def get_etf_metrics():
             'trade_date':                    np.nan,
             'latest_close':                  np.nan,
             'latest_pct_chg':                np.nan,
-            # 超额收益
             'excess_return_mean':            np.nan,
             'tracking_error':                np.nan,
             'excess_return_5d_ma':           np.nan,
@@ -88,25 +86,21 @@ def get_etf_metrics():
             'excess_return_15d_ma':          np.nan,
             'excess_return_20d_ma':          np.nan,
             'ma_trend_slope':                np.nan,
-            # 换手
             'turnover_rate':                 np.nan,
             'turnover_quantile':             np.nan,
             'is_price_turnover_divergence':  np.nan,
             'turnover_ratio_1w':             np.nan,
             'turnover_ratio_1m':             np.nan,
             'turnover_acceleration':         np.nan,
-            # 折溢价
             'latest_discount_rate':          np.nan,
             'discount_quantile_1y':          np.nan,
             'discount_quantile_3y':          np.nan,
             'change_5d_discount':            np.nan,
             'change_10d_discount':           np.nan,
-            # 波动率
             'annualized_volatility':         np.nan,
             'volatility_quantile_1y':        np.nan,
             'volatility_quantile_3y':        np.nan,
             'volatility_slope':              np.nan,
-            # 回撤
             'max_drawdown':                  np.nan,
             'max_drawdown_quantile_1y':      np.nan,
             'max_drawdown_quantile_3y':      np.nan,
@@ -132,7 +126,6 @@ def get_etf_metrics():
             m['latest_close']   = latest['close_fund']
             m['latest_pct_chg'] = latest['pct_chg_fund']
 
-            # ← 新增：保存价格序列，供胜率赔率计算使用
             price_s = df[['close_fund']].copy()
             price_s.columns = [erp_code]
             price_frames.append(price_s)
@@ -182,18 +175,15 @@ def get_etf_metrics():
                             df['excess_return'] = df['pct_chg_fund'] - df['pct_chg_index']
                             ex = df['excess_return'].dropna()
 
-                            # 3年均值和跟踪误差（与监控模型一致）
                             ex_3y = ex[ex.index >= (end_date - timedelta(days=3 * 365))]
                             m['excess_return_mean'] = ex_3y.mean()
                             m['tracking_error']     = ex_3y.std() * np.sqrt(250)
 
-                            # 滚动MA（5/10/15/20日）
                             m['excess_return_5d_ma']  = ex.rolling(5).mean().iloc[-1]
                             m['excess_return_10d_ma'] = ex.rolling(10).mean().iloc[-1]
                             m['excess_return_15d_ma'] = ex.rolling(15).mean().iloc[-1]
                             m['excess_return_20d_ma'] = ex.rolling(20).mean().iloc[-1]
 
-                            # ma_trend_slope：4个MA点线性拟合（与监控模型一致）
                             y = np.array([m['excess_return_5d_ma'],  m['excess_return_10d_ma'],
                                           m['excess_return_15d_ma'], m['excess_return_20d_ma']])
                             x = np.array([5, 10, 15, 20])
@@ -260,29 +250,30 @@ def get_etf_metrics():
 
             # ── 6. 换手 & 背离 ───────────────────────────────────────────────
             if 'amount_fund' in df.columns:
-                # 周/月成交额（与监控模型一致，用 resample）
                 df_weekly  = df['amount_fund'].resample('W').sum()
                 df_monthly = df['amount_fund'].resample('ME').sum()
 
-                # turnover_rate = 1年日均成交额（AUM未知时的近似）
                 amt_1y = df['amount_fund'][df.index >= (end_date - timedelta(days=365))]
                 m['turnover_rate'] = amt_1y.mean() if len(amt_1y) > 0 else np.nan
 
-                # 周/月成交额原始值
                 if len(df_weekly) > 0:
                     m['turnover_ratio_1w'] = df_weekly.iloc[-1]
                 if len(df_monthly) > 0:
                     m['turnover_ratio_1m'] = df_monthly.iloc[-1]
 
-                # 换手加速度：本周成交额 / 本月成交额
-                if len(df_monthly) > 0 and df_monthly.iloc[-1] > 0 and len(df_weekly) > 0:
-                    m['turnover_acceleration'] = df_weekly.iloc[-1] / df_monthly.iloc[-1]
+                # 换手加速度：本周成交额 / 过去4周均值
+                # 修复月初统计伪影：原来用"本周/本月"，月初本月≈本周导致加速度虚高100%
+                if len(df_weekly) >= 5:
+                    avg_4w = df_weekly.iloc[-5:-1].mean()   # 过去4周（不含本周）
+                    if avg_4w > 0:
+                        m['turnover_acceleration'] = df_weekly.iloc[-1] / avg_4w
+                    # avg_4w==0 时保持 NaN，避免除零
 
-                # 换手分位：周成交额52周分位（与监控模型一致）
+                # 换手分位：周成交额52周分位
                 if len(df_weekly) >= 52:
                     m['turnover_quantile'] = df_weekly.iloc[-52:].rank(pct=True).iloc[-1]
 
-                # 背离：5日价格方向 vs 周成交额环比（与监控模型一致）
+                # 背离：5日价格方向 vs 周成交额环比
                 price_chg_5d = 0.0
                 if len(df) >= 6:
                     price_chg_5d = (df['close_fund'].iloc[-1] - df['close_fund'].iloc[-6]) / df['close_fund'].iloc[-6]
@@ -305,7 +296,6 @@ def get_etf_metrics():
             print(f"  错误 ({etf_code}): {e}")
             results.append(m)
 
-    # ← 新增：合并所有ETF价格序列并保存
     if price_frames:
         price_df = pd.concat(price_frames, axis=1).sort_index()
         price_df.to_csv('etf_price.csv', encoding='utf-8-sig')
@@ -332,6 +322,5 @@ if __name__ == '__main__':
             'excess_return_mean', 'tracking_error', 'ma_trend_slope']
     print(df[cols].to_string(index=False))
 
-    # 以 ts_code 为索引保存（load_etf_metrics 读取时 index_col="ts_code"）
     df.set_index('ts_code').to_csv('simple_etf_metrics.csv', encoding='utf-8-sig')
     print("\n✅ 已保存到 simple_etf_metrics.csv")
