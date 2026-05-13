@@ -207,8 +207,9 @@ def update_hstech_ps(cn10y_series=None):
 
     bond_df["Date"] = pd.to_datetime(bond_df["Date"])
     bond_df = bond_df.set_index("Date")["Bond_Yield_10Y"].sort_index()
-    # 月末对齐：取每月最后一个交易日的值
-    bond_monthly = bond_df.resample("ME").last()
+
+    # ★ 修复：月末 resample 后做 ffill，防止月末恰好缺失导致整月 rf/PSY 为空
+    bond_monthly = bond_df.resample("ME").last().ffill()
 
     # 按月末合并计算PS和PSY
     new_rows = []
@@ -281,6 +282,10 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
         action = "全新创建"
 
     combined['PE'] = combined['PE'].ffill()
+
+    # ★ 修复：对国债收益率做 ffill，防止偶发缺失日导致 ERP 为空
+    combined['Bond_Yield_10Y'] = combined['Bond_Yield_10Y'].ffill()
+
     combined['ERP'] = (1 / combined['PE']) - combined['Bond_Yield_10Y']
 
     combined.to_csv(file_path, index=False, encoding='utf-8-sig')
