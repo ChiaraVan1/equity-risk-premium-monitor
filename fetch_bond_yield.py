@@ -251,7 +251,8 @@ def process_and_save(pe_df, bond_df, code, name, currency, bond_code):
     if bond_code in ['FR10Y', 'DE10Y', 'JP10Y']:
         merged['Bond_Yield_10Y'] = merged['Bond_Yield_10Y'].bfill()
     else:
-        merged['Bond_Yield_10Y'] = merged['Bond_Yield_10Y']
+        # ★ 修复：对国债收益率做 ffill，防止月末等偶发缺失导致 ERP/PSY 为空
+        merged['Bond_Yield_10Y'] = merged['Bond_Yield_10Y'].ffill()
 
     merged['PE'] = merged['PE'].ffill()
 
