@@ -27,21 +27,19 @@ INDEX_CONFIG = [
     ("399989", "中证医疗",       "CNY", "CN10Y", "csindex"),
     ("931071", "人工智能",       "CNY", "CN10Y", "csindex"),
     ("SPY",    "S&P 500",       "USD", "US10Y", "worldpe"),
-    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "manual"),   # 手动填入
+    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "manual"),
     ("EWQ",    "MSCI France",   "EUR", "FR10Y", "worldpe"),
     ("EWG",    "MSCI Germany",  "EUR", "DE10Y", "worldpe"),
     ("EWJ",    "MSCI Japan",    "JPY", "JP10Y", "worldpe"),
     ("EEM",    "MSCI Emerging", "USD", "CN10Y", "worldpe"),
-    # ========== 新增恒生科技指数 ==========
-    ("HSTECH", "恒生科技指数",   "CNY", "CN10Y", "manual"),   # 手动填入，与 QQQ 一致
+    ("HSTECH", "恒生科技指数",   "CNY", "CN10Y", "manual"),
     ("000069", "消费80",      "CNY", "CN10Y", "csindex"),
     ("930781", "中证影视",    "CNY", "CN10Y", "csindex"),
     ("000989", "全指可选",    "CNY", "CN10Y", "csindex"),
     ("931139", "CS消费50",   "CNY", "CN10Y", "csindex"),
 ]
 
-# ── 手动填入今日 PE（与 QQQ 一致）─────────────────────────────────────────────
-# 优先从环境变量读（GitHub Actions），没有则用硬编码值（本地调试）
+# ── 手动填入今日 PE ───────────────────────────────────────────────────────────
 _qqq_pe_env = os.environ.get("QQQ_PE_TODAY")
 QQQ_PE_TODAY = float(_qqq_pe_env) if _qqq_pe_env else None
 
@@ -103,7 +101,6 @@ HSTECH_TICKERS = [
 ]
 
 def _get_single_quarter_revenue(code):
-    """累计季报 -> 单季度营收 Series"""
     df = ak.stock_financial_hk_report_em(stock=code, symbol="利润表", indicator="季度")
     df = df[df["STD_ITEM_NAME"] == "营业额"][["REPORT_DATE", "AMOUNT"]].copy()
     df["REPORT_DATE"] = pd.to_datetime(df["REPORT_DATE"])
@@ -136,11 +133,11 @@ def update_hstech_ps(cn10y_series=None):
     增量更新 ps_HSTECH.csv。
     - 文件不存在：全量重算（从2020-07开始）
     - 文件已存在：重算最近3个月（覆盖营收修订），再合并去重
-    月末频率：
-      PS  = 当月末总市值 / TTM总营收
-      PSY = 1/PS - CN10Y（类比ERP，衡量相对无风险利率的销售收益率溢价）
-    cn10y_series: 已获取的中国国债收益率 DataFrame（含Date/Bond_Yield_10Y列），
-                  若传入则直接复用，否则重新拉取。
+
+    ★ 修复：国债数据按 calc_start ~ calc_end 独立拉取，
+      不依赖主流程传入的只有30天的 cn10y_series，
+      确保 bond_monthly 覆盖完整的计算区间。
+      同时对 bond_monthly 做 ffill，防止月末恰好缺失。
     """
     ps_path = "./data/ps_HSTECH.csv"
     os.makedirs("./data", exist_ok=True)
@@ -170,13 +167,11 @@ def update_hstech_ps(cn10y_series=None):
     for t in HSTECH_TICKERS:
         code = t.replace(".HK", "").zfill(5)
         try:
-            # 营收（akshare）
             sq = _get_single_quarter_revenue(code)
             ttm = sq.rolling(4, min_periods=4).sum()
             ttm.index = ttm.index.to_period("M").to_timestamp("M")
             all_ttm_rev[t] = ttm[~ttm.index.duplicated(keep="last")]
 
-            # 市值（yfinance fast_info + 历史价格）
             tk = yf.Ticker(t)
             hist = tk.history(start=str(calc_start.date()))
             shares = tk.fast_info.shares
@@ -193,25 +188,27 @@ def update_hstech_ps(cn10y_series=None):
             print(f"      skip {t}: {e}")
             time.sleep(1.5)
 
-    # 国债月末收益率序列（用于PSY）
-    if cn10y_series is not None:
-        bond_df = cn10y_series.copy()
-    else:
-        try:
-            start_str = calc_start.strftime("%Y%m%d")
-            end_str   = calc_end.strftime("%Y%m%d")
-            bond_df = fetch_cn_bond_incremental(start_str, end_str)
-        except Exception as e:
-            print(f"   ⚠️  国债数据获取失败，PSY将为空: {e}")
+    # ★ 修复：按 calc_start ~ calc_end 独立拉取国债，覆盖完整计算区间
+    start_str = calc_start.strftime("%Y%m%d")
+    end_str   = calc_end.strftime("%Y%m%d")
+    try:
+        bond_df = fetch_cn_bond_incremental(start_str, end_str)
+        print(f"   国债数据: {start_str} ~ {end_str}，{len(bond_df)} 条")
+    except Exception as e:
+        print(f"   ⚠️  国债数据获取失败，尝试降级使用传入数据: {e}")
+        # 降级：用主流程传入的数据（可能不够用，但总比没有强）
+        if cn10y_series is not None:
+            bond_df = cn10y_series.copy()
+        else:
             bond_df = pd.DataFrame(columns=["Date", "Bond_Yield_10Y"])
 
     bond_df["Date"] = pd.to_datetime(bond_df["Date"])
     bond_df = bond_df.set_index("Date")["Bond_Yield_10Y"].sort_index()
 
-    # ★ 修复：月末 resample 后做 ffill，防止月末恰好缺失导致整月 rf/PSY 为空
+    # ★ 修复：ffill 防止月末恰好缺失导致整月 rf/PSY 为空
     bond_monthly = bond_df.resample("ME").last().ffill()
 
-    # 按月末合并计算PS和PSY
+    # 按月末合并计算 PS 和 PSY
     new_rows = []
     for d in date_range:
         total_mc = np.nansum([
@@ -226,7 +223,6 @@ def update_hstech_ps(cn10y_series=None):
         ])
         if total_rev > 0 and total_mc > 0:
             ps = total_mc / total_rev
-            # PSY = 1/PS - 无风险利率（类比ERP）
             rf = bond_monthly.asof(d) if not bond_monthly.empty else np.nan
             psy = (1 / ps) - rf if pd.notna(rf) else np.nan
             new_rows.append({"date": d, "ps": ps, "rf": rf, "psy": psy})
@@ -239,7 +235,7 @@ def update_hstech_ps(cn10y_series=None):
     else:
         combined = new_ps.sort_index()
 
-    # 若旧文件没有psy列（首次升级），补算
+    # 若旧文件没有 psy 列（首次升级），补算
     if "psy" not in combined.columns and "ps" in combined.columns and not bond_monthly.empty:
         combined["rf"]  = bond_monthly.reindex(combined.index, method="ffill")
         combined["psy"] = (1 / combined["ps"]) - combined["rf"]
@@ -297,7 +293,6 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
 def main():
     os.makedirs('./data', exist_ok=True)
 
-    # 检查 QQQ 今日值
     if QQQ_PE_TODAY is None:
         print("⚠️  警告: QQQ_PE_TODAY 未填写，今日 QQQ ERP 将不会更新！")
         print("    请访问 https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio")
@@ -305,7 +300,6 @@ def main():
     else:
         print(f"✅ QQQ 今日 PE: {QQQ_PE_TODAY}（来源: GuruFocus TTM）\n")
 
-    # 检查恒生科技今日值
     if HS_TECH_PE_TODAY is None:
         print("⚠️  警告: HS_TECH_PE_TODAY 未填写，今日恒生科技 ERP 将不会更新！")
         print("    请根据最新数据手动填写（例如从 GuruFocus 或其它数据源获取）。\n")
@@ -376,7 +370,6 @@ def main():
                 pe_df = pd.DataFrame({'Date': [today], 'PE': [pe_today_dict[code]]})
 
             elif pe_source == 'manual':
-                # QQQ 和恒生科技都走这个分支
                 if code == 'QQQ':
                     if QQQ_PE_TODAY is None:
                         print(f"   ⚠️ [{code}] QQQ_PE_TODAY 未填写，跳过今日更新")
@@ -398,9 +391,11 @@ def main():
         except Exception as e:
             print(f"   ❌ [{code}] {name} 失败: {e}")
 
+    # 4. 更新 HSTECH PS/PSY
+    # update_hstech_ps 现在自己按 calc_start 拉国债，不再依赖这里传入的30天数据
+    # 仍传入 cn10y_series 作为降级备用
     print("\n--- 4. 更新 HSTECH PS/PSY ---")
     try:
-        # 复用已拉取的CN10Y，避免重复请求
         update_hstech_ps(cn10y_series=bonds.get("CN10Y"))
     except Exception as e:
         print(f"   ❌ HSTECH PS 更新失败: {e}")
