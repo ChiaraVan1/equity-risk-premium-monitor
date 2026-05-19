@@ -134,10 +134,44 @@ def load_ps_data():
 
 
 # ══════════════════════════════════════════════════════════════════════
+#  赔率计算（ERP绝对值法）
+# ══════════════════════════════════════════════════════════════════════
+
+def calc_odds(cur_val, val_series):
+    """
+    赔率 = ERP回落盈利空间 / ERP走高亏损空间
+    盈利空间 = 当前ERP - P10  （ERP回落到历史最贵边界的距离）
+    亏损空间 = P90 - 当前ERP  （ERP走高到历史最便宜边界的距离）
+
+    边界处理：
+    - ERP已超P90（极度低估）：downside<=0，返回None
+    - ERP已破P10（极度高估）：upside<=0，返回0.0
+    """
+    p10_val = val_series.quantile(0.10)
+    p90_val = val_series.quantile(0.90)
+
+    upside   = cur_val - p10_val   # ERP回落盈利空间
+    downside = p90_val - cur_val   # ERP走高亏损空间
+
+    if downside <= 0:
+        return None   # 已超P90，极度低估，赔率极高
+    elif upside <= 0:
+        return 0.0    # 已破P10，极度高估，赔率为零
+    else:
+        return upside / downside
+
+
+# ══════════════════════════════════════════════════════════════════════
 #  报告构建模块
 # ══════════════════════════════════════════════════════════════════════
 
 def build_unified_valuation_block(df, code):
+    """
+    统一的估值决策模块
+    胜率 = ERP历史分位
+    赔率 = (当前ERP - P10) / (P90 - 当前ERP)，ERP绝对值法
+    支持 ERP (通用) 和 PSY (HSTECH)
+    """
     is_hstech = (code == "HSTECH")
 
     if is_hstech:
@@ -157,53 +191,48 @@ def build_unified_valuation_block(df, code):
     if len(val_series) < 50:
         return "\n> ⚠️ 样本不足，无法计算胜率赔率。\n"
 
-    cur_val = val_series.iloc[-1]
+    cur_val      = val_series.iloc[-1]
     cur_p_metric = price_metric_series.iloc[-1]
+    avg_p        = price_metric_series.mean()
+    max_p        = price_metric_series.max()
+    min_p        = price_metric_series.min()
 
-    percentile = (val_series < cur_val).mean()
-    win_rate = percentile
+    p10_val = val_series.quantile(0.10)
+    p90_val = val_series.quantile(0.90)
 
-    mean_val = val_series.mean()
-    p10_val  = val_series.quantile(0.10)
-    p90_val  = val_series.quantile(0.90)
+    # 胜率
+    win_rate = (val_series < cur_val).mean()
 
-    erp_range = max(p90_val - p10_val, 1e-4)
-
-    erp_upside   = max(p90_val - cur_val, 0)
-    if cur_val <= p10_val:
-        erp_downside = erp_range
+    # 赔率（ERP绝对值法）
+    odds_ratio = calc_odds(cur_val, val_series)
+    if odds_ratio is None:
+        odds_str = "极高（已超P90极度低估区）"
     else:
-        erp_downside = cur_val - p10_val
+        odds_str = f"{odds_ratio:.2f}x"
 
-    odds_ratio = erp_upside / erp_downside
+    upside   = cur_val - p10_val
+    downside = p90_val - cur_val
 
-    reward = max(cur_val - mean_val, 0) / (1 + abs(cur_val)) if cur_val > mean_val else 0
-    risk   = min(erp_downside / (1 + abs(p10_val)), 1.0)
-
-    avg_p = price_metric_series.mean()
-    max_p = price_metric_series.max()
-    min_p = price_metric_series.min()
-
-    if percentile >= 0.90:
-        zone_icon = "🟢"
-        zone_name = "极度低估"
-    elif percentile >= 0.75:
-        zone_icon = "🟢"
-        zone_name = "显著低估"
-    elif percentile >= 0.50:
-        zone_icon = "🟡"
-        zone_name = "合理偏低"
-    elif percentile >= 0.25:
-        zone_icon = "🟠"
-        zone_name = "合理区间"
-    elif percentile >= 0.10:
-        zone_icon = "🔴"
-        zone_name = "严重高估"
+    # 估值区间
+    if win_rate >= 0.90:
+        zone_icon, zone_name = "🟢", "极度低估"
+    elif win_rate >= 0.75:
+        zone_icon, zone_name = "🟢", "显著低估"
+    elif win_rate >= 0.50:
+        zone_icon, zone_name = "🟡", "合理偏低"
+    elif win_rate >= 0.25:
+        zone_icon, zone_name = "🟠", "合理区间"
+    elif win_rate >= 0.10:
+        zone_icon, zone_name = "🔴", "严重高估"
     else:
-        zone_icon = "🚨"
-        zone_name = "危险泡沫"
+        zone_icon, zone_name = "🚨", "危险泡沫"
 
-    if win_rate >= 0.75 and odds_ratio >= 1.5:
+    # 综合评级
+    if odds_ratio is None:
+        rating = "🟢 已进入极度低估区，极佳买点"
+    elif odds_ratio == 0.0:
+        rating = "🚨 已进入极度高估区，规避"
+    elif win_rate >= 0.75 and odds_ratio >= 1.5:
         rating = "🟢 高胜率 + 高赔率，极佳买点"
     elif win_rate >= 0.75 and odds_ratio >= 1.0:
         rating = "🟢 胜率尚可 + 赔率合理，较好买点"
@@ -218,22 +247,19 @@ def build_unified_valuation_block(df, code):
     else:
         rating = "🟠 中性偏弱"
 
-    expected_return = win_rate * reward - (1 - win_rate) * risk
-
     block = f"""
 ---
 ### 核心估值决策（基于 {m_name} 框架）
 
-> 方法：胜率 = {m_name}历史分位；赔率 = {m_name}还能走高多少（距P90）/ {m_name}可能回落多少（距P10）
-> 当前 {m_name} = **{cur_val:.2%}**，历史分位 = **{percentile:.1%}** {zone_icon} **{zone_name}**
+> 胜率 = {m_name}历史分位（越高代表当前越便宜）
+> 赔率 = {m_name}回落盈利空间（当前{m_name} − P10） / {m_name}走高亏损空间（P90 − 当前{m_name}）
+> 当前 {m_name} = **{cur_val:.2%}**，历史分位 = **{win_rate:.1%}** {zone_icon} **{zone_name}**
 
 | 指标 | 数值 | 说明 |
 |:-----|-----:|:-----|
-| **胜率** | **{win_rate:.1%}** | [{m_name}视角] 历史有{win_rate:.1%}的时间比现在更贵（ERP更低） |
-| **赔率（盈亏比）** | **{odds_ratio:.2f}x** | [价格视角] 潜在涨幅空间 / 潜在跌幅风险 |
-| {m_name} 还能走高 | **+{erp_upside:.2%}** | [{m_name}视角] 距历史P90（{p90_val:.2%}）还差多少，=0表示已超P90 |
-| {m_name} 可能回落 | **-{erp_downside:.2%}** | [{m_name}视角] 若回落至历史P10（{p10_val:.2%}），对应价格上涨空间 |
-| 期望收益(估算) | **{expected_return:+.1%}** | [价格视角] 胜率×涨幅估算 − 败率×跌幅估算 |
+| **胜率** | **{win_rate:.1%}** | 历史上 {win_rate:.1%} 的时间比现在更贵（{m_name}更低） |
+| **赔率（盈亏比）** | **{odds_str}** | 盈利空间 {upside:.2%} / 亏损空间 {downside:.2%} |
+| 当前 {p_name} | {cur_p_metric:.1f}x | 历史均值 {avg_p:.1f}x，最高 {max_p:.1f}x，最低 {min_p:.1f}x |
 
 **综合评级：{rating}**
 """
@@ -241,8 +267,9 @@ def build_unified_valuation_block(df, code):
 
 
 def build_trend_block(df, erp_series, code, quantiles):
-    monthly_codes = {'EWQ', 'EWG', 'EWJ', 'EEM', 'HSTECH'}
-
+    """
+    生成近10个月末 ERP 数据点的趋势模块。
+    """
     if code == "HSTECH":
         ps_df = load_ps_data()
         if ps_df is None or "psy" not in ps_df.columns:
@@ -335,7 +362,6 @@ def build_trend_block(df, erp_series, code, quantiles):
 # ══════════════════════════════════════════════════════════════════════
 
 def build_summary_block(summary_list: list) -> str:
-    """决策仪表盘：每标的单行，兼容 ServerChan 渲染"""
     if not summary_list:
         return ""
 
@@ -359,7 +385,7 @@ def build_summary_block(summary_list: list) -> str:
         return part.replace(" ", "")
 
     header = f"## 📊 决策仪表盘 · {date_str}"
-    legend  = "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 💎已超P90极度低估\n\n"
+    legend  = "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 🟢极高=已超P90\n\n"
     legend += "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
     legend += "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)"
 
@@ -367,14 +393,19 @@ def build_summary_block(summary_list: list) -> str:
     for r in summary_list:
         win  = r.get("win_rate", float("nan"))
         odds = r.get("odds",     float("nan"))
-        win_str  = f"{win:.0%}"   if win  == win  else "─"
-        odds_str = f"{odds:.1f}x" if odds == odds else "─"
-        wi = graded_icon(win,  win_thresholds,  win_icons)
-        if r.get("erp_zone", "").startswith("🟢 极度低估"):
-            oi = "💎"
-            odds_str = "已超P90"
+        win_str = f"{win:.0%}" if win == win else "─"
+
+        if odds is None:
+            odds_str = "极高"
+            oi = "🟢"
+        elif odds != odds:  # nan
+            odds_str = "─"
+            oi = "─"
         else:
+            odds_str = f"{odds:.1f}x"
             oi = graded_icon(odds, odds_thresholds, odds_icons)
+
+        wi   = graded_icon(win, win_thresholds, win_icons)
         zone = zone_short(r.get("erp_zone", "─"))
         pos  = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}={r['total_pct']}%"
 
@@ -393,9 +424,9 @@ def build_summary_block(summary_list: list) -> str:
     return f"{header}\n{legend}\n\n{body}\n\n---\n"
 
 
-# 估值区间 & 公式说明
 LEGEND_BLOCK = """
 ERP = 1/PE − 无风险利率；PSY = 1/PS − 无风险利率。越高越便宜。
+赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
 
 ---
 """
@@ -442,6 +473,8 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
         return
 
     mean_erp = erp_series.mean()
+
+    # 欧日美负利率指数，用2022年后数据做锚
     if code in ('EWQ', 'EWG', 'EWJ', 'SPY', 'QQQ'):
         anchor = df[df['Date'] >= pd.Timestamp('2022-01-01')]['ERP'].dropna()
         if len(anchor) >= 30:
@@ -472,6 +505,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     else:
         erp_zone = "🚨 危险泡沫 (<P10)"
 
+    # HSTECH：用 PSY 数据覆盖
     _hstech_psy_s = None
     if code == "HSTECH":
         _ps_df = load_ps_data()
@@ -516,18 +550,12 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 
     total_pct = v_pct + b_pct + t_pct
 
-    # ── 胜率 / 赔率 ───────────────────────────────────────────────────
+    # ── 胜率/赔率（供 summary_list 使用）─────────────────────────────
     if code == "HSTECH":
         _psy_s = _hstech_psy_s
         if _psy_s is not None:
-            _cur_psy = _psy_s.iloc[-1]
-            _p10_psy = _psy_s.quantile(0.10)
-            _p90_psy = _psy_s.quantile(0.90)
-            _win  = (_psy_s < _cur_psy).mean()
-            _rng  = max(_p90_psy - _p10_psy, 1e-4)
-            _up   = max(_p90_psy - _cur_psy, 0)
-            _dn   = _rng if _cur_psy <= _p10_psy else (_cur_psy - _p10_psy)
-            _odds = _up / _dn if _dn > 0 else 0.0
+            _win  = (_psy_s < _psy_s.iloc[-1]).mean()
+            _odds = calc_odds(_psy_s.iloc[-1], _psy_s)
             erp_zone = (
                 "🟢 极度低估 (>=P90)" if _win >= 0.90 else
                 "🟢 显著低估 (P75-P90)" if _win >= 0.75 else
@@ -539,14 +567,10 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
         else:
             _win, _odds = float("nan"), float("nan")
     else:
-        _p10 = quantiles["P10"]; _p90 = quantiles["P90"]
         _win  = (erp_series < current_erp).mean()
-        _rng  = max(_p90 - _p10, 1e-4)
-        _up   = max(_p90 - current_erp, 0)
-        _dn   = _rng if current_erp <= _p10 else (current_erp - _p10)
-        _odds = _up / _dn if _dn > 0 else 0.0
+        _odds = calc_odds(current_erp, erp_series)
 
-    # ── ETF 折溢价执行信号（原有，保留供仪表盘兼容） ──────────────────
+    # ── ETF折溢价执行信号 ─────────────────────────────────────────────
     _etf_signal = "─"
     if etf_df is not None:
         try:
@@ -562,8 +586,8 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
         except Exception:
             pass
 
-    # ── ETF 执行质量三信号（新增） ────────────────────────────────────
-    _etf_discount_signal  = "─"
+    # ── ETF 执行质量三信号 ────────────────────────────────────────────
+    _etf_discount_signal   = "─"
     _etf_divergence_signal = "─"
     _etf_vol_signal        = "─"
     if etf_df is not None:
@@ -712,7 +736,7 @@ if __name__ == "__main__":
         if report_md:
             report_list.append(report_md)
 
-    # 仪表盘排序：估值越低估排越前，同区间内按胜率降序
+    # 仪表盘排序：估值越低估排越前，同估值区间内按胜率降序
     _zone_order = {
         "🟢 极度低估": 0,
         "🟢 显著低估": 1,
