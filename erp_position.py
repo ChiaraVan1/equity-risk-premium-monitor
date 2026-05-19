@@ -359,8 +359,8 @@ def build_summary_block(summary_list: list) -> str:
         return part.replace(" ", "")
 
     header = f"## 📊 决策仪表盘 · {date_str}"
-    legend  = "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正\n"
-    legend += "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n"
+    legend  = "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 💎已超P90极度低估\n\n"
+    legend += "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
     legend += "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)"
 
     rows = []
@@ -370,7 +370,11 @@ def build_summary_block(summary_list: list) -> str:
         win_str  = f"{win:.0%}"   if win  == win  else "─"
         odds_str = f"{odds:.1f}x" if odds == odds else "─"
         wi = graded_icon(win,  win_thresholds,  win_icons)
-        oi = graded_icon(odds, odds_thresholds, odds_icons)
+        if r.get("erp_zone", "").startswith("🟢 极度低估"):
+            oi = "💎"
+            odds_str = "已超P90"
+        else:
+            oi = graded_icon(odds, odds_thresholds, odds_icons)
         zone = zone_short(r.get("erp_zone", "─"))
         pos  = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}={r['total_pct']}%"
 
