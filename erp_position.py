@@ -727,6 +727,8 @@ if __name__ == "__main__":
         ("EWJ",    "MSCI Japan"),
         ("EEM",    "MSCI Emerging"),
         ("HSTECH", "恒生科技指数"),
+        ("399967", "中证军工"),
+        ("931066", "军工龙头"),
     ]
 
     summary_list = []
