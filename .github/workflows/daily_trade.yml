@@ -40,7 +40,7 @@ jobs:
           QQQ_PE_TODAY: ${{ secrets.QQQ_PE_TODAY }}
         run: python fetch_bond_yield_incremental.py
 
-      # 5. 执行分析，正式运行推送微信，预览模式写文件不推送
+      # 5. 执行分析，生成 HTML 报告 + 推送仪表盘到微信
       - name: Analyze and Push to WeChat
         env:
           SCT_KEY: ${{ secrets.SCT_KEY }}
@@ -56,10 +56,20 @@ jobs:
           path: output_preview.md
 
       # 7. 将更新后的数据保存回 GitHub 仓库
-      - name: Commit and Push changes
+      - name: Commit and Push data
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add data/
           git commit -m "Auto update ERP data [skip ci]" || exit 0
           git push
+
+      # 8. 部署 HTML 报告到 gh-pages 分支
+      - name: Deploy HTML report to gh-pages
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          publish_branch: gh-pages
+          commit_message: "Auto update report [skip ci]"
