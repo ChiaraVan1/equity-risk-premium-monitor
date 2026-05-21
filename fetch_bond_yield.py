@@ -31,7 +31,7 @@ INDEX_CONFIG = [
     ("EWG",    "MSCI Germany",  "EUR", "DE10Y", "worldpe_ratio"),
     ("EWJ",    "MSCI Japan",    "JPY", "JP10Y", "worldpe_ratio"),
     ("EEM",    "MSCI Emerging", "USD", "CN10Y", "worldpe_ratio"),
-    # ========== 新增恒生科技指数 ==========
+    # ========== 新增 ==========
     ("HSTECH", "恒生科技指数",   "CNY", "CN10Y", "hstech_csv"),
     ("000069", "消费80",      "CNY", "CN10Y", "csindex"),
     ("930781", "中证影视",    "CNY", "CN10Y", "csindex"),
@@ -39,6 +39,7 @@ INDEX_CONFIG = [
     ("931139", "CS消费50",   "CNY", "CN10Y", "csindex"),
     ("399967", "中证军工",   "CNY", "CN10Y", "csindex"),
     ("931066", "军工龙头",   "CNY", "CN10Y", "csindex"),
+    ("930598", "稀土产业",    "CNY", "CN10Y", "csindex"),
 ]
 
 # ── 手动填入今日 PE（与 QQQ 一致）─────────────────────────────────────────────
