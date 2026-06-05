@@ -10,21 +10,43 @@ jobs:
   update-pe:
     runs-on: ubuntu-latest
     steps:
-      - name: Fetch QQQ PE from GuruFocus and update variable
+      - name: Install Playwright and fetch PE
+        run: pip install playwright && playwright install chromium --with-deps
+
+      - name: Fetch QQQ PE from GuruFocus
+        id: fetch_pe
+        run: |
+          python3 - <<'EOF'
+          from playwright.sync_api import sync_playwright
+          import re, os
+
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              page = browser.new_page()
+              page.goto("https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio", timeout=30000)
+              page.wait_for_timeout(3000)
+
+              # 从 h1 提取 PE 值，例如 "Nasdaq 100 PE Ratio : 37.02"
+              title = page.title()
+              print(f"Page title: {title}")
+              match = re.search(r'PE Ratio[:\s]+([\d.]+)', title)
+              if match:
+                  pe = match.group(1)
+                  print(f"PE={pe}")
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f"pe={pe}\n")
+              else:
+                  print("Failed to extract PE from title")
+                  exit(1)
+              browser.close()
+          EOF
+
+      - name: Update GitHub Variable QQQ_PE_TODAY
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          HTML=$(curl -s -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" \
-            "https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio")
-
-          PE=$(echo "$HTML" | grep -oP 'PE Ratio: \K[0-9]+\.?[0-9]*' | head -1)
-
-          if [ -z "$PE" ]; then
-            echo "❌ 未能提取到 PE 值，退出"
-            exit 1
-          fi
-
-          echo "✅ 今日 QQQ PE: $PE"
+          PE="${{ steps.fetch_pe.outputs.pe }}"
+          echo "Updating QQQ_PE_TODAY to $PE"
 
           HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X PATCH \
             -H "Authorization: Bearer $GH_PAT" \
@@ -33,8 +55,8 @@ jobs:
             -d "{\"name\":\"QQQ_PE_TODAY\",\"value\":\"$PE\"}")
 
           if [ "$HTTP_CODE" = "204" ]; then
-            echo "✅ Variable QQQ_PE_TODAY 已更新为 $PE"
+            echo "✅ QQQ_PE_TODAY updated to $PE"
           else
-            echo "❌ 更新失败，HTTP $HTTP_CODE"
+            echo "❌ Failed, HTTP $HTTP_CODE"
             exit 1
           fi
