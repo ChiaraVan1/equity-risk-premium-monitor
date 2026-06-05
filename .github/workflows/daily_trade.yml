@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: '预览模式（只生成报告文件，不推送微信）'
+        description: '预览模式（只生成报告文件，不推送微信）
         type: boolean
         default: false
 
@@ -37,7 +37,7 @@ jobs:
       # 4. 执行增量抓取数据
       - name: Fetch Data
         env:
-          QQQ_PE_TODAY: ${{ secrets.QQQ_PE_TODAY }}
+          QQQ_PE_TODAY: ${{ vars.QQQ_PE_TODAY }}
         run: python fetch_bond_yield_incremental.py
 
       # 5. 执行分析，生成 HTML 报告 + 推送仪表盘到微信
