@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       dry_run:
-        description: '预览模式（只生成报告文件，不推送微信）‘
+        description: '预览模式（只生成报告文件，不推送微信）'
         type: boolean
         default: false
 
