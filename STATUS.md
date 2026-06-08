@@ -1,7 +1,7 @@
 # STATUS.md — 跨 session 运行记忆
 
 > 每次 Claude 完成工作后必须更新此文件。
-> 最后更新：2026-06-08
+> 最后更新：2026-06-08（launchd 定时任务配置）
 
 ---
 
@@ -15,6 +15,41 @@
 | ETF 执行质量模块 | 依赖 ETF_data_project Release | 从 GitHub Release `latest` tag 实时下载 `simple_etf_metrics.csv` |
 | 微信推送 | 正常 | 只推仪表盘 + 完整报告链接，完整 HTML 在 gh-pages 查看 |
 | HTML 报告 | 正常部署 | https://chiaravan1.github.io/equity-risk-premium-monitor/report.html |
+
+---
+
+## 本地定时任务（macOS launchd）
+
+QQQ PE 的本地自动化通过 launchd LaunchAgent 实现，每日北京时间 16:30（UTC 08:30）触发。
+
+| 项目 | 路径/值 |
+|-----|--------|
+| plist 文件 | `~/Library/LaunchAgents/com.chiaravan.updatepe.plist` |
+| 触发脚本 | `~/update_pe_trigger.sh` |
+| 触发时间 | 周一至周五，北京时间 16:30（= UTC 08:30） |
+| 日志文件 | `~/update_pe.log` |
+| launchd Label | `com.chiaravan.updatepe` |
+
+**脚本职责**：激活 Claude 桌面应用，自动输入 `updatePE` 并回车，触发 PE 数据查询。日志格式：
+```
+[2026-06-08 16:30:00] === update_pe_trigger.sh 开始 ===
+[2026-06-08 16:30:15] === 结束，exit code: 0 ===
+```
+
+**管理命令**：
+```bash
+# 查看状态
+launchctl list | grep chiaravan
+
+# 重新加载（修改 plist 后执行）
+launchctl unload ~/Library/LaunchAgents/com.chiaravan.updatepe.plist
+launchctl load   ~/Library/LaunchAgents/com.chiaravan.updatepe.plist
+
+# 手动触发测试
+bash ~/update_pe_trigger.sh
+```
+
+> 注意：另有 `com.chiaravan.update-pe.plist` 运行 `~/update_pe.py`，两者独立，勿混淆。
 
 ---
 
@@ -40,6 +75,7 @@
 
 | 日期 | 变更内容 |
 |-----|---------|
+| 2026-06-08 | 配置 launchd 定时任务（com.chiaravan.updatepe），每日北京 16:30 触发 update_pe_trigger.sh，日志输出到 ~/update_pe.log |
 | 2026-06-08 | 初始化 CLAUDE.md / STATUS.md / ../shared/KEYS.md，读取并记录全项目结构；同步创建 ETF_data_project 的 CLAUDE.md / STATUS.md |
 | 2025 | 添加持仓分类映射（`HOLDING_CATEGORY`）到 `erp_position.py` |
 | 2025 | 新增稀土产业（930598）、畜牧养殖（931946）、中美互联网（930794）等指数 |
