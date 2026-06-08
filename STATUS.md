@@ -1,7 +1,7 @@
 # STATUS.md — 跨 session 运行记忆
 
-> 每次 Claude 完成工作后必须更新此文件。
-> 最后更新：2026-06-08（launchd 定时任务配置）
+> 每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。
+> 最后更新：2026-06-08 17:10
 
 ---
 
@@ -26,7 +26,7 @@ QQQ PE 的本地自动化通过 launchd LaunchAgent 实现，每日北京时间 
 |-----|--------|
 | plist 文件 | `~/Library/LaunchAgents/com.chiaravan.updatepe.plist` |
 | 触发脚本 | `~/update_pe_trigger.sh` |
-| 触发时间 | 周一至周五，北京时间 16:30（= UTC 08:30） |
+| 触发时间 | 周一至周五，北京时间 17:00（launchd 本地时间 Hour=17 Minute=0） |
 | 日志文件 | `~/update_pe.log` |
 | launchd Label | `com.chiaravan.updatepe` |
 
@@ -75,7 +75,10 @@ bash ~/update_pe_trigger.sh
 
 | 日期 | 变更内容 |
 |-----|---------|
-| 2026-06-08 | 配置 launchd 定时任务（com.chiaravan.updatepe），每日北京 16:30 触发 update_pe_trigger.sh，日志输出到 ~/update_pe.log |
+| 2026-06-08 17:10 | 修复 update_pe_trigger.sh：改用 AppleScript 内部设置剪贴板 + `keystroke "v" using {command down}` 粘贴完整 prompt，解决 Cmd+V 无效问题 |
+| 2026-06-08 17:00 | launchd 触发时间改为 17:00（CST） |
+| 2026-06-08 16:41 | 修复 plist 时间：launchd 用本地时间，Hour 改为 16，Minute 改为 30（之前错误地设成 UTC 08:30） |
+| 2026-06-08 16:30 | 配置 launchd 定时任务（com.chiaravan.updatepe），每日北京时间触发 update_pe_trigger.sh，日志输出到 ~/update_pe.log |
 | 2026-06-08 | 初始化 CLAUDE.md / STATUS.md / ../shared/KEYS.md，读取并记录全项目结构；同步创建 ETF_data_project 的 CLAUDE.md / STATUS.md |
 | 2025 | 添加持仓分类映射（`HOLDING_CATEGORY`）到 `erp_position.py` |
 | 2025 | 新增稀土产业（930598）、畜牧养殖（931946）、中美互联网（930794）等指数 |
