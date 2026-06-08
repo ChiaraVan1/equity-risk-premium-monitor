@@ -361,6 +361,32 @@ def build_trend_block(df, erp_series, code, quantiles):
 #  仪表盘 & 图例
 # ══════════════════════════════════════════════════════════════════════
 
+# ── 持仓分类映射 ──────────────────────────────────────────────────────────────
+HOLDING_CATEGORY = {
+    "000300": "低估-宽基",
+    "000688": "科技-A股",
+    "000922": "",
+    "399989": "低估-医疗",
+    "931071": "",
+    "000069": "低估-消费",
+    "930781": "",
+    "000989": "",
+    "931139": "",
+    "SPY":    "",
+    "QQQ":    "",
+    "EWQ":    "",
+    "EWG":    "",
+    "EWJ":    "",
+    "EEM":    "",
+    "HSTECH": "低估-港股科技",
+    "399967": "低估-军工",
+    "931066": "低估-军工",
+    "930794": "",
+    "931946": "",
+    "930598": "低估-资源",
+}
+
+
 def build_summary_block(summary_list: list) -> str:
     if not summary_list:
         return ""
@@ -414,10 +440,12 @@ def build_summary_block(summary_list: list) -> str:
         divg = r.get("etf_divergence", "─")
         vol  = r.get("etf_vol",        "─")
 
+        cat = HOLDING_CATEGORY.get(r.get("code", ""), "")
+        cat_str = f" [{cat}]" if cat else ""
         rows.append(
             f"{r['name']} {zone} · 胜{wi}{win_str} 赔{oi}{odds_str}"
             f" · 折{disc} 量{divg} 波{vol}"
-            f" · 仓{pos}"
+            f" · 仓{pos}{cat_str}"
         )
 
     body = "\n\n".join(rows)
