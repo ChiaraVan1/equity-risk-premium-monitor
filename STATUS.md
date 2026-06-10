@@ -1,7 +1,7 @@
 # STATUS.md — 跨 session 运行记忆
 
 > 每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。
-> 最后更新：2026-06-08 17:10
+> 最后更新：2026-06-10
 
 ---
 
@@ -19,6 +19,38 @@
 ---
 
 ## 本地定时任务（macOS launchd）
+
+### pi-mobile host 开机自启（常驻服务）
+
+| 项目 | 路径/值 |
+|-----|--------|
+| plist 文件 | `~/Library/LaunchAgents/com.chiaravan.pi-mobile-host.plist` |
+| 启动命令 | `pnpm --filter host dev`（WorkingDirectory: `~/workspace/dev/pi-mobile`） |
+| 触发时机 | 登录即启动（`RunAtLoad=true`），崩溃自动重启（`KeepAlive=true`） |
+| 环境变量 | `PI_MOBILE_HOST_BIND=0.0.0.0` |
+| 文件句柄限制 | `SoftResourceLimits.NumberOfFiles=65536`（等效 `ulimit -n 65536`） |
+| 日志文件 | `~/pi-mobile-host.log`（stdout + stderr 合并） |
+| launchd Label | `com.chiaravan.pi-mobile-host` |
+
+**管理命令**：
+```bash
+# 查看状态
+launchctl list | grep pi-mobile
+
+# 停止
+launchctl unload ~/Library/LaunchAgents/com.chiaravan.pi-mobile-host.plist
+
+# 重新加载（修改 plist 后执行）
+launchctl unload ~/Library/LaunchAgents/com.chiaravan.pi-mobile-host.plist
+launchctl load   ~/Library/LaunchAgents/com.chiaravan.pi-mobile-host.plist
+
+# 查看实时日志
+tail -f ~/pi-mobile-host.log
+```
+
+---
+
+### QQQ PE 每日触发
 
 QQQ PE 的本地自动化通过 launchd LaunchAgent 实现，每日北京时间 16:30（UTC 08:30）触发。
 
@@ -49,7 +81,7 @@ launchctl load   ~/Library/LaunchAgents/com.chiaravan.updatepe.plist
 bash ~/update_pe_trigger.sh
 ```
 
-> 注意：另有 `com.chiaravan.update-pe.plist` 运行 `~/update_pe.py`，两者独立，勿混淆。
+> ~~`com.chiaravan.update-pe.plist`~~ 已删除（`update_pe.py` 不存在，每日 18:00 报错，2026-06-10 清理）。
 
 ---
 
@@ -75,6 +107,7 @@ bash ~/update_pe_trigger.sh
 
 | 日期 | 变更内容 |
 |-----|---------|
+| 2026-06-10 18:00 | 删除 `com.chiaravan.update-pe.plist`（`update_pe.py` 不存在，每日报错）；`gh auth login` 完成（ChiaraVan1）；`update_pe_trigger.sh` prompt 第二步改为 `gh variable set QQQ_PE_TODAY` 替代浏览器导航 GitHub settings（更稳定，不依赖 Chrome 登录状态） |
 | 2026-06-08 17:10 | 修复 update_pe_trigger.sh：改用 AppleScript 内部设置剪贴板 + `keystroke "v" using {command down}` 粘贴完整 prompt，解决 Cmd+V 无效问题 |
 | 2026-06-08 17:00 | launchd 触发时间改为 17:00（CST） |
 | 2026-06-08 16:41 | 修复 plist 时间：launchd 用本地时间，Hour 改为 16，Minute 改为 30（之前错误地设成 UTC 08:30） |
