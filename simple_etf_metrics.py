@@ -2,9 +2,13 @@
 simple_etf_metrics.py  —  AKShare 版（无需 Tushare token）
 ──────────────────────────────────────────────────────────────────────────────
 数据源替换说明：
-  pro.fund_daily()   → ak.fund_etf_hist_em()        ETF历史行情（东财）
-  pro.fund_nav()     → ak.fund_open_fund_info_em()  ETF历史净值（东财）
-  pro.index_daily()  → ak.index_zh_a_hist_csindex() 中证指数历史 / ak.stock_zh_index_daily_em() 其他
+  pro.fund_daily()   → ak.fund_etf_hist_sina()          ETF历史行情（新浪）
+                        字段: date/open/high/low/close/volume/amount
+                        symbol格式: sh510300 / sz159696
+  pro.fund_nav()     → ak.fund_etf_fund_info_em()       ETF历史净值（东财）
+                        字段: 净值日期/单位净值/累计净值/...
+  pro.index_daily()  → ak.stock_zh_index_hist_csindex() 中证官网（全部走这个）
+                        字段: 日期/收盘/涨跌幅/...
 输出字段与原版完全一致，下游 erp_position.py 无需改动。
 ──────────────────────────────────────────────────────────────────────────────
 """
@@ -15,7 +19,7 @@ import numpy as np
 import time
 from datetime import datetime, timedelta
 
-# ── ETF列表 ───────────────────────────────────────────────────────────────────
+# ── ETF列表 (erp_code, etf_code) ─────────────────────────────────────────────
 ETF_LIST = [
     ("000300", "510300"),
     ("000688", "588000"),
@@ -37,34 +41,46 @@ ETF_LIST = [
     ("930794", "009225"),
 ]
 
-# ETF → 基准指数
-# csindex: 走 ak.index_zh_a_hist_csindex()
-# em:      走 ak.stock_zh_index_daily_em()
+# 新浪行情 symbol 前缀：上交所 sh，深交所 sz
+# 上交所：5开头（510xxx, 515xxx, 516xxx, 588xxx, 513xxx）
+# 深交所：1开头（159xxx）, 0开头（009xxx）
+def _sina_symbol(etf_code: str) -> str:
+    if etf_code.startswith(('51', '58', '56', '50', '52', '00')):
+        return 'sh' + etf_code
+    return 'sz' + etf_code
+
+# ts_code 后缀（兼容下游）
+def _ts_code(etf_code: str) -> str:
+    if etf_code.startswith(('51', '58', '56', '50', '52', '00')):
+        return etf_code + '.SH'
+    return etf_code + '.SZ'
+
+# ETF → 基准指数（全部走 stock_zh_index_hist_csindex）
 ETF_TO_BENCHMARK = {
-    "510300": ("000300", "csindex"),
-    "588000": ("000688", "csindex"),
-    "515180": ("000922", "csindex"),
-    "512170": ("399989", "em"),
-    "515980": ("931071", "csindex"),
-    "513180": (None,     None),
-    "513500": (None,     None),
-    "159696": (None,     None),
-    "513080": (None,     None),
-    "513880": (None,     None),
-    "510150": ("000069", "csindex"),
-    "516620": ("930781", "csindex"),
-    "159936": ("000989", "csindex"),
-    "515650": ("931139", "csindex"),
-    "512660": ("399967", "em"),
-    "512710": ("931066", "csindex"),
-    "516150": ("930598", "csindex"),
-    "009225": ("930794", "csindex"),
+    "510300": "000300",
+    "588000": "000688",
+    "515180": "000922",
+    "512170": "399989",
+    "515980": "931071",
+    "513180": None,      # 恒生科技，无A股基准
+    "513500": None,      # SPY
+    "159696": None,      # QQQ
+    "513080": None,      # 法国
+    "513880": None,      # 日本
+    "510150": "000069",
+    "516620": "930781",
+    "159936": "000989",
+    "515650": "931139",
+    "512660": "399967",
+    "512710": "931066",
+    "516150": "930598",
+    "009225": "930794",
 }
 
 
 def _empty_record(erp_code, etf_code):
     return {
-        'ts_code':                       etf_code + ('.SH' if etf_code.startswith(('5', '0')) else '.SZ'),
+        'ts_code':                       _ts_code(etf_code),
         'erp_code':                      erp_code,
         'name':                          etf_code,
         'trade_date':                    np.nan,
@@ -99,83 +115,65 @@ def _empty_record(erp_code, etf_code):
     }
 
 
-def fetch_etf_price(etf_code: str, start_str: str, end_str: str) -> pd.DataFrame | None:
+def fetch_etf_price(etf_code: str) -> pd.DataFrame | None:
     """
-    ak.fund_etf_hist_em() 返回字段：
-      日期 开盘 收盘 最高 最低 成交量 成交额 振幅 涨跌幅 涨跌额 换手率
+    新浪ETF全量历史行情
+    返回字段: date / open / high / low / close / volume / amount
+    注意：新浪接口返回全量数据，不支持日期筛选，在调用侧截取3年
     """
     try:
-        df = ak.fund_etf_hist_em(
-            symbol=etf_code,
-            period="daily",
-            start_date=start_str,
-            end_date=end_str,
-            adjust=""
-        )
+        symbol = _sina_symbol(etf_code)
+        df = ak.fund_etf_hist_sina(symbol=symbol)
         if df is None or df.empty:
             return None
-        df = df.rename(columns={
-            '日期':  'trade_date',
-            '收盘':  'close',
-            '涨跌幅': 'pct_chg',
-            '成交额': 'amount',
-            '换手率': 'turnover',
-        })
-        df['trade_date'] = pd.to_datetime(df['trade_date'])
-        return df.sort_values('trade_date').set_index('trade_date')
+        df['date'] = pd.to_datetime(df['date'])
+        df = df.sort_values('date').set_index('date')
+        df['close']  = pd.to_numeric(df['close'],  errors='coerce')
+        df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
+        # 计算日涨跌幅（新浪无直接字段）
+        df['pct_chg'] = df['close'].pct_change() * 100
+        return df
     except Exception as e:
-        print(f"    [行情] {etf_code} 失败: {e}")
+        print(f"    [行情] {etf_code} ({_sina_symbol(etf_code)}) 失败: {e}")
         return None
 
 
-def fetch_etf_nav(etf_code: str) -> pd.DataFrame | None:
+def fetch_etf_nav(etf_code: str, start_str: str, end_str: str) -> pd.DataFrame | None:
     """
-    ak.fund_open_fund_info_em() 返回净值历史。
-    字段：净值日期 单位净值 累计净值 ...
-    适用于场内ETF（其本质是开放式基金）。
+    东财ETF净值历史
+    字段: 净值日期 / 单位净值 / 累计净值 / 日增长率 / 申购状态 / 赎回状态
     """
     try:
-        df = ak.fund_open_fund_info_em(fund=etf_code, indicator="单位净值走势")
+        df = ak.fund_etf_fund_info_em(fund=etf_code, start_date=start_str, end_date=end_str)
         if df is None or df.empty:
             return None
         df = df.rename(columns={'净值日期': 'nav_date', '单位净值': 'unit_nav'})
-        df['nav_date'] = pd.to_datetime(df['nav_date'])
-        df['unit_nav'] = pd.to_numeric(df['unit_nav'], errors='coerce')
+        df['nav_date']  = pd.to_datetime(df['nav_date'])
+        df['unit_nav']  = pd.to_numeric(df['unit_nav'], errors='coerce')
         return df[['nav_date', 'unit_nav']].dropna().sort_values('nav_date').set_index('nav_date')
     except Exception as e:
         print(f"    [净值] {etf_code} 失败: {e}")
         return None
 
 
-def fetch_index_pct(index_code: str, source: str, start_str: str, end_str: str) -> pd.Series | None:
+def fetch_index_pct(index_code: str, start_str: str, end_str: str) -> pd.Series | None:
     """
-    返回基准指数日涨跌幅 Series，index 为 trade_date。
-    source='csindex' → ak.index_zh_a_hist_csindex()  字段：日期 收盘
-    source='em'      → ak.stock_zh_index_daily_em()  字段：date close
+    中证官网指数历史，返回日涨跌幅 Series
+    字段: 日期 / 收盘 / 涨跌幅 / ...
     """
     try:
-        if source == 'csindex':
-            df = ak.index_zh_a_hist_csindex(
-                symbol=index_code,
-                start_date=start_str,
-                end_date=end_str
-            )
-            if df is None or df.empty:
-                return None
-            df = df.rename(columns={'日期': 'date', '收盘': 'close'})
-        else:  # em
-            df = ak.stock_zh_index_daily_em(symbol=index_code)
-            if df is None or df.empty:
-                return None
-            # 字段：date open close high low volume
-            df = df[df['date'] >= start_str[:4] + '-' + start_str[4:6] + '-' + start_str[6:]]
-
+        df = ak.stock_zh_index_hist_csindex(
+            symbol=index_code,
+            start_date=start_str,
+            end_date=end_str
+        )
+        if df is None or df.empty:
+            return None
+        df = df.rename(columns={'日期': 'date', '涨跌幅': 'pct_chg_index'})
         df['date'] = pd.to_datetime(df['date'])
         df = df.sort_values('date').set_index('date')
-        df['close'] = pd.to_numeric(df['close'], errors='coerce')
-        pct = df['close'].pct_change() * 100
-        pct.name = 'pct_chg_index'
-        return pct
+        df['pct_chg_index'] = pd.to_numeric(df['pct_chg_index'], errors='coerce')
+        return df['pct_chg_index']
     except Exception as e:
         print(f"    [基准] {index_code} 失败: {e}")
         return None
@@ -194,17 +192,17 @@ def get_etf_metrics():
         print(f"\n处理 {erp_code} -> {etf_code}")
         m = _empty_record(erp_code, etf_code)
 
-        # ── 修正 ts_code 后缀 ───────────────────────────────────────────────
-        if etf_code.startswith(('51', '58', '56', '50', '52', '00')):
-            m['ts_code'] = etf_code + '.SH'
-        else:
-            m['ts_code'] = etf_code + '.SZ'
-
         try:
-            # ── 1. 日行情 ──────────────────────────────────────────────────
-            df = fetch_etf_price(etf_code, start_str, end_str)
-            if df is None:
+            # ── 1. 日行情（新浪，截取3年）────────────────────────────────
+            df_all = fetch_etf_price(etf_code)
+            if df_all is None:
                 print(f"  警告: {etf_code} 无行情数据，跳过")
+                results.append(m)
+                continue
+
+            df = df_all[df_all.index >= start_date].copy()
+            if df.empty:
+                print(f"  警告: {etf_code} 3年内无数据，跳过")
                 results.append(m)
                 continue
 
@@ -217,10 +215,10 @@ def get_etf_metrics():
             price_s.columns = [erp_code]
             price_frames.append(price_s)
 
-            time.sleep(0.5)
+            time.sleep(0.3)
 
-            # ── 2. 净值 & 折溢价 ───────────────────────────────────────────
-            df_nav = fetch_etf_nav(etf_code)
+            # ── 2. 净值 & 折溢价 ─────────────────────────────────────────
+            df_nav = fetch_etf_nav(etf_code, start_str, end_str)
             if df_nav is not None:
                 df = df.join(df_nav[['unit_nav']], how='left')
                 df['unit_nav'] = df['unit_nav'].ffill()
@@ -243,13 +241,12 @@ def get_etf_metrics():
                     if len(disc) > 10:
                         m['change_10d_discount'] = disc.iloc[-1] - disc.iloc[-11]
 
-            time.sleep(0.5)
+            time.sleep(0.3)
 
-            # ── 3. 超额收益 & 跟踪误差 ────────────────────────────────────
-            bm_info = ETF_TO_BENCHMARK.get(etf_code)
-            if bm_info and bm_info[0]:
-                bm_code, bm_source = bm_info
-                pct_index = fetch_index_pct(bm_code, bm_source, start_str, end_str)
+            # ── 3. 超额收益 & 跟踪误差 ───────────────────────────────────
+            bm_code = ETF_TO_BENCHMARK.get(etf_code)
+            if bm_code:
+                pct_index = fetch_index_pct(bm_code, start_str, end_str)
                 if pct_index is not None:
                     df = df.join(pct_index, how='left')
                     valid = df[['pct_chg', 'pct_chg_index']].dropna()
@@ -275,9 +272,9 @@ def get_etf_metrics():
                             except np.linalg.LinAlgError:
                                 pass
 
-                time.sleep(0.5)
+                time.sleep(0.3)
 
-            # ── 4. 波动率 & 分位 ──────────────────────────────────────────
+            # ── 4. 波动率 & 分位 ─────────────────────────────────────────
             if 'pct_chg' in df.columns:
                 df['rolling_vol'] = df['pct_chg'].rolling(20).std() * np.sqrt(250)
                 roll_vol = df['rolling_vol'].dropna()
@@ -301,7 +298,7 @@ def get_etf_metrics():
                         except np.linalg.LinAlgError:
                             pass
 
-            # ── 5. 最大回撤 & 分位 ────────────────────────────────────────
+            # ── 5. 最大回撤 & 分位 ───────────────────────────────────────
             if 'pct_chg' in df.columns:
                 cum  = (1 + df['pct_chg'] / 100).cumprod()
                 peak = cum.cummax()
@@ -328,7 +325,7 @@ def get_etf_metrics():
                         except np.linalg.LinAlgError:
                             pass
 
-            # ── 6. 换手 & 背离 ────────────────────────────────────────────
+            # ── 6. 换手（成交额）& 背离 ──────────────────────────────────
             if 'amount' in df.columns:
                 df_weekly  = df['amount'].resample('W').sum()
                 df_monthly = df['amount'].resample('ME').sum()
@@ -349,11 +346,9 @@ def get_etf_metrics():
                 if len(df_weekly) >= 52:
                     m['turnover_quantile'] = df_weekly.iloc[-52:].rank(pct=True).iloc[-1]
 
-                price_chg_5d = 0.0
+                price_chg_5d, turnover_chg_1w = 0.0, 0.0
                 if len(df) >= 6:
                     price_chg_5d = (df['close'].iloc[-1] - df['close'].iloc[-6]) / df['close'].iloc[-6]
-
-                turnover_chg_1w = 0.0
                 if len(df_weekly) >= 2:
                     turnover_chg_1w = df_weekly.iloc[-1] - df_weekly.iloc[-2]
 
@@ -362,8 +357,8 @@ def get_etf_metrics():
                 )
 
             results.append(m)
-            print(f"  完成: 折价={m['latest_discount_rate']}, "
-                  f"波动={m['annualized_volatility']}, "
+            print(f"  完成: 折价={m['latest_discount_rate']:.4f}, "
+                  f"波动={m['annualized_volatility']:.4f}, "
                   f"换手分位={m['turnover_quantile']}, "
                   f"背离={m['is_price_turnover_divergence']}")
 
