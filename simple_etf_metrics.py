@@ -11,6 +11,12 @@ simple_etf_metrics.py  —  AKShare 版（无需 Tushare token）
                         字段: 日期/收盘/涨跌幅/...
 输出字段与原版完全一致，下游 erp_position.py 无需改动。
 ──────────────────────────────────────────────────────────────────────────────
+并发说明：
+  使用 ThreadPoolExecutor(max_workers=5) 并行处理各 ETF，
+  网络 IO 等待时间重叠，速度约提升 3-5 倍。
+  各线程内部保留 time.sleep(0.3) 防止对同一数据源限流。
+  如遇频繁 429/限流，可将 MAX_WORKERS 调小至 3。
+──────────────────────────────────────────────────────────────────────────────
 """
 
 import akshare as ak
@@ -18,6 +24,9 @@ import pandas as pd
 import numpy as np
 import time
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
+
+MAX_WORKERS = 5  # 并发线程数，遇到限流可调小
 
 # ── ETF列表 (erp_code, etf_code) ─────────────────────────────────────────────
 ETF_LIST = [
@@ -38,12 +47,9 @@ ETF_LIST = [
     ("399967", "512660"),
     ("931066", "512710"),
     ("930598", "516150"),
-    ("930794", "009225"),
 ]
 
 # 新浪行情 symbol 前缀：上交所 sh，深交所 sz
-# 上交所：5开头（510xxx, 515xxx, 516xxx, 588xxx, 513xxx）
-# 深交所：1开头（159xxx）, 0开头（009xxx）
 def _sina_symbol(etf_code: str) -> str:
     if etf_code.startswith(('51', '58', '56', '50', '52', '00')):
         return 'sh' + etf_code
@@ -55,18 +61,18 @@ def _ts_code(etf_code: str) -> str:
         return etf_code + '.SH'
     return etf_code + '.SZ'
 
-# ETF → 基准指数（全部走 stock_zh_index_hist_csindex）
+# ETF → 基准指数
 ETF_TO_BENCHMARK = {
     "510300": "000300",
     "588000": "000688",
     "515180": "000922",
     "512170": "399989",
     "515980": "931071",
-    "513180": None,      # 恒生科技，无A股基准
-    "513500": None,      # SPY
-    "159696": None,      # QQQ
-    "513080": None,      # 法国
-    "513880": None,      # 日本
+    "513180": None,
+    "513500": None,
+    "159696": None,
+    "513080": None,
+    "513880": None,
     "510150": "000069",
     "516620": "930781",
     "159936": "000989",
@@ -74,7 +80,6 @@ ETF_TO_BENCHMARK = {
     "512660": "399967",
     "512710": "931066",
     "516150": "930598",
-    "009225": "930794",
 }
 
 
@@ -116,11 +121,6 @@ def _empty_record(erp_code, etf_code):
 
 
 def fetch_etf_price(etf_code: str) -> pd.DataFrame | None:
-    """
-    新浪ETF全量历史行情
-    返回字段: date / open / high / low / close / volume / amount
-    注意：新浪接口返回全量数据，不支持日期筛选，在调用侧截取3年
-    """
     try:
         symbol = _sina_symbol(etf_code)
         df = ak.fund_etf_hist_sina(symbol=symbol)
@@ -130,7 +130,6 @@ def fetch_etf_price(etf_code: str) -> pd.DataFrame | None:
         df = df.sort_values('date').set_index('date')
         df['close']  = pd.to_numeric(df['close'],  errors='coerce')
         df['amount'] = pd.to_numeric(df['amount'], errors='coerce')
-        # 计算日涨跌幅（新浪无直接字段）
         df['pct_chg'] = df['close'].pct_change() * 100
         return df
     except Exception as e:
@@ -139,17 +138,13 @@ def fetch_etf_price(etf_code: str) -> pd.DataFrame | None:
 
 
 def fetch_etf_nav(etf_code: str, start_str: str, end_str: str) -> pd.DataFrame | None:
-    """
-    东财ETF净值历史
-    字段: 净值日期 / 单位净值 / 累计净值 / 日增长率 / 申购状态 / 赎回状态
-    """
     try:
         df = ak.fund_etf_fund_info_em(fund=etf_code, start_date=start_str, end_date=end_str)
         if df is None or df.empty:
             return None
         df = df.rename(columns={'净值日期': 'nav_date', '单位净值': 'unit_nav'})
-        df['nav_date']  = pd.to_datetime(df['nav_date'])
-        df['unit_nav']  = pd.to_numeric(df['unit_nav'], errors='coerce')
+        df['nav_date'] = pd.to_datetime(df['nav_date'])
+        df['unit_nav'] = pd.to_numeric(df['unit_nav'], errors='coerce')
         return df[['nav_date', 'unit_nav']].dropna().sort_values('nav_date').set_index('nav_date')
     except Exception as e:
         print(f"    [净值] {etf_code} 失败: {e}")
@@ -157,10 +152,6 @@ def fetch_etf_nav(etf_code: str, start_str: str, end_str: str) -> pd.DataFrame |
 
 
 def fetch_index_pct(index_code: str, start_str: str, end_str: str) -> pd.Series | None:
-    """
-    中证官网指数历史，返回日涨跌幅 Series
-    字段: 日期 / 收盘 / 涨跌幅 / ...
-    """
     try:
         df = ak.stock_zh_index_hist_csindex(
             symbol=index_code,
@@ -179,192 +170,208 @@ def fetch_index_pct(index_code: str, start_str: str, end_str: str) -> pd.Series 
         return None
 
 
+# ── 单只 ETF 处理（在线程中运行）────────────────────────────────────────────────
+
+def _process_single_etf(args):
+    erp_code, etf_code, start_date, end_date, start_str, end_str = args
+    print(f"\n处理 {erp_code} -> {etf_code}")
+    m = _empty_record(erp_code, etf_code)
+    price_s = None
+
+    try:
+        # ── 1. 日行情 ────────────────────────────────────────────────────────
+        df_all = fetch_etf_price(etf_code)
+        if df_all is None:
+            print(f"  警告: {etf_code} 无行情数据，跳过")
+            return m, price_s
+
+        df = df_all[df_all.index >= start_date].copy()
+        if df.empty:
+            print(f"  警告: {etf_code} 3年内无数据，跳过")
+            return m, price_s
+
+        latest = df.iloc[-1]
+        m['trade_date']     = df.index[-1].strftime('%Y-%m-%d')
+        m['latest_close']   = latest['close']
+        m['latest_pct_chg'] = latest['pct_chg']
+
+        _price_s = df[['close']].copy()
+        _price_s.columns = [erp_code]
+        price_s = _price_s
+
+        time.sleep(0.3)
+
+        # ── 2. 净值 & 折溢价 ─────────────────────────────────────────────────
+        df_nav = fetch_etf_nav(etf_code, start_str, end_str)
+        if df_nav is not None:
+            df = df.join(df_nav[['unit_nav']], how='left')
+            df['unit_nav'] = df['unit_nav'].ffill()
+            df['discount_rate'] = (df['unit_nav'] - df['close']) / df['unit_nav']
+            disc = df['discount_rate'].dropna()
+
+            if len(disc) > 0:
+                m['latest_discount_rate'] = disc.iloc[-1]
+
+                disc_1y = disc[disc.index >= (end_date - timedelta(days=365))]
+                if len(disc_1y) > 1:
+                    m['discount_quantile_1y'] = disc_1y.rank(pct=True).iloc[-1]
+
+                disc_3y = disc[disc.index >= (end_date - timedelta(days=3 * 365))]
+                if len(disc_3y) > 1:
+                    m['discount_quantile_3y'] = disc_3y.rank(pct=True).iloc[-1]
+
+                if len(disc) > 5:
+                    m['change_5d_discount']  = disc.iloc[-1] - disc.iloc[-6]
+                if len(disc) > 10:
+                    m['change_10d_discount'] = disc.iloc[-1] - disc.iloc[-11]
+
+        time.sleep(0.3)
+
+        # ── 3. 超额收益 & 跟踪误差 ───────────────────────────────────────────
+        bm_code = ETF_TO_BENCHMARK.get(etf_code)
+        if bm_code:
+            pct_index = fetch_index_pct(bm_code, start_str, end_str)
+            if pct_index is not None:
+                df = df.join(pct_index, how='left')
+                valid = df[['pct_chg', 'pct_chg_index']].dropna()
+                if len(valid) > 20:
+                    df['excess_return'] = df['pct_chg'] - df['pct_chg_index']
+                    ex = df['excess_return'].dropna()
+
+                    ex_3y = ex[ex.index >= (end_date - timedelta(days=3 * 365))]
+                    m['excess_return_mean'] = ex_3y.mean()
+                    m['tracking_error']     = ex_3y.std() * np.sqrt(250)
+
+                    m['excess_return_5d_ma']  = ex.rolling(5).mean().iloc[-1]
+                    m['excess_return_10d_ma'] = ex.rolling(10).mean().iloc[-1]
+                    m['excess_return_15d_ma'] = ex.rolling(15).mean().iloc[-1]
+                    m['excess_return_20d_ma'] = ex.rolling(20).mean().iloc[-1]
+
+                    y = np.array([m['excess_return_5d_ma'],  m['excess_return_10d_ma'],
+                                  m['excess_return_15d_ma'], m['excess_return_20d_ma']])
+                    x = np.array([5, 10, 15, 20])
+                    if not np.any(np.isnan(y)):
+                        try:
+                            m['ma_trend_slope'] = np.polyfit(x, y, 1)[0]
+                        except np.linalg.LinAlgError:
+                            pass
+
+            time.sleep(0.3)
+
+        # ── 4. 波动率 & 分位 ─────────────────────────────────────────────────
+        if 'pct_chg' in df.columns:
+            df['rolling_vol'] = df['pct_chg'].rolling(20).std() * np.sqrt(250)
+            roll_vol = df['rolling_vol'].dropna()
+
+            if len(roll_vol) > 0:
+                m['annualized_volatility'] = roll_vol.iloc[-1]
+
+                vol_1y = roll_vol[roll_vol.index >= (end_date - timedelta(days=365))]
+                if len(vol_1y) > 1:
+                    m['volatility_quantile_1y'] = vol_1y.rank(pct=True).iloc[-1]
+
+                vol_3y = roll_vol[roll_vol.index >= (end_date - timedelta(days=3 * 365))]
+                if len(vol_3y) > 1:
+                    m['volatility_quantile_3y'] = vol_3y.rank(pct=True).iloc[-1]
+
+                if len(roll_vol) >= 20:
+                    y = roll_vol.iloc[-20:].values
+                    x = np.arange(len(y))
+                    try:
+                        m['volatility_slope'] = np.polyfit(x, y, 1)[0]
+                    except np.linalg.LinAlgError:
+                        pass
+
+        # ── 5. 最大回撤 & 分位 ───────────────────────────────────────────────
+        if 'pct_chg' in df.columns:
+            cum  = (1 + df['pct_chg'] / 100).cumprod()
+            peak = cum.cummax()
+            dd   = (peak - cum) / peak
+            m['max_drawdown'] = dd.max()
+
+            df['rolling_dd'] = dd.rolling(20).max()
+            roll_dd = df['rolling_dd'].dropna()
+
+            if len(roll_dd) > 0:
+                dd_1y = roll_dd[roll_dd.index >= (end_date - timedelta(days=365))]
+                if len(dd_1y) > 1:
+                    m['max_drawdown_quantile_1y'] = dd_1y.rank(pct=True).iloc[-1]
+
+                dd_3y = roll_dd[roll_dd.index >= (end_date - timedelta(days=3 * 365))]
+                if len(dd_3y) > 1:
+                    m['max_drawdown_quantile_3y'] = dd_3y.rank(pct=True).iloc[-1]
+
+                if len(roll_dd) >= 20:
+                    y = roll_dd.iloc[-20:].values
+                    x = np.arange(len(y))
+                    try:
+                        m['max_drawdown_slope'] = np.polyfit(x, y, 1)[0]
+                    except np.linalg.LinAlgError:
+                        pass
+
+        # ── 6. 换手（成交额）& 背离 ──────────────────────────────────────────
+        if 'amount' in df.columns:
+            df_weekly  = df['amount'].resample('W').sum()
+            df_monthly = df['amount'].resample('ME').sum()
+
+            amt_1y = df['amount'][df.index >= (end_date - timedelta(days=365))]
+            m['turnover_rate'] = amt_1y.mean() if len(amt_1y) > 0 else np.nan
+
+            if len(df_weekly) > 0:
+                m['turnover_ratio_1w'] = df_weekly.iloc[-1]
+            if len(df_monthly) > 0:
+                m['turnover_ratio_1m'] = df_monthly.iloc[-1]
+
+            if len(df_weekly) >= 5:
+                avg_4w = df_weekly.iloc[-5:-1].mean()
+                if avg_4w > 0:
+                    m['turnover_acceleration'] = df_weekly.iloc[-1] / avg_4w
+
+            if len(df_weekly) >= 52:
+                m['turnover_quantile'] = df_weekly.iloc[-52:].rank(pct=True).iloc[-1]
+
+            price_chg_5d, turnover_chg_1w = 0.0, 0.0
+            if len(df) >= 6:
+                price_chg_5d = (df['close'].iloc[-1] - df['close'].iloc[-6]) / df['close'].iloc[-6]
+            if len(df_weekly) >= 2:
+                turnover_chg_1w = df_weekly.iloc[-1] - df_weekly.iloc[-2]
+
+            m['is_price_turnover_divergence'] = int(
+                np.sign(price_chg_5d) != np.sign(turnover_chg_1w)
+            )
+
+        print(f"  完成 {erp_code}: 折价={m['latest_discount_rate']:.4f}, "
+              f"波动={m['annualized_volatility']:.4f}, "
+              f"换手分位={m['turnover_quantile']}, "
+              f"背离={m['is_price_turnover_divergence']}")
+
+    except Exception as e:
+        print(f"  错误 ({etf_code}): {e}")
+
+    return m, price_s
+
+
+# ── 主入口 ────────────────────────────────────────────────────────────────────
+
 def get_etf_metrics():
     end_date   = datetime.now()
     start_date = end_date - timedelta(days=3 * 365)
     start_str  = start_date.strftime('%Y%m%d')
     end_str    = end_date.strftime('%Y%m%d')
 
-    results = []
+    args_list = [
+        (erp_code, etf_code, start_date, end_date, start_str, end_str)
+        for erp_code, etf_code in ETF_LIST
+    ]
+
+    results      = []
     price_frames = []
 
-    for erp_code, etf_code in ETF_LIST:
-        print(f"\n处理 {erp_code} -> {etf_code}")
-        m = _empty_record(erp_code, etf_code)
-
-        try:
-            # ── 1. 日行情（新浪，截取3年）────────────────────────────────
-            df_all = fetch_etf_price(etf_code)
-            if df_all is None:
-                print(f"  警告: {etf_code} 无行情数据，跳过")
-                results.append(m)
-                continue
-
-            df = df_all[df_all.index >= start_date].copy()
-            if df.empty:
-                print(f"  警告: {etf_code} 3年内无数据，跳过")
-                results.append(m)
-                continue
-
-            latest = df.iloc[-1]
-            m['trade_date']     = df.index[-1].strftime('%Y-%m-%d')
-            m['latest_close']   = latest['close']
-            m['latest_pct_chg'] = latest['pct_chg']
-
-            price_s = df[['close']].copy()
-            price_s.columns = [erp_code]
-            price_frames.append(price_s)
-
-            time.sleep(0.3)
-
-            # ── 2. 净值 & 折溢价 ─────────────────────────────────────────
-            df_nav = fetch_etf_nav(etf_code, start_str, end_str)
-            if df_nav is not None:
-                df = df.join(df_nav[['unit_nav']], how='left')
-                df['unit_nav'] = df['unit_nav'].ffill()
-                df['discount_rate'] = (df['unit_nav'] - df['close']) / df['unit_nav']
-                disc = df['discount_rate'].dropna()
-
-                if len(disc) > 0:
-                    m['latest_discount_rate'] = disc.iloc[-1]
-
-                    disc_1y = disc[disc.index >= (end_date - timedelta(days=365))]
-                    if len(disc_1y) > 1:
-                        m['discount_quantile_1y'] = disc_1y.rank(pct=True).iloc[-1]
-
-                    disc_3y = disc[disc.index >= (end_date - timedelta(days=3 * 365))]
-                    if len(disc_3y) > 1:
-                        m['discount_quantile_3y'] = disc_3y.rank(pct=True).iloc[-1]
-
-                    if len(disc) > 5:
-                        m['change_5d_discount']  = disc.iloc[-1] - disc.iloc[-6]
-                    if len(disc) > 10:
-                        m['change_10d_discount'] = disc.iloc[-1] - disc.iloc[-11]
-
-            time.sleep(0.3)
-
-            # ── 3. 超额收益 & 跟踪误差 ───────────────────────────────────
-            bm_code = ETF_TO_BENCHMARK.get(etf_code)
-            if bm_code:
-                pct_index = fetch_index_pct(bm_code, start_str, end_str)
-                if pct_index is not None:
-                    df = df.join(pct_index, how='left')
-                    valid = df[['pct_chg', 'pct_chg_index']].dropna()
-                    if len(valid) > 20:
-                        df['excess_return'] = df['pct_chg'] - df['pct_chg_index']
-                        ex = df['excess_return'].dropna()
-
-                        ex_3y = ex[ex.index >= (end_date - timedelta(days=3 * 365))]
-                        m['excess_return_mean'] = ex_3y.mean()
-                        m['tracking_error']     = ex_3y.std() * np.sqrt(250)
-
-                        m['excess_return_5d_ma']  = ex.rolling(5).mean().iloc[-1]
-                        m['excess_return_10d_ma'] = ex.rolling(10).mean().iloc[-1]
-                        m['excess_return_15d_ma'] = ex.rolling(15).mean().iloc[-1]
-                        m['excess_return_20d_ma'] = ex.rolling(20).mean().iloc[-1]
-
-                        y = np.array([m['excess_return_5d_ma'],  m['excess_return_10d_ma'],
-                                      m['excess_return_15d_ma'], m['excess_return_20d_ma']])
-                        x = np.array([5, 10, 15, 20])
-                        if not np.any(np.isnan(y)):
-                            try:
-                                m['ma_trend_slope'] = np.polyfit(x, y, 1)[0]
-                            except np.linalg.LinAlgError:
-                                pass
-
-                time.sleep(0.3)
-
-            # ── 4. 波动率 & 分位 ─────────────────────────────────────────
-            if 'pct_chg' in df.columns:
-                df['rolling_vol'] = df['pct_chg'].rolling(20).std() * np.sqrt(250)
-                roll_vol = df['rolling_vol'].dropna()
-
-                if len(roll_vol) > 0:
-                    m['annualized_volatility'] = roll_vol.iloc[-1]
-
-                    vol_1y = roll_vol[roll_vol.index >= (end_date - timedelta(days=365))]
-                    if len(vol_1y) > 1:
-                        m['volatility_quantile_1y'] = vol_1y.rank(pct=True).iloc[-1]
-
-                    vol_3y = roll_vol[roll_vol.index >= (end_date - timedelta(days=3 * 365))]
-                    if len(vol_3y) > 1:
-                        m['volatility_quantile_3y'] = vol_3y.rank(pct=True).iloc[-1]
-
-                    if len(roll_vol) >= 20:
-                        y = roll_vol.iloc[-20:].values
-                        x = np.arange(len(y))
-                        try:
-                            m['volatility_slope'] = np.polyfit(x, y, 1)[0]
-                        except np.linalg.LinAlgError:
-                            pass
-
-            # ── 5. 最大回撤 & 分位 ───────────────────────────────────────
-            if 'pct_chg' in df.columns:
-                cum  = (1 + df['pct_chg'] / 100).cumprod()
-                peak = cum.cummax()
-                dd   = (peak - cum) / peak
-                m['max_drawdown'] = dd.max()
-
-                df['rolling_dd'] = dd.rolling(20).max()
-                roll_dd = df['rolling_dd'].dropna()
-
-                if len(roll_dd) > 0:
-                    dd_1y = roll_dd[roll_dd.index >= (end_date - timedelta(days=365))]
-                    if len(dd_1y) > 1:
-                        m['max_drawdown_quantile_1y'] = dd_1y.rank(pct=True).iloc[-1]
-
-                    dd_3y = roll_dd[roll_dd.index >= (end_date - timedelta(days=3 * 365))]
-                    if len(dd_3y) > 1:
-                        m['max_drawdown_quantile_3y'] = dd_3y.rank(pct=True).iloc[-1]
-
-                    if len(roll_dd) >= 20:
-                        y = roll_dd.iloc[-20:].values
-                        x = np.arange(len(y))
-                        try:
-                            m['max_drawdown_slope'] = np.polyfit(x, y, 1)[0]
-                        except np.linalg.LinAlgError:
-                            pass
-
-            # ── 6. 换手（成交额）& 背离 ──────────────────────────────────
-            if 'amount' in df.columns:
-                df_weekly  = df['amount'].resample('W').sum()
-                df_monthly = df['amount'].resample('ME').sum()
-
-                amt_1y = df['amount'][df.index >= (end_date - timedelta(days=365))]
-                m['turnover_rate'] = amt_1y.mean() if len(amt_1y) > 0 else np.nan
-
-                if len(df_weekly) > 0:
-                    m['turnover_ratio_1w'] = df_weekly.iloc[-1]
-                if len(df_monthly) > 0:
-                    m['turnover_ratio_1m'] = df_monthly.iloc[-1]
-
-                if len(df_weekly) >= 5:
-                    avg_4w = df_weekly.iloc[-5:-1].mean()
-                    if avg_4w > 0:
-                        m['turnover_acceleration'] = df_weekly.iloc[-1] / avg_4w
-
-                if len(df_weekly) >= 52:
-                    m['turnover_quantile'] = df_weekly.iloc[-52:].rank(pct=True).iloc[-1]
-
-                price_chg_5d, turnover_chg_1w = 0.0, 0.0
-                if len(df) >= 6:
-                    price_chg_5d = (df['close'].iloc[-1] - df['close'].iloc[-6]) / df['close'].iloc[-6]
-                if len(df_weekly) >= 2:
-                    turnover_chg_1w = df_weekly.iloc[-1] - df_weekly.iloc[-2]
-
-                m['is_price_turnover_divergence'] = int(
-                    np.sign(price_chg_5d) != np.sign(turnover_chg_1w)
-                )
-
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        for m, price_s in executor.map(_process_single_etf, args_list):
             results.append(m)
-            print(f"  完成: 折价={m['latest_discount_rate']:.4f}, "
-                  f"波动={m['annualized_volatility']:.4f}, "
-                  f"换手分位={m['turnover_quantile']}, "
-                  f"背离={m['is_price_turnover_divergence']}")
-
-        except Exception as e:
-            print(f"  错误 ({etf_code}): {e}")
-            results.append(m)
+            if price_s is not None:
+                price_frames.append(price_s)
 
     if price_frames:
         price_df = pd.concat(price_frames, axis=1).sort_index()
