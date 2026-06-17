@@ -43,7 +43,7 @@ ERP_TO_ETF = {
     "931139": "515650.SH",
     "399967": "512660.SH",   # 中证军工
     "931066": "512710.SH",   # 军工龙头
-    "930598": "516150.SH",   # 稀土产业  
+    "930598": "516150.SH",   # 稀土产业
     "930794": None,   # 中美互联网
 }
 
@@ -53,21 +53,17 @@ _metrics_cache = {}
 def load_etf_metrics() -> pd.DataFrame | None:
     if _metrics_cache:
         return _metrics_cache.get("df")
-    
-    import requests, io
-    url = "https://github.com/ChiaraVan1/ETF_data_project/releases/download/latest/simple_etf_metrics.csv"
+
+    local_path = "./simple_etf_metrics.csv"
     try:
-        resp = requests.get(url, timeout=15, allow_redirects=True)  # ← 关键
-        resp.raise_for_status()
-        df = pd.read_csv(io.StringIO(resp.content.decode("utf-8-sig")), index_col="ts_code")
+        df = pd.read_csv(local_path, index_col="ts_code")
+        print(f"✅ 从本地加载 ETF 指标：{local_path}（{len(df)} 条）")
         _metrics_cache["df"] = df
         return df
-    except requests.HTTPError as e:
-        print(f"⚠️ ETF 指标文件下载失败（HTTP {e.response.status_code}）：{url}\n   ETF 执行质量模块将跳过，不影响主报告。")
-    except requests.RequestException as e:
-        print(f"⚠️ ETF 指标文件网络请求失败：{e}\n   ETF 执行质量模块将跳过，不影响主报告。")
+    except FileNotFoundError:
+        print("⚠️ 未找到 simple_etf_metrics.csv，ETF 执行质量模块将跳过，不影响主报告。")
     except Exception as e:
-        print(f"⚠️ ETF 指标文件加载异常：{e}\n   ETF 执行质量模块将跳过，不影响主报告。")
+        print(f"⚠️ ETF 指标加载失败：{e}，ETF 执行质量模块将跳过，不影响主报告。")
     _metrics_cache["df"] = None
     return None
 
@@ -166,7 +162,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     # ══════════════════════════════════════════════════════
     disc_pct = discount_rate * 100
 
-    # 折溢价当前状态
     if discount_rate < -0.003:
         disc_icon, disc_label = "🟢", f"折价 {disc_pct:.3f}%"
         disc_action = "折价买入，执行成本占优，可直接下单"
@@ -183,7 +178,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
         disc_icon, disc_label = "🔴", f"溢价 {disc_pct:.3f}%"
         disc_action = "溢价偏高，建议等折价窗口或限价委托"
 
-    # 折溢价历史分位
     q1y_pct = discount_q1y * 100
     q3y_pct = discount_q3y * 100
     if discount_q1y <= 0.2:
@@ -195,11 +189,9 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     else:
         q_label = f"🔴 1年{q1y_pct:.0f}%分位 — 历史罕见高溢价，等待"
 
-    # 折溢价变化方向（正值=溢价扩大/折价收窄，负值=折价扩大/溢价收窄）
     d5_str  = f"+{discount_5d_chg*100:.3f}%" if discount_5d_chg >= 0 else f"{discount_5d_chg*100:.3f}%"
     d10_str = f"+{discount_10d_chg*100:.3f}%" if discount_10d_chg >= 0 else f"{discount_10d_chg*100:.3f}%"
     if discount_rate > 0:
-        # 当前是溢价状态
         if discount_5d_chg > 0.001:
             trend_label = "溢价扩大 → 买入成本上升，等折价窗口"
         elif discount_5d_chg < -0.001:
@@ -207,7 +199,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
         else:
             trend_label = "折溢价近期稳定"
     else:
-        # 当前是折价状态
         if discount_5d_chg < -0.001:
             trend_label = "折价扩大 → 买入窗口正在打开"
         elif discount_5d_chg > 0.001:
@@ -218,8 +209,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     # ══════════════════════════════════════════════════════
     # B. 这波量是否真实 — 资金流
     # ══════════════════════════════════════════════════════
-
-    # 资金流分位（近1周成交额在52周分布中的位置）
     tq_pct = turnover_q * 100
     if turnover_q >= 0.8:
         tq_icon, tq_label = "🔥", f"1周成交额在52周中处于{tq_pct:.0f}%分位 — 市场高度活跃"
@@ -228,7 +217,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     else:
         tq_icon, tq_label = "🧊", f"1周成交额在52周中处于{tq_pct:.0f}%分位 — 成交清淡"
 
-    # 资金流加速度（本周 ÷ 本月，正常≈0.25）
     if pd.notna(acceleration):
         acc_pct = acceleration * 100
         if acceleration > 1.6:
@@ -242,7 +230,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     else:
         acc_label = "─ 数据不足"
 
-    # 价格-资金背离
     if divergence:
         div_label = "⚠️ 背离 — 价格走势与成交量方向相反，需警惕假突破/假跌破"
     else:
@@ -251,8 +238,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     # ══════════════════════════════════════════════════════
     # C. 风险水位 / 换只ETF — 波动 + 超额收益
     # ══════════════════════════════════════════════════════
-
-    # 波动率分位
     vol_pct = vol_q1y * 100
     if vol_q1y >= 0.85:
         vol_icon, vol_label = "🔴", f"1年{vol_pct:.0f}%分位 — 波动率历史高位，单次建仓量要小，分批进"
@@ -261,7 +246,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     else:
         vol_icon, vol_label = "🟢", f"1年{vol_pct:.0f}%分位 — 波动率偏低"
 
-    # 回撤分位
     dd_pct = dd_q1y * 100
     if dd_q1y >= 0.85:
         dd_label = f"1年{dd_pct:.0f}%分位 — 已充分下跌，风险较释放 ✅"
@@ -270,7 +254,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     else:
         dd_label = f"1年{dd_pct:.0f}%分位 — 回撤偏小，下行风险未充分释放，别误以为安全 ⚠️"
 
-    # 波动×回撤综合风险结论
     if vol_q1y >= 0.85 and dd_q1y >= 0.7:
         risk_conclusion = "高波动 + 充分回撤 → 适合分批建仓，风险已有释放"
     elif vol_q1y < 0.4 and dd_q1y < 0.3:
@@ -280,8 +263,7 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     else:
         risk_conclusion = "风险水位正常"
 
-    # 超额收益质量（长期持有价值）
-    excess_ann = excess_mean * 250  # 日均 → 年化近似
+    excess_ann = excess_mean * 250
     if excess_mean > 0.01:
         excess_icon, excess_label = "✅", f"年化超额约 +{excess_ann:.1f}% — 长期跑赢基准，值得持有"
     elif excess_mean > 0:
@@ -291,7 +273,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     else:
         excess_icon, excess_label = "🔴", f"年化超额约 {excess_ann:.1f}% — 长期跑输基准，考虑换同指数更优ETF"
 
-    # 超额收益近期动量（MA方向）
     if pd.notna(ma5) and pd.notna(ma20):
         if ma5 > ma20 + 0.001:
             ma_label = "📈 近期超额改善中（5日MA > 20日MA）"
@@ -304,9 +285,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 
     te_label = "⚠️ 偏高，建议关注同类替代品" if tracking_err > 8 else "正常"
 
-    # ══════════════════════════════════════════════════════
-    # 综合执行建议（置顶）
-    # ══════════════════════════════════════════════════════
     alerts = []
     if discount_rate > 0.003:
         alerts.append("溢价偏高→等折价或限价")
@@ -324,7 +302,6 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     else:
         exec_line = "✅ 执行条件正常"
 
-    # MA数值行
     def _ma_str(v):
         return f"{v*100:.4f}%" if pd.notna(v) else "─"
 
