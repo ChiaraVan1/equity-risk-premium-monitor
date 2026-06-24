@@ -387,69 +387,116 @@ HOLDING_CATEGORY = {
 }
 
 
+# ── 动作句生成 ────────────────────────────────────────────────────────────────
+
+def generate_action_sentence(disc, divg, vol, zone_label):
+    """
+    根据 ETF 执行质量信号和估值区间，生成操作动作句。
+
+    参数直接读取已有变量，不重新计算：
+      disc       = etf_discount   （折溢价 emoji）
+      divg       = etf_divergence （量价背离 emoji）
+      vol        = etf_vol        （波动 emoji）
+      zone_label = 估值区间字符串
+    """
+    # 规避区直接返回
+    if zone_label and (zone_label.startswith("🔴") or zone_label.startswith("🚨")):
+        return "规避，不建仓"
+
+    # 前缀：量价背离
+    prefix = "等量能确认，" if divg == "⚠️" else ""
+
+    # 中段：波动
+    if vol == "🔴":
+        mid = "分批建仓"
+    elif vol == "🟠":
+        mid = "可建仓"
+    else:
+        mid = "正常建仓"
+
+    # 后缀：折溢价
+    if disc == "🔴":
+        suffix = "，等折价再入"
+    elif disc in ["💎", "🟢"]:
+        suffix = "，折价窗口开着"
+    else:
+        suffix = ""
+
+    return prefix + mid + suffix
+
+
 def build_summary_block(summary_list: list) -> str:
     if not summary_list:
         return ""
 
     date_str = datetime.now().strftime("%Y-%m-%d")
 
-    def graded_icon(val, thresholds, icons):
-        if val != val:
-            return "─"
-        for t, i in zip(thresholds, icons):
-            if val >= t:
-                return i
-        return icons[-1]
+    def pos_color_class(pct):
+        if pct >= 80: return "pos-high"
+        if pct >= 60: return "pos-mid"
+        if pct >= 40: return "pos-low"
+        return "pos-min"
 
-    win_thresholds  = [0.75, 0.50, 0.25]
-    win_icons       = ["🟢", "🟡", "🟠", "🔴"]
-    odds_thresholds = [1.5,  1.0,  0.5]
-    odds_icons      = ["🟢", "🟡", "🟠", "🔴"]
-
-    def zone_short(z):
-        part = z.split("(")[0].strip()
-        return part.replace(" ", "")
+    # 估值分组定义（顺序即显示顺序）
+    zone_groups = [
+        ("🟢 极度低估", lambda z: z.startswith("🟢 极度低估")),
+        ("🟢 显著低估", lambda z: z.startswith("🟢 显著低估")),
+        ("🟡 合理偏低", lambda z: z.startswith("🟡")),
+        ("🟠 合理区间", lambda z: z.startswith("🟠")),
+        ("🔴 高估/规避", lambda z: z.startswith("🔴") or z.startswith("🚨")),
+    ]
 
     header = f"## 📊 决策仪表盘 · {date_str}"
-    legend  = "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 🟢极高=已超P90\n\n"
-    legend += "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
-    legend += "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n---"
+    legend = (
+        "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 🟢极高=已超P90\n\n"
+        "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
+        "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n---"
+    )
 
-    rows = []
-    for r in summary_list:
-        win  = r.get("win_rate", float("nan"))
-        odds = r.get("odds",     float("nan"))
-        win_str = f"{win:.0%}" if win == win else "─"
+    rows_html = []
+    for group_label, match_fn in zone_groups:
+        group_items = [r for r in summary_list if match_fn(r.get("erp_zone", ""))]
+        if not group_items:
+            continue
 
-        if odds is None:
-            odds_str = "极高"
-            oi = "🟢"
-        elif odds != odds:  # nan
-            odds_str = "─"
-            oi = "─"
-        else:
-            odds_str = f"{odds:.1f}x"
-            oi = graded_icon(odds, odds_thresholds, odds_icons)
-
-        wi   = graded_icon(win, win_thresholds, win_icons)
-        zone = zone_short(r.get("erp_zone", "─"))
-        pos  = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}={r['total_pct']}%"
-
-        # ETF 执行质量三信号
-        disc = r.get("etf_discount",   "─")
-        divg = r.get("etf_divergence", "─")
-        vol  = r.get("etf_vol",        "─")
-
-        cat = HOLDING_CATEGORY.get(r.get("code", ""), "")
-        cat_str = f" [{cat}]" if cat else ""
-        rows.append(
-            f"{r['name']} {zone} · 胜{wi}{win_str} 赔{oi}{odds_str}"
-            f" · 折{disc} 量{divg} 波{vol}"
-            f" · 仓{pos}{cat_str}"
+        rows_html.append(
+            f'<tr><td colspan="4" class="section-header">{group_label}</td></tr>'
         )
 
-    body = "\n\n".join(rows)
-    return f"{header}\n{legend}\n\n{body}\n\n---\n"
+        for r in group_items:
+            code = r.get("code", "")
+            etf_ticker  = ERP_TO_ETF.get(code, "─")
+            etf_display = etf_ticker.split(".")[0] if "." in str(etf_ticker) else str(etf_ticker)
+
+            total_pct     = r["total_pct"]
+            pos_cls       = pos_color_class(total_pct)
+            pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
+
+            disc       = r.get("etf_discount",   "─")
+            divg       = r.get("etf_divergence", "─")
+            vol        = r.get("etf_vol",        "─")
+            zone_label = r.get("erp_zone", "")
+
+            action  = generate_action_sentence(disc, divg, vol, zone_label)
+            cat     = HOLDING_CATEGORY.get(code, "")
+            cat_str = f" [{cat}]" if cat else ""
+
+            rows_html.append(
+                f'<tr>'
+                f'<td class="col-name">{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
+                f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
+                f'<td class="col-sig">{divg}&nbsp;{vol}&nbsp;{disc}</td>'
+                f'<td class="col-action">{action}{cat_str}</td>'
+                f'</tr>'
+            )
+
+    table_html = (
+        '<table class="dashboard-table">\n'
+        + "\n".join(rows_html)
+        + "\n</table>"
+    )
+
+    return f"{header}\n{legend}\n\n{table_html}\n\n---\n"
 
 
 LEGEND_BLOCK = """
@@ -522,6 +569,9 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
                 html_lines.append('<hr>')
             elif line.strip() == "":
                 html_lines.append('<br>')
+            elif line.startswith("<"):
+                # 直通原生 HTML（仪表盘表格等）
+                html_lines.append(line)
             else:
                 html_lines.append(f'<p>{_inline(line)}</p>')
         if in_table:
@@ -560,6 +610,32 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
   pre {{ background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0; }}
   pre code {{ background: none; padding: 0; color: var(--text); }}
   .footer {{ text-align: center; color: var(--muted); font-size: 11px; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); }}
+
+  /* 仪表盘表格 */
+  .dashboard-table {{ width: 100%; border-collapse: collapse; }}
+  .dashboard-table tr {{ border-bottom: 1px solid #21262d; }}
+  .dashboard-table td {{ padding: 10px 8px; vertical-align: middle; }}
+
+  /* 列宽 */
+  .col-name  {{ width: 110px; font-weight: bold; }}
+  .col-etf   {{ color: #8b949e; font-size: 11px; }}
+  .col-pos   {{ width: 64px; text-align: center; font-size: 20px; font-weight: bold; }}
+  .col-sub   {{ font-size: 10px; color: #8b949e; }}
+  .col-sig   {{ width: 100px; }}
+  .col-action {{ font-size: 12px; }}
+
+  /* 仓位颜色 */
+  .pos-high   {{ color: #3fb950; }}
+  .pos-mid    {{ color: #d29922; }}
+  .pos-low    {{ color: #e3b341; }}
+  .pos-min    {{ color: #f85149; }}
+
+  /* 分组标题 */
+  .section-header {{
+    font-size: 10px; color: #8b949e;
+    text-transform: uppercase; letter-spacing: 1px;
+    border-bottom: 1px solid #21262d; padding: 12px 0 5px;
+  }}
 </style>
 </head>
 <body>
@@ -875,10 +951,10 @@ if __name__ == "__main__":
         ("HSTECH", "恒生科技指数"),
         ("399967", "中证军工"),
         ("931066", "军工龙头"),
-        ("930794", "中美互联网"),   
+        ("930794", "中美互联网"),
         ("931946", "畜牧养殖"),   # ← 新增
         ("930598", "稀土产业")
-    
+
     ]
 
     summary_list = []
