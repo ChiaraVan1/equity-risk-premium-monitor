@@ -485,7 +485,7 @@ def build_summary_block(summary_list: list) -> str:
                 f'<tr>'
                 f'<td class="col-name">{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
                 f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
-                f'<td class="col-sig">{divg}&nbsp;{vol}&nbsp;{disc}</td>'
+                f'<td class="col-sig">量{divg}&nbsp;波{vol}&nbsp;折{disc}</td>'
                 f'<td class="col-action">{action}{cat_str}</td>'
                 f'</tr>'
             )
