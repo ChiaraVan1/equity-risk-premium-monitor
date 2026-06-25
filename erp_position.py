@@ -469,8 +469,9 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
                 cat        = HOLDING_CATEGORY.get(r["code"], "")
                 cat_str    = f" [{cat}]" if cat else ""
+                pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
                 lines.append(
-                    f"{r['name']} · {r['total_pct']}% · "
+                    f"\n{r['name']} · {r['total_pct']}%({pos_structure}) · "
                     f"量{divg} 波{vol} 折{disc} · {action}{cat_str}"
                 )
         return "\n".join(lines) + "\n\n---\n"
