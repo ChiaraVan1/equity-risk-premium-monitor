@@ -138,27 +138,274 @@ def load_ps_data():
 # ══════════════════════════════════════════════════════════════════════
 
 def calc_odds(cur_val, val_series):
-    """
-    赔率 = ERP回落盈利空间 / ERP走高亏损空间
-    盈利空间 = 当前ERP - P10  （ERP回落到历史最贵边界的距离）
-    亏损空间 = P90 - 当前ERP  （ERP走高到历史最便宜边界的距离）
-
-    边界处理：
-    - ERP已超P90（极度低估）：downside<=0，返回None
-    - ERP已破P10（极度高估）：upside<=0，返回0.0
-    """
     p10_val = val_series.quantile(0.10)
     p90_val = val_series.quantile(0.90)
 
-    upside   = cur_val - p10_val   # ERP回落盈利空间
-    downside = p90_val - cur_val   # ERP走高亏损空间
+    upside   = cur_val - p10_val
+    downside = p90_val - cur_val
 
     if downside <= 0:
-        return None   # 已超P90，极度低估，赔率极高
+        return None
     elif upside <= 0:
-        return 0.0    # 已破P10，极度高估，赔率为零
+        return 0.0
     else:
         return upside / downside
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  【新增】ERP 斜率信号模块
+# ══════════════════════════════════════════════════════════════════════
+
+_SLOPE_EXTREME_THRESHOLD = 0.02   # 20日内ERP绝对变化 >= 2% 视为极陡
+
+
+def compute_erp_slope_signal(erp_series: pd.Series) -> dict:
+    if len(erp_series) < 21:
+        return {"slope_20d": np.nan, "delta_20d": np.nan,
+                "signal": "数据不足", "signal_icon": "─", "desc": ""}
+
+    recent = erp_series.dropna().iloc[-21:]
+    x = np.arange(len(recent))
+    slope = np.polyfit(x, recent.values, 1)[0]
+    delta = recent.iloc[-1] - recent.iloc[0]
+
+    if delta >= _SLOPE_EXTREME_THRESHOLD:
+        signal, signal_icon = "恐慌踩踏", "🚨"
+        desc = (f"近20日ERP急速飙升 {delta:.2%}（斜率 {slope*100:.3f}%/日）"
+                "— 市场处于恐慌抛售期，PE急速压缩，历史上往往是买点临近的强化信号，但需警惕基本面是否同步恶化。")
+    elif delta >= _SLOPE_EXTREME_THRESHOLD * 0.4:
+        signal, signal_icon = "估值快速改善", "🟢"
+        desc = (f"近20日ERP持续走高 {delta:.2%}（斜率 {slope*100:.3f}%/日）"
+                "— 估值快速修复，买入窗口正在打开。")
+    elif delta <= -_SLOPE_EXTREME_THRESHOLD:
+        signal, signal_icon = "情绪过热", "⚠️"
+        desc = (f"近20日ERP急速坠落 {delta:.2%}（斜率 {slope*100:.3f}%/日）"
+                "— 市场情绪快速升温，估值泡沫化加速，警戒高位。")
+    elif delta <= -_SLOPE_EXTREME_THRESHOLD * 0.4:
+        signal, signal_icon = "估值快速恶化", "🟠"
+        desc = (f"近20日ERP持续走低 {delta:.2%}（斜率 {slope*100:.3f}%/日）"
+                "— 估值向贵的方向漂移，需提高警惕。")
+    else:
+        signal, signal_icon = "横盘震荡", "🟡"
+        desc = (f"近20日ERP变化 {delta:+.2%}（斜率 {slope*100:.3f}%/日）"
+                "— 估值无明显趋势，保持既有仓位。")
+
+    return {"slope_20d": slope, "delta_20d": delta,
+            "signal": signal, "signal_icon": signal_icon, "desc": desc}
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  【新增】减仓信号模块
+# ══════════════════════════════════════════════════════════════════════
+
+ETF_PRICE_PATH = "./data/etf_price.csv"
+_ETF_PRICE_CACHE = {}
+
+
+def _load_etf_price_series(erp_code: str):
+    global _ETF_PRICE_CACHE
+    if "df" not in _ETF_PRICE_CACHE:
+        if not os.path.exists(ETF_PRICE_PATH):
+            return None
+        try:
+            df = pd.read_csv(ETF_PRICE_PATH, index_col=0, parse_dates=True)
+            _ETF_PRICE_CACHE["df"] = df
+        except Exception:
+            return None
+    df = _ETF_PRICE_CACHE.get("df")
+    if df is None or erp_code not in df.columns:
+        return None
+    return df[erp_code].dropna()
+
+
+def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str:
+    price_s = _load_etf_price_series(erp_code)
+
+    if price_s is None or len(price_s) < 5:
+        return "\n> ⚠️ 减仓信号：无ETF价格数据，跳过。\n"
+
+    # 低估区门控
+    if current_erp_percentile >= 0.50:
+        return f"""
+---
+### 减仓 / 清仓信号
+
+> 🛡️ **低估区保护（ERP ≥ P50，当前分位 {current_erp_percentile:.0%}）**
+> 均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。
+> 减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。
+"""
+
+    cur_price    = price_s.iloc[-1]
+    lookback     = min(120, len(price_s))
+    recent_high  = price_s.iloc[-lookback:].max()
+    drawdown_from_high = (cur_price - recent_high) / recent_high
+
+    ma20  = price_s.iloc[-min(20,  len(price_s)):].mean() if len(price_s) >= 5  else np.nan
+    ma120 = price_s.iloc[-min(120, len(price_s)):].mean() if len(price_s) >= 30 else np.nan
+
+    below_ma20  = cur_price < ma20  if pd.notna(ma20)  else False
+    below_ma120 = cur_price < ma120 if pd.notna(ma120) else False
+    dd_pct      = drawdown_from_high * 100
+
+    alerts    = []
+    max_level = 0
+
+    if drawdown_from_high <= -0.10 and below_ma20:
+        alerts.append(f"回撤 {dd_pct:.1f}%（≥10%）且跌破20日均线（MA20={ma20:.3f}）")
+        max_level = max(max_level, 1)
+    if drawdown_from_high <= -0.20:
+        alerts.append(f"回撤 {dd_pct:.1f}%（≥20%），已触发强制清仓阈值")
+        max_level = max(max_level, 2)
+    if below_ma120 and pd.notna(ma120):
+        alerts.append(f"跌破120日均线（MA120={ma120:.3f}，当前={cur_price:.3f}）")
+        max_level = max(max_level, 2)
+
+    ma20_str  = f"{ma20:.3f}"  if pd.notna(ma20)  else "─"
+    ma120_str = f"{ma120:.3f}" if pd.notna(ma120) else "─"
+
+    if max_level == 0:
+        level_line = "✅ **无减仓信号** — 价格结构健康，持仓不动"
+    elif max_level == 1:
+        level_line = "⚠️ **第一次减仓预警** — 建议酌情减持部分仓位"
+    else:
+        level_line = "🚨 **强烈清仓预警**" if len(alerts) >= 2 else "🔴 **清仓预警** — 趋势破坏，建议清仓"
+
+    alerts_md = "\n".join(f"  - {a}" for a in alerts) if alerts else "  - 无"
+
+    return f"""
+---
+### 减仓 / 清仓信号
+
+> ⚡ ERP当前分位 {current_erp_percentile:.0%}（< P50），价格信号已激活
+
+{level_line}
+
+| 指标 | 数值 | 状态 |
+|:-----|-----:|:-----|
+| 当前价格 | {cur_price:.3f} | ─ |
+| 近期最高（120日内） | {recent_high:.3f} | ─ |
+| 从高点回撤 | **{dd_pct:.1f}%** | {"🔴 ≥20%" if drawdown_from_high <= -0.20 else ("⚠️ ≥10%" if drawdown_from_high <= -0.10 else "✅ <10%")} |
+| MA20 | {ma20_str} | {"🔴 跌破" if below_ma20 else "✅ 站上"} |
+| MA120 | {ma120_str} | {"🔴 跌破" if below_ma120 else "✅ 站上"} |
+
+**触发条件：**
+{alerts_md}
+
+> ⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。
+"""
+
+
+# ══════════════════════════════════════════════════════════════════════
+#  【新增】基本面暴雷预警模块
+# ══════════════════════════════════════════════════════════════════════
+
+_ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
+
+def _fundamental_queries() -> dict:
+    """动态生成搜索词，年份跟随当前年份"""
+    y = datetime.now().year
+    return {
+        "000300": (f"沪深300 基本面 重大风险 监管 暴雷 {y}", f"CSI 300 major risk earnings collapse {y}"),
+        "000688": (f"科创50 基本面 重大风险 监管 退市 {y}", f"STAR50 major risk earnings warning {y}"),
+        "000922": (f"中证红利 分红 基本面 风险 {y}", f"CSI dividend index major risk {y}"),
+        "399989": (f"中证医疗 医药 监管 集采 暴雷 {y}", f"China medical index regulation risk {y}"),
+        "931071": (f"人工智能指数 监管 泡沫 风险 {y}", f"China AI index regulation bubble risk {y}"),
+        "000069": (f"消费80 消费指数 基本面 风险 {y}", f"China consumer index fundamental risk {y}"),
+        "930781": (f"中证影视 监管 票房 基本面 {y}", f"China media entertainment index risk {y}"),
+        "000989": (f"全指可选 消费 基本面 风险 {y}", f"China optional consumer index risk {y}"),
+        "931139": (f"CS消费50 基本面 风险 {y}", f"China consumer 50 index risk {y}"),
+        "SPY":    (f"S&P 500 earnings collapse recession risk {y}", f"标普500 经济衰退 基本面 风险 {y}"),
+        "QQQ":    (f"Nasdaq 100 tech earnings collapse regulation {y}", f"纳斯达克 科技股 监管 暴雷 {y}"),
+        "EWQ":    (f"France stock market fundamental risk recession {y}", f"法国股市 经济 风险 {y}"),
+        "EWG":    (f"Germany stock market fundamental risk recession {y}", f"德国股市 经济 风险 {y}"),
+        "EWJ":    (f"Japan stock market fundamental risk BOJ {y}", f"日本股市 央行 基本面 风险 {y}"),
+        "EEM":    (f"emerging market fundamental risk geopolitical {y}", f"新兴市场 地缘 基本面 风险 {y}"),
+        "HSTECH": (f"恒生科技 监管 互联网 基本面 暴雷 {y}", f"Hang Seng Tech regulation crackdown earnings {y}"),
+        "399967": (f"中证军工 军工 政策 订单 风险 {y}", f"China defense index policy orders risk {y}"),
+        "931066": (f"军工龙头 业绩 基本面 风险 {y}", f"China defense leading stocks earnings risk {y}"),
+        "930794": (f"中美互联网 监管 中美关系 风险 {y}", f"China US internet index regulation geopolitical risk {y}"),
+        "931946": (f"畜牧养殖 猪价 周期 基本面 风险 {y}", f"China livestock index hog price cycle risk {y}"),
+        "930598": (f"稀土产业 政策 出口管制 风险 {y}", f"China rare earth index policy export control risk {y}"),
+    }
+
+
+def build_fundamental_alert_block(code: str, name: str) -> str:
+    queries = _fundamental_queries().get(code)
+    if queries is None:
+        return ""
+
+    query_cn, query_en = queries
+    prompt = f"""你是一位专业的股票基本面分析师。请搜索以下两个查询，判断"{name}({code})"在过去30天内是否存在重大基本面负面事件。
+
+搜索查询1（中文）：{query_cn}
+搜索查询2（英文）：{query_en}
+
+判断标准（以下任一即为"疑似暴雷"）：
+- 核心成分股出现重大财务造假、业绩暴雷、退市风险
+- 行业遭遇超预期强监管、重大政策打压
+- 宏观层面出现系统性风险（如金融危机苗头、主权债务危机）
+- 指数或ETF本身出现清盘、停牌等结构性风险
+
+请严格按以下JSON格式输出，不要输出任何其他内容：
+{{"alert_level": "正常" | "关注" | "疑似暴雷", "confidence": "低" | "中" | "高", "summary": "不超过80字的摘要", "sources": ["来源1", "来源2"]}}"""
+
+    try:
+        import json
+        payload = {
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 1000,
+            "tools": [{"type": "web_search_20250305", "name": "web_search"}],
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
+            "anthropic-version": "2023-06-01",
+        }
+        resp = requests.post(_ANTHROPIC_API_URL, json=payload, headers=headers, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+
+        text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
+        raw_text    = "\n".join(text_blocks).strip().replace("```json", "").replace("```", "").strip()
+        result      = json.loads(raw_text)
+
+        alert_level = result.get("alert_level", "正常")
+        confidence  = result.get("confidence", "低")
+        summary     = result.get("summary", "")
+        sources     = result.get("sources", [])
+
+        if alert_level == "疑似暴雷":
+            level_icon = "🚨"
+            action_tip = "**⚠️ 需人工确认后才可触发减仓/清仓操作，请立即核查。**"
+        elif alert_level == "关注":
+            level_icon = "⚠️"
+            action_tip = "建议持续关注，暂不需要立即操作。"
+        else:
+            level_icon = "✅"
+            action_tip = "近期无重大基本面异常。"
+
+        sources_md = "\n".join(f"  - {s}" for s in sources) if sources else "  - 无"
+
+        return f"""
+---
+### 基本面暴雷预警（AI辅助，需人工确认）
+
+> 🤖 搜索近30天新闻。**本模块仅供参考，不自动触发任何交易动作。**
+
+{level_icon} **{alert_level}**（置信度：{confidence}）
+
+{action_tip}
+
+**摘要：** {summary}
+
+**参考来源：**
+{sources_md}
+"""
+    except requests.exceptions.Timeout:
+        return "\n> ⚠️ 基本面预警：API请求超时，跳过。\n"
+    except Exception as e:
+        return f"\n> ⚠️ 基本面预警：发生异常（{e}），跳过。\n"
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -200,10 +447,7 @@ def build_unified_valuation_block(df, code):
     p10_val = val_series.quantile(0.10)
     p90_val = val_series.quantile(0.90)
 
-    # 胜率
-    win_rate = (val_series < cur_val).mean()
-
-    # 赔率（ERP绝对值法）
+    win_rate   = (val_series < cur_val).mean()
     odds_ratio = calc_odds(cur_val, val_series)
     if odds_ratio is None:
         odds_str = "极高（已超P90极度低估区）"
@@ -213,7 +457,6 @@ def build_unified_valuation_block(df, code):
     upside   = cur_val - p10_val
     downside = p90_val - cur_val
 
-    # 估值区间
     if win_rate >= 0.90:
         zone_icon, zone_name = "🟢", "极度低估"
     elif win_rate >= 0.75:
@@ -227,7 +470,6 @@ def build_unified_valuation_block(df, code):
     else:
         zone_icon, zone_name = "🚨", "危险泡沫"
 
-    # 综合评级
     if odds_ratio is None:
         rating = "🟢 已进入极度低估区，极佳买点"
     elif odds_ratio == 0.0:
@@ -277,6 +519,9 @@ def build_trend_block(df, erp_series, code, quantiles):
         recent_psy = ps_df[ps_df["psy"].notna()][["ps", "psy"]].tail(10)
         if len(recent_psy) < 2:
             return ""
+
+        slope_info = compute_erp_slope_signal(ps_df["psy"].dropna())
+
         psy_rows = []
         prev_psy = None
         for d, r in recent_psy.iterrows():
@@ -290,6 +535,8 @@ def build_trend_block(df, erp_series, code, quantiles):
 ---
 ### 近10月 PSY 趋势（营收口径）
 
+> 📐 近20日斜率信号：{slope_info['signal_icon']} **{slope_info['signal']}** — {slope_info['desc']}
+
 | 月份 | PS | PSY | 环比 |
 |:-----|---:|----:|:-----|
 {chr(10).join(psy_rows)}
@@ -298,6 +545,8 @@ def build_trend_block(df, erp_series, code, quantiles):
     valid = df[df['ERP'].notna()][['Date', 'ERP', 'PE']].copy()
     if len(valid) < 2:
         return ""
+
+    slope_info = compute_erp_slope_signal(erp_series)
 
     valid['YM'] = valid['Date'].dt.to_period('M')
     month_end = valid.groupby('YM').last().reset_index(drop=True)
@@ -344,24 +593,23 @@ def build_trend_block(df, erp_series, code, quantiles):
 
     rows_md = "\n".join(rows)
 
-    block = f"""
+    return f"""
 ---
 ### 近10月 ERP 趋势
 
 > 趋势方向：**{trend_icon}**，区间变化：**{delta_str}**
+> 📐 近20日斜率信号：{slope_info['signal_icon']} **{slope_info['signal']}** — {slope_info['desc']}
 
 | 月份 | PE | ERP | 环比变化 |
 |:-----|---:|----:|:---------|
 {rows_md}
 """
-    return block
 
 
 # ══════════════════════════════════════════════════════════════════════
 #  仪表盘 & 图例
 # ══════════════════════════════════════════════════════════════════════
 
-# ── 持仓分类映射 ──────────────────────────────────────────────────────────────
 HOLDING_CATEGORY = {
     "000300": "低估-宽基",
     "000688": "科技-A股",
@@ -387,41 +635,22 @@ HOLDING_CATEGORY = {
 }
 
 
-# ── 动作句生成 ────────────────────────────────────────────────────────────────
-
 def generate_action_sentence(disc, divg, vol, zone_label):
-    """
-    根据 ETF 执行质量信号和估值区间，生成操作动作句。
-
-    参数直接读取已有变量，不重新计算：
-      disc       = etf_discount   （折溢价 emoji）
-      divg       = etf_divergence （量价背离 emoji）
-      vol        = etf_vol        （波动 emoji）
-      zone_label = 估值区间字符串
-    """
-    # 规避区直接返回
     if zone_label and (zone_label.startswith("🔴") or zone_label.startswith("🚨")):
         return "规避，不建仓"
-
-    # 前缀：量价背离
     prefix = "等量能确认，" if divg == "⚠️" else ""
-
-    # 中段：波动
     if vol == "🔴":
         mid = "分批建仓"
     elif vol == "🟠":
         mid = "建仓，注意分批"
     else:
         mid = "一次建仓"
-
-    # 后缀：折溢价
     if disc == "🔴":
         suffix = "，等折价再入"
     elif disc in ["💎", "🟢"]:
         suffix = "，折价窗口开着"
     else:
         suffix = ""
-
     return prefix + mid + suffix
 
 
@@ -437,7 +666,6 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         if pct >= 40: return "pos-low"
         return "pos-min"
 
-    # 估值分组定义（顺序即显示顺序）
     zone_groups = [
         ("🟢 极度低估", lambda z: z.startswith("🟢 极度低估")),
         ("🟢 显著低估", lambda z: z.startswith("🟢 显著低估")),
@@ -450,11 +678,12 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
     legend = (
         "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 🟢极高=已超P90\n\n"
         "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
+        "ERP斜率：🚨恐慌踩踏 🟢快速改善 ⚠️情绪过热 🟠快速恶化 🟡横盘\n\n"
+        "减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强烈清仓 🛡️低估区保护\n\n"
         "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n---"
     )
 
     if output_format == "markdown":
-        # 纯文本版，用于微信推送
         lines = [header, "", legend, ""]
         for group_label, match_fn in zone_groups:
             group_items = [r for r in summary_list if match_fn(r.get("erp_zone", ""))]
@@ -465,6 +694,8 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 disc       = r.get("etf_discount",   "─")
                 divg       = r.get("etf_divergence", "─")
                 vol        = r.get("etf_vol",        "─")
+                slope_sig  = r.get("slope_signal",   "─")
+                exit_sig   = r.get("exit_signal",    "─")
                 zone_label = r.get("erp_zone", "")
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
                 cat        = HOLDING_CATEGORY.get(r["code"], "")
@@ -472,55 +703,49 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
                 lines.append(
                     f"\n{r['name']} · {r['total_pct']}%({pos_structure}) · "
-                    f"量{divg} 波{vol} 折{disc} · {action}{cat_str}"
+                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_sig} · {action}{cat_str}"
                 )
         return "\n".join(lines) + "\n\n---\n"
 
     else:
-        # HTML表格版，用于report.html
         rows_html = []
         for group_label, match_fn in zone_groups:
             group_items = [r for r in summary_list if match_fn(r.get("erp_zone", ""))]
             if not group_items:
                 continue
-
             rows_html.append(
-                f'<tr><td colspan="4" class="section-header">{group_label}</td></tr>'
+                f'<tr><td colspan="5" class="section-header">{group_label}</td></tr>'
             )
-
             for r in group_items:
                 code        = r.get("code", "")
                 etf_ticker  = ERP_TO_ETF.get(code, "─")
                 etf_display = etf_ticker.split(".")[0] if "." in str(etf_ticker) else str(etf_ticker)
-
                 total_pct     = r["total_pct"]
                 pos_cls       = pos_color_class(total_pct)
                 pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
-
                 disc       = r.get("etf_discount",   "─")
                 divg       = r.get("etf_divergence", "─")
                 vol        = r.get("etf_vol",        "─")
+                slope_sig  = r.get("slope_signal",   "─")
+                exit_sig   = r.get("exit_signal",    "─")
                 zone_label = r.get("erp_zone", "")
-
-                action  = generate_action_sentence(disc, divg, vol, zone_label)
-                cat     = HOLDING_CATEGORY.get(code, "")
-                cat_str = f" [{cat}]" if cat else ""
-
+                action     = generate_action_sentence(disc, divg, vol, zone_label)
+                cat        = HOLDING_CATEGORY.get(code, "")
+                cat_str    = f" [{cat}]" if cat else ""
                 rows_html.append(
                     f'<tr>'
                     f'<td class="col-name">{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
                     f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
                     f'<td class="col-sig">量{divg}&nbsp;波{vol}&nbsp;折{disc}</td>'
+                    f'<td class="col-sig2">斜{slope_sig}&nbsp;仓{exit_sig}</td>'
                     f'<td class="col-action">{action}{cat_str}</td>'
                     f'</tr>'
                 )
-
         table_html = (
             '<table class="dashboard-table">\n'
             + "\n".join(rows_html)
             + "\n</table>"
         )
-
         return f"{header}\n{legend}\n\n{table_html}\n\n---\n"
 
 
@@ -540,7 +765,6 @@ REPORT_URL = "https://chiaravan1.github.io/equity-risk-premium-monitor/report.ht
 
 
 def markdown_to_html(md_text: str, date_str: str) -> str:
-    """将完整 Markdown 报告转为独立 HTML（内嵌样式，无外部依赖）"""
     import re
 
     def _inline(text):
@@ -595,7 +819,6 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
             elif line.strip() == "":
                 html_lines.append('<br>')
             elif line.startswith("<"):
-                # 直通原生 HTML（仪表盘表格等）
                 html_lines.append(line)
             else:
                 html_lines.append(f'<p>{_inline(line)}</p>')
@@ -635,27 +858,20 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
   pre {{ background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0; }}
   pre code {{ background: none; padding: 0; color: var(--text); }}
   .footer {{ text-align: center; color: var(--muted); font-size: 11px; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); }}
-
-  /* 仪表盘表格 */
   .dashboard-table {{ width: 100%; border-collapse: collapse; }}
   .dashboard-table tr {{ border-bottom: 1px solid #21262d; }}
   .dashboard-table td {{ padding: 10px 8px; vertical-align: middle; border: none; }}
-
-  /* 列宽 */
   .col-name  {{ width: 110px; font-weight: bold; }}
   .col-etf   {{ color: #8b949e; font-size: 11px; }}
   .col-pos   {{ width: 64px; text-align: center; font-size: 20px; font-weight: bold; }}
   .col-sub   {{ font-size: 10px; color: #8b949e; }}
   .col-sig   {{ width: 120px; }}
+  .col-sig2  {{ width: 80px; }}
   .col-action {{ font-size: 12px; }}
-
-  /* 仓位颜色 */
   .pos-high   {{ color: #3fb950; }}
   .pos-mid    {{ color: #d29922; }}
   .pos-low    {{ color: #e3b341; }}
   .pos-min    {{ color: #f85149; }}
-
-  /* 分组标题 */
   .section-header {{
     font-size: 10px; color: #8b949e;
     text-transform: uppercase; letter-spacing: 1px;
@@ -675,7 +891,6 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
 
 
 def save_html_report(full_report_md: str, date_str: str):
-    """保存完整报告为 HTML 到 ./docs/report.html"""
     os.makedirs("./docs", exist_ok=True)
     html = markdown_to_html(full_report_md, date_str)
     with open("./docs/report.html", "w", encoding="utf-8") as f:
@@ -684,7 +899,6 @@ def save_html_report(full_report_md: str, date_str: str):
 
 
 def send_to_wechat(summary_md: str, date_str: str):
-    """只推送仪表盘 + 完整报告链接，避免超出方糖字段长度限制"""
     sct_key = os.getenv("SCT_KEY")
     if not sct_key:
         print("⚠️ 未找到 SCT_KEY，推送跳过。")
@@ -722,7 +936,6 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 
     mean_erp = erp_series.mean()
 
-    # 欧日美负利率指数，用2022年后数据做锚
     if code in ('EWQ', 'EWG', 'EWJ', 'SPY', 'QQQ'):
         anchor = df[df['Date'] >= pd.Timestamp('2022-01-01')]['ERP'].dropna()
         if len(anchor) >= 30:
@@ -753,7 +966,6 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     else:
         erp_zone = "🚨 危险泡沫 (<P10)"
 
-    # HSTECH：用 PSY 数据覆盖
     _hstech_psy_s = None
     if code == "HSTECH":
         _ps_df = load_ps_data()
@@ -798,7 +1010,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 
     total_pct = v_pct + b_pct + t_pct
 
-    # ── 胜率/赔率（供 summary_list 使用）─────────────────────────────
+    # ── 胜率/赔率 ─────────────────────────────────────────────────────
     if code == "HSTECH":
         _psy_s = _hstech_psy_s
         if _psy_s is not None:
@@ -819,22 +1031,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
         _odds = calc_odds(current_erp, erp_series)
 
     # ── ETF折溢价执行信号 ─────────────────────────────────────────────
-    _etf_signal = "─"
-    if etf_df is not None:
-        try:
-            _ts = ERP_TO_ETF.get(code)
-            if _ts and _ts in etf_df.index:
-                _prem = float(etf_df.loc[_ts].get("latest_discount_rate", float("nan")))
-                if _prem == _prem:
-                    if   _prem < -0.02:  _etf_signal = "💎"
-                    elif _prem < -0.005: _etf_signal = "🟢"
-                    elif _prem <  0.005: _etf_signal = "🟡"
-                    elif _prem <  0.02:  _etf_signal = "🟠"
-                    else:                _etf_signal = "🔴"
-        except Exception:
-            pass
-
-    # ── ETF 执行质量三信号 ────────────────────────────────────────────
+    _etf_signal            = "─"
     _etf_discount_signal   = "─"
     _etf_divergence_signal = "─"
     _etf_vol_signal        = "─"
@@ -842,23 +1039,17 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
         try:
             _ts = ERP_TO_ETF.get(code)
             if _ts and _ts in etf_df.index:
-                _row = etf_df.loc[_ts]
-
-                # 折溢价
+                _row  = etf_df.loc[_ts]
                 _prem = float(_row.get("latest_discount_rate", float("nan")))
                 if _prem == _prem:
-                    if   _prem < -0.02:  _etf_discount_signal = "💎"
-                    elif _prem < -0.005: _etf_discount_signal = "🟢"
-                    elif _prem <  0.005: _etf_discount_signal = "🟡"
-                    elif _prem <  0.02:  _etf_discount_signal = "🟠"
-                    else:                _etf_discount_signal = "🔴"
-
-                # 量价背离
+                    if   _prem < -0.02:  _etf_signal = _etf_discount_signal = "💎"
+                    elif _prem < -0.005: _etf_signal = _etf_discount_signal = "🟢"
+                    elif _prem <  0.005: _etf_signal = _etf_discount_signal = "🟡"
+                    elif _prem <  0.02:  _etf_signal = _etf_discount_signal = "🟠"
+                    else:                _etf_signal = _etf_discount_signal = "🔴"
                 _div = _row.get("is_price_turnover_divergence", float("nan"))
                 if _div == _div:
                     _etf_divergence_signal = "⚠️" if int(_div) == 1 else "✅"
-
-                # 波动率分位
                 _vq = float(_row.get("volatility_quantile_1y", float("nan")))
                 if _vq == _vq:
                     if   _vq >= 0.85: _etf_vol_signal = "🔴"
@@ -866,6 +1057,18 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
                     else:             _etf_vol_signal = "🟢"
         except Exception:
             pass
+
+    # ── 斜率信号 ──────────────────────────────────────────────────────
+    slope_info = compute_erp_slope_signal(erp_series)
+
+    # ── 减仓信号 ──────────────────────────────────────────────────────
+    erp_percentile = (erp_series < current_erp).mean()
+    exit_block     = build_exit_signal_block(code, erp_percentile)
+    if "强烈清仓预警" in exit_block:   _exit_signal = "🚨"
+    elif "清仓预警" in exit_block:      _exit_signal = "🔴"
+    elif "减仓预警" in exit_block:      _exit_signal = "⚠️"
+    elif "低估区保护" in exit_block:    _exit_signal = "🛡️"
+    else:                               _exit_signal = "✅"
 
     if summary_list is not None:
         summary_list.append({
@@ -875,10 +1078,12 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
             "b_pct": b_pct, "v_pct": v_pct, "t_pct": t_pct,
             "win_rate": _win,
             "odds": _odds,
-            "etf_signal": _etf_signal,
+            "etf_signal":     _etf_signal,
             "etf_discount":   _etf_discount_signal,
             "etf_divergence": _etf_divergence_signal,
             "etf_vol":        _etf_vol_signal,
+            "slope_signal":   slope_info["signal_icon"],
+            "exit_signal":    _exit_signal,
         })
 
     # ── 报告头部 ──────────────────────────────────────────────────────
@@ -928,10 +1133,12 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 """
 
     # ── 组装各模块 ────────────────────────────────────────────────────
-    unified_block = build_unified_valuation_block(df, code)
-    trend_block   = build_trend_block(df, erp_series, code, quantiles)
-    etf_block     = build_etf_metrics_block(code, etf_df)
-    shiller_block = build_shiller_block(code)
+    unified_block     = build_unified_valuation_block(df, code)
+    trend_block       = build_trend_block(df, erp_series, code, quantiles)
+    exit_block_final  = exit_block
+    fundamental_block = build_fundamental_alert_block(code, name)
+    etf_block         = build_etf_metrics_block(code, etf_df)
+    shiller_block     = build_shiller_block(code)
 
     md = f"""{header_block}
 ---
@@ -942,7 +1149,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 **{t_msg}** ({t_pct}%)
 
 建议总仓位：**{total_pct}%**（泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%）
-{unified_block}{trend_block}{etf_block}{shiller_block}"""
+{unified_block}{trend_block}{exit_block_final}{fundamental_block}{etf_block}{shiller_block}"""
     print(md)
     return md
 
@@ -989,21 +1196,13 @@ if __name__ == "__main__":
         if report_md:
             report_list.append(report_md)
 
-    # 仪表盘排序：估值越低估排越前，同估值区间内按胜率降序
     _zone_order = {
-        "🟢 极度低估": 0,
-        "🟢 显著低估": 1,
-        "🟡 合理偏低": 2,
-        "🟠 合理区间": 3,
-        "🔴 严重高估": 4,
-        "🚨 危险泡沫": 5,
+        "🟢 极度低估": 0, "🟢 显著低估": 1, "🟡 合理偏低": 2,
+        "🟠 合理区间": 3, "🔴 严重高估": 4, "🚨 危险泡沫": 5,
     }
     def _sort_key(r):
         zone_str  = r.get("erp_zone", "")
-        zone_rank = next(
-            (v for k, v in _zone_order.items() if zone_str.startswith(k)),
-            99
-        )
+        zone_rank = next((v for k, v in _zone_order.items() if zone_str.startswith(k)), 99)
         win = r.get("win_rate", 0.0)
         win = win if win == win else 0.0
         return (zone_rank, -win)
@@ -1011,8 +1210,8 @@ if __name__ == "__main__":
     summary_list.sort(key=_sort_key)
 
     if report_list:
-        date_str     = datetime.now().strftime("%Y-%m-%d")
-        summary_html = build_summary_block(summary_list, output_format="html")
+        date_str       = datetime.now().strftime("%Y-%m-%d")
+        summary_html   = build_summary_block(summary_list, output_format="html")
         summary_wechat = build_summary_block(summary_list, output_format="markdown")
 
         full_report = (
@@ -1022,7 +1221,6 @@ if __name__ == "__main__":
             + "".join(report_list)
         )
 
-        # 始终生成 HTML 报告（供 gh-pages 托管）
         save_html_report(full_report, date_str)
 
         if os.getenv("DRY_RUN") == "true":
