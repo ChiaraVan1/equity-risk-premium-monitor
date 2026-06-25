@@ -29,27 +29,21 @@
   pre { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px; overflow-x: auto; margin: 10px 0; }
   pre code { background: none; padding: 0; color: var(--text); }
   .footer { text-align: center; color: var(--muted); font-size: 11px; margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--border); }
-
-  /* 仪表盘表格 */
   .dashboard-table { width: 100%; border-collapse: collapse; }
   .dashboard-table tr { border-bottom: 1px solid #21262d; }
   .dashboard-table td { padding: 10px 8px; vertical-align: middle; border: none; }
-
-  /* 列宽 */
-  .col-name  { width: 110px; font-weight: bold; }
-  .col-etf   { color: #8b949e; font-size: 11px; }
-  .col-pos   { width: 64px; text-align: center; font-size: 20px; font-weight: bold; }
-  .col-sub   { font-size: 10px; color: #8b949e; }
-  .col-sig   { width: 120px; }
+  .col-name   { width: 110px; font-weight: bold; }
+  .col-etf    { color: #8b949e; font-size: 11px; }
+  .col-pos    { width: 64px; text-align: center; font-size: 20px; font-weight: bold; }
+  .col-sub    { font-size: 10px; color: #8b949e; }
+  .col-sig    { width: 120px; }
+  .col-sig2   { width: 80px; }
+  .col-fund   { width: 36px; text-align: center; }
   .col-action { font-size: 12px; }
-
-  /* 仓位颜色 */
   .pos-high   { color: #3fb950; }
   .pos-mid    { color: #d29922; }
   .pos-low    { color: #e3b341; }
   .pos-min    { color: #f85149; }
-
-  /* 分组标题 */
   .section-header {
     font-size: 10px; color: #8b949e;
     text-transform: uppercase; letter-spacing: 1px;
@@ -67,37 +61,43 @@
 <br>
 <p>折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批</p>
 <br>
+<p>ERP斜率：🚨恐慌踩踏 🟢快速改善 ⚠️情绪过热 🟠快速恶化 🟡横盘</p>
+<br>
+<p>减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强烈清仓 🛡️低估区保护</p>
+<br>
+<p>基本面：✅正常 ⚠️关注 🚨疑似暴雷 ─未获取</p>
+<br>
 <p>估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)</p>
 <br>
 <hr>
 <br>
 <table class="dashboard-table">
-<tr><td colspan="4" class="section-header">🟢 极度低估</td></tr>
-<tr><td class="col-name">消费80<br><span class="col-etf">510150</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量⚠️&nbsp;波🟠&nbsp;折─</td><td class="col-action">等量能确认，建仓，注意分批 [低估-消费]</td></tr>
-<tr><td class="col-name">CS消费50<br><span class="col-etf">515650</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-action">分批建仓</td></tr>
-<tr><td class="col-name">中证医疗<br><span class="col-etf">512170</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量✅&nbsp;波🟢&nbsp;折🟢</td><td class="col-action">一次建仓，折价窗口开着 [低估-医疗]</td></tr>
-<tr><td class="col-name">中证军工<br><span class="col-etf">512660</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-action">建仓，注意分批 [低估-军工]</td></tr>
-<tr><td class="col-name">全指可选<br><span class="col-etf">159936</span></td><td class="col-pos pos-high">90%<br><span class="col-sub">30+40+20</span></td><td class="col-sig">量⚠️&nbsp;波🟢&nbsp;折─</td><td class="col-action">等量能确认，一次建仓</td></tr>
-<tr><td colspan="4" class="section-header">🟢 显著低估</td></tr>
-<tr><td class="col-name">恒生科技指数<br><span class="col-etf">513180</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-action">等量能确认，分批建仓 [低估-港股科技]</td></tr>
-<tr><td colspan="4" class="section-header">🟡 合理偏低</td></tr>
-<tr><td class="col-name">稀土产业<br><span class="col-etf">516150</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-action">分批建仓 [低估-资源]</td></tr>
-<tr><td class="col-name">中证红利<br><span class="col-etf">515180</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-action">分批建仓</td></tr>
-<tr><td class="col-name">中证影视<br><span class="col-etf">516620</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟢&nbsp;折🟡</td><td class="col-action">一次建仓</td></tr>
-<tr><td class="col-name">中美互联网<br><span class="col-etf">None</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-action">一次建仓</td></tr>
-<tr><td class="col-name">军工龙头<br><span class="col-etf">512710</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟢&nbsp;折🟡</td><td class="col-action">一次建仓</td></tr>
-<tr><td class="col-name">MSCI France<br><span class="col-etf">513080</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-action">建仓，注意分批</td></tr>
-<tr><td class="col-name">MSCI Germany<br><span class="col-etf">None</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-action">一次建仓</td></tr>
-<tr><td class="col-name">畜牧养殖<br><span class="col-etf">─</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-action">一次建仓</td></tr>
-<tr><td colspan="4" class="section-header">🟠 合理区间</td></tr>
-<tr><td class="col-name">人工智能<br><span class="col-etf">515980</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量⚠️&nbsp;波🟠&nbsp;折🟡</td><td class="col-action">等量能确认，建仓，注意分批</td></tr>
-<tr><td class="col-name">沪深300<br><span class="col-etf">510300</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-action">分批建仓 [低估-宽基]</td></tr>
-<tr><td class="col-name">MSCI Emerging<br><span class="col-etf">None</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-action">一次建仓</td></tr>
-<tr><td class="col-name">S&P 500<br><span class="col-etf">513500</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折💎</td><td class="col-action">建仓，注意分批，折价窗口开着</td></tr>
-<tr><td class="col-name">科创50<br><span class="col-etf">588000</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-action">等量能确认，分批建仓 [科技-A股]</td></tr>
-<tr><td colspan="4" class="section-header">🔴 高估/规避</td></tr>
-<tr><td class="col-name">MSCI Japan<br><span class="col-etf">513880</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折💎</td><td class="col-action">规避，不建仓</td></tr>
-<tr><td class="col-name">Nasdaq 100<br><span class="col-etf">159696</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折💎</td><td class="col-action">规避，不建仓</td></tr>
+<tr><td colspan="6" class="section-header">🟢 极度低估</td></tr>
+<tr><td class="col-name">消费80<br><span class="col-etf">510150</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批 [低估-消费]</td></tr>
+<tr><td class="col-name">CS消费50<br><span class="col-etf">515650</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">等量能确认，分批建仓</td></tr>
+<tr><td class="col-name">中证医疗<br><span class="col-etf">512170</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量✅&nbsp;波🟢&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">一次建仓 [低估-医疗]</td></tr>
+<tr><td class="col-name">中证军工<br><span class="col-etf">512660</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批 [低估-军工]</td></tr>
+<tr><td class="col-name">全指可选<br><span class="col-etf">159936</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量⚠️&nbsp;波🟢&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">等量能确认，一次建仓</td></tr>
+<tr><td colspan="6" class="section-header">🟢 显著低估</td></tr>
+<tr><td class="col-name">恒生科技指数<br><span class="col-etf">513180</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🔴</td><td class="col-sig2">斜🚨&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">等量能确认，分批建仓，等折价再入 [低估-港股科技]</td></tr>
+<tr><td colspan="6" class="section-header">🟡 合理偏低</td></tr>
+<tr><td class="col-name">中证红利<br><span class="col-etf">515180</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面✅</td><td class="col-action">分批建仓</td></tr>
+<tr><td class="col-name">稀土产业<br><span class="col-etf">516150</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批 [低估-资源]</td></tr>
+<tr><td class="col-name">中证影视<br><span class="col-etf">516620</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量⚠️&nbsp;波🟢&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">等量能确认，一次建仓</td></tr>
+<tr><td class="col-name">中美互联网<br><span class="col-etf">None</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🚨&nbsp;仓✅</td><td class="col-fund">面⚠️</td><td class="col-action">一次建仓</td></tr>
+<tr><td class="col-name">军工龙头<br><span class="col-etf">512710</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟢&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面✅</td><td class="col-action">一次建仓</td></tr>
+<tr><td class="col-name">MSCI France<br><span class="col-etf">513080</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批</td></tr>
+<tr><td class="col-name">畜牧养殖<br><span class="col-etf">─</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面⚠️</td><td class="col-action">一次建仓</td></tr>
+<tr><td class="col-name">MSCI Germany<br><span class="col-etf">None</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
+<tr><td colspan="6" class="section-header">🟠 合理区间</td></tr>
+<tr><td class="col-name">沪深300<br><span class="col-etf">510300</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面✅</td><td class="col-action">分批建仓 [低估-宽基]</td></tr>
+<tr><td class="col-name">人工智能<br><span class="col-etf">515980</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批</td></tr>
+<tr><td class="col-name">MSCI Emerging<br><span class="col-etf">None</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
+<tr><td class="col-name">S&P 500<br><span class="col-etf">513500</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折💎</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批，折价窗口开着</td></tr>
+<tr><td class="col-name">科创50<br><span class="col-etf">588000</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面✅</td><td class="col-action">分批建仓 [科技-A股]</td></tr>
+<tr><td colspan="6" class="section-header">🔴 高估/规避</td></tr>
+<tr><td class="col-name">MSCI Japan<br><span class="col-etf">513880</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折💎</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">规避，不建仓</td></tr>
+<tr><td class="col-name">Nasdaq 100<br><span class="col-etf">159696</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折💎</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">规避，不建仓</td></tr>
 </table>
 <br>
 <hr>
@@ -112,8 +112,8 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>4.99%</strong></td><td><strong>🟠 合理区间 (P25-P50)</strong></td></tr>
-<tr><td>历史均值</td><td>4.91%</td><td>3760条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>4.95%</strong></td><td><strong>🟠 合理区间 (P25-P50)</strong></td></tr>
+<tr><td>历史均值</td><td>4.91%</td><td>3761条样本</td></tr>
 </table>
 <br>
 <table>
@@ -139,13 +139,13 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>4.99%</strong>，历史分位 = <strong>45.5%</strong> 🟠 <strong>合理区间</strong></blockquote>
+<blockquote>当前 ERP = <strong>4.95%</strong>，历史分位 = <strong>44.6%</strong> 🟠 <strong>合理区间</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>45.5%</strong></td><td>历史上 45.5% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>1.36x</strong></td><td>盈利空间 2.00% / 亏损空间 1.47%</td></tr>
-<tr><td>当前 PE</td><td>14.8x</td><td>历史均值 12.8x，最高 20.4x，最低 8.6x</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>44.6%</strong></td><td>历史上 44.6% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>1.30x</strong></td><td>盈利空间 1.96% / 亏损空间 1.51%</td></tr>
+<tr><td>当前 PE</td><td>14.9x</td><td>历史均值 12.8x，最高 20.4x，最低 8.6x</td></tr>
 </table>
 <br>
 <p><strong>综合评级：🟠 中性偏弱</strong></p>
@@ -153,7 +153,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>-0.08%</strong></blockquote>
+<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>-0.12%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 -0.16%（斜率 -0.011%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -166,8 +167,44 @@
 <tr><td>2026-03</td><td>13.8x</td><td><strong>5.41%</strong> 🟡</td><td>▲0.20%</td></tr>
 <tr><td>2026-04</td><td>14.6x</td><td><strong>5.10%</strong> 🟠</td><td>▼0.31%</td></tr>
 <tr><td>2026-05</td><td>14.6x</td><td><strong>5.13%</strong> 🟡</td><td>▲0.03%</td></tr>
-<tr><td>2026-06</td><td>14.8x</td><td><strong>4.99%</strong> 🟠</td><td>▼0.14%</td></tr>
+<tr><td>2026-06</td><td>14.9x</td><td><strong>4.95%</strong> 🟠</td><td>▼0.18%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>⚡ ERP当前分位 45%（< P50），价格信号已激活</blockquote>
+<br>
+<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<br>
+<table>
+<tr><td>指标</td><td>数值</td><td>状态</td></tr>
+<tr><td>当前价格</td><td>5.048</td><td>─</td></tr>
+<tr><td>近期最高（120日内）</td><td>5.091</td><td>─</td></tr>
+<tr><td>从高点回撤</td><td><strong>-0.8%</strong></td><td>✅ <10%</td></tr>
+<tr><td>MA20</td><td>4.906</td><td>✅ 站上</td></tr>
+<tr><td>MA120</td><td>4.764</td><td>✅ 站上</td></tr>
+</table>
+<br>
+<p><strong>触发条件：</strong></p>
+<p>  - 无</p>
+<br>
+<blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
+<br>
+<hr>
+<h3>基本面暴雷预警（Serper 实时搜索 + AI 判断，需人工确认）</h3>
+<br>
+<blockquote>🔍 数据源：Serper.dev 实时搜索 + 七牛云 AI 分析。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
+<br>
+<p>✅ <strong>正常</strong>（置信度：中）</p>
+<br>
+<p>近期无重大基本面异常。</p>
+<br>
+<p><strong>摘要：</strong> 截至知识截止日期，沪深300未见系统性重大负面事件。市场存在宏观经济压力、房地产行业持续承压等结构性挑战，但未触发指数级暴雷标准。建议关注实时政策动向及成分股财报披露。</p>
+<br>
+<p><strong>参考来源：</strong></p>
+<p>  - 训练知识库</p>
+<p>  - 无实时新闻数据</p>
 <br>
 <hr>
 <h3>ETF 执行质量（510300.SH）</h3>
@@ -177,24 +214,24 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟠 轻微溢价 0.074%（1年85% / 3年84%分位）— 历史罕见高溢价，等待 → 小幅溢价，可接受，建议挂单而非市价</p>
-<p>- 趋势：5日+0.030% / 10日+0.056% → 折溢价近期稳定</p>
+<p>- 当前：⚪ 平价 -0.016%（1年31% / 3年35%分位）— 折价处于历史中低位 → 平价，无额外成本，可下单</p>
+<p>- 趋势：5日-0.020% / 10日+0.091% → 折溢价近期稳定</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
 <p>- 资金活跃度：🔥 1周成交额在52周中处于94%分位 — 市场高度活跃</p>
-<p>- 资金加速度：🔥 186% — 本周放量明显（正常≈100%），资金加速涌入</p>
+<p>- 资金加速度：🔥 255% — 本周放量明显（正常≈100%），资金加速涌入</p>
 <p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：22.4%，🔴 1年98%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
+<p>- 年化波动率：22.8%，🔴 1年100%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
 <p>- 最大回撤：22.1%，1年44%分位 — 回撤偏小，下行风险未充分释放，别误以为安全 ⚠️</p>
 <p>- 综合风险：波动率高位 → 控制单次建仓量，等波动率回落再加</p>
-<p>- 超额收益：🟡 年化超额约 -0.13% — 轻微跑输，可接受</p>
-<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日-1.0399% / 10日-0.2851% / 20日-0.0517%）</p>
+<p>- 超额收益：🟡 年化超额约 -0.10% — 轻微跑输，可接受</p>
+<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日0.2235% / 10日-1.9746% / 20日0.3247%）</p>
 <p>- 跟踪误差：3.57% 正常</p>
 <br>
 <hr>
@@ -202,8 +239,8 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>-0.70%</strong></td><td><strong>🟠 合理区间 (P25-P50)</strong></td></tr>
-<tr><td>历史均值</td><td>-0.28%</td><td>1502条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>-0.72%</strong></td><td><strong>🟠 合理区间 (P25-P50)</strong></td></tr>
+<tr><td>历史均值</td><td>-0.28%</td><td>1503条样本</td></tr>
 </table>
 <br>
 <table>
@@ -229,13 +266,13 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>-0.70%</strong>，历史分位 = <strong>27.2%</strong> 🟠 <strong>合理区间</strong></blockquote>
+<blockquote>当前 ERP = <strong>-0.72%</strong>，历史分位 = <strong>26.6%</strong> 🟠 <strong>合理区间</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>27.2%</strong></td><td>历史上 27.2% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>0.67x</strong></td><td>盈利空间 1.19% / 亏损空间 1.78%</td></tr>
-<tr><td>当前 PE</td><td>95.3x</td><td>历史均值 52.7x，最高 105.4x，最低 23.4x</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>26.6%</strong></td><td>历史上 26.6% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>0.64x</strong></td><td>盈利空间 1.16% / 亏损空间 1.80%</td></tr>
+<tr><td>当前 PE</td><td>98.7x</td><td>历史均值 52.7x，最高 105.4x，最低 23.4x</td></tr>
 </table>
 <br>
 <p><strong>综合评级：🟠 中性偏弱</strong></p>
@@ -243,7 +280,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>-0.09%</strong></blockquote>
+<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>-0.11%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 -0.21%（斜率 -0.015%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -256,35 +294,71 @@
 <tr><td>2026-03</td><td>67.2x</td><td><strong>-0.33%</strong> 🟠</td><td>▲0.12%</td></tr>
 <tr><td>2026-04</td><td>86.0x</td><td><strong>-0.58%</strong> 🟠</td><td>▼0.26%</td></tr>
 <tr><td>2026-05</td><td>77.7x</td><td><strong>-0.42%</strong> 🟠</td><td>▲0.16%</td></tr>
-<tr><td>2026-06</td><td>95.3x</td><td><strong>-0.70%</strong> 🟠</td><td>▼0.27%</td></tr>
+<tr><td>2026-06</td><td>98.7x</td><td><strong>-0.72%</strong> 🟠</td><td>▼0.30%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>⚡ ERP当前分位 27%（< P50），价格信号已激活</blockquote>
+<br>
+<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<br>
+<table>
+<tr><td>指标</td><td>数值</td><td>状态</td></tr>
+<tr><td>当前价格</td><td>2.178</td><td>─</td></tr>
+<tr><td>近期最高（120日内）</td><td>2.178</td><td>─</td></tr>
+<tr><td>从高点回撤</td><td><strong>0.0%</strong></td><td>✅ <10%</td></tr>
+<tr><td>MA20</td><td>1.872</td><td>✅ 站上</td></tr>
+<tr><td>MA120</td><td>1.604</td><td>✅ 站上</td></tr>
+</table>
+<br>
+<p><strong>触发条件：</strong></p>
+<p>  - 无</p>
+<br>
+<blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
+<br>
+<hr>
+<h3>基本面暴雷预警（Serper 实时搜索 + AI 判断，需人工确认）</h3>
+<br>
+<blockquote>🔍 数据源：Serper.dev 实时搜索 + 七牛云 AI 分析。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
+<br>
+<p>✅ <strong>正常</strong>（置信度：中）</p>
+<br>
+<p>近期无重大基本面异常。</p>
+<br>
+<p><strong>摘要：</strong> 截至训练知识截止日，科创50成分股未出现系统性重大财务造假或退市风险，半导体、生物医药等核心行业虽面临周期波动与国际环境压力，但未见超预期强监管或结构性崩溃风险，指数运行基本正常。</p>
+<br>
+<p><strong>参考来源：</strong></p>
+<p>  - 训练知识库（截至2025年初）</p>
+<p>  - 无实时新闻数据</p>
 <br>
 <hr>
 <h3>ETF 执行质量（588000.SH）</h3>
 <br>
-<p><strong>⚠️ 注意：价格/量背离→确认量能再入 · 波动高位→分批建仓</strong></p>
+<p><strong>⚠️ 注意：波动高位→分批建仓</strong></p>
 <br>
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟠 轻微溢价 0.072%（1年82% / 3年83%分位）— 历史罕见高溢价，等待 → 小幅溢价，可接受，建议挂单而非市价</p>
-<p>- 趋势：5日+0.125% / 10日-0.042% → 溢价扩大 → 买入成本上升，等折价窗口</p>
+<p>- 当前：⚪ 平价 -0.009%（1年47% / 3年49%分位）— 折价处于历史中低位 → 平价，无额外成本，可下单</p>
+<p>- 趋势：5日-0.076% / 10日-0.112% → 折溢价近期稳定</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🟡 1周成交额在52周中处于62%分位 — 活跃度中等</p>
-<p>- 资金加速度：🟠 76% — 本周低于近4周均值，资金动能偏弱</p>
-<p>- 价格/量背离：⚠️ 背离 — 价格走势与成交量方向相反，需警惕假突破/假跌破</p>
+<p>- 资金活跃度：🔥 1周成交额在52周中处于85%分位 — 市场高度活跃</p>
+<p>- 资金加速度：🟡 102% — 本周略高于近4周均值，温和放量</p>
+<p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：51.5%，🔴 1年91%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
+<p>- 年化波动率：51.4%，🔴 1年90%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
 <p>- 最大回撤：36.5%，1年70%分位 — 回撤中等，尚有下行空间</p>
 <p>- 综合风险：波动率高位 → 控制单次建仓量，等波动率回落再加</p>
-<p>- 超额收益：✅ 年化超额约 +0.62% — 微正，跟踪正常</p>
-<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日-2.8399% / 10日-1.9279% / 20日-0.2437%）</p>
+<p>- 超额收益：✅ 年化超额约 +0.64% — 微正，跟踪正常</p>
+<p>- 近期动量：📈 近期超额改善中（5日MA > 20日MA）（MA 5日1.2383% / 10日-1.7379% / 20日0.4491%）</p>
 <p>- 跟踪误差：3.84% 正常</p>
 <br>
 <hr>
@@ -292,8 +366,8 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>10.98%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
-<tr><td>历史均值</td><td>9.43%</td><td>3760条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>11.18%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
+<tr><td>历史均值</td><td>9.43%</td><td>3761条样本</td></tr>
 </table>
 <br>
 <table>
@@ -319,13 +393,13 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>10.98%</strong>，历史分位 = <strong>72.1%</strong> 🟡 <strong>合理偏低</strong></blockquote>
+<blockquote>当前 ERP = <strong>11.18%</strong>，历史分位 = <strong>74.8%</strong> 🟡 <strong>合理偏低</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>72.1%</strong></td><td>历史上 72.1% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>1.81x</strong></td><td>盈利空间 5.01% / 亏损空间 2.77%</td></tr>
-<tr><td>当前 PE</td><td>7.9x</td><td>历史均值 8.3x，最高 14.0x，最低 5.3x</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>74.8%</strong></td><td>历史上 74.8% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>2.03x</strong></td><td>盈利空间 5.21% / 亏损空间 2.56%</td></tr>
+<tr><td>当前 PE</td><td>7.7x</td><td>历史均值 8.3x，最高 14.0x，最低 5.3x</td></tr>
 </table>
 <br>
 <p><strong>综合评级：🟡 胜率中等 + 赔率一般，可参与</strong></p>
@@ -333,7 +407,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+0.37%</strong></blockquote>
+<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+0.58%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.64%（斜率 0.027%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -346,8 +421,30 @@
 <tr><td>2026-03</td><td>8.6x</td><td><strong>9.77%</strong> 🟡</td><td>▼0.58%</td></tr>
 <tr><td>2026-04</td><td>8.6x</td><td><strong>9.84%</strong> 🟡</td><td>▲0.07%</td></tr>
 <tr><td>2026-05</td><td>8.2x</td><td><strong>10.47%</strong> 🟡</td><td>▲0.63%</td></tr>
-<tr><td>2026-06</td><td>7.9x</td><td><strong>10.98%</strong> 🟡</td><td>▲0.51%</td></tr>
+<tr><td>2026-06</td><td>7.7x</td><td><strong>11.18%</strong> 🟡</td><td>▲0.71%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 75%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<hr>
+<h3>基本面暴雷预警（Serper 实时搜索 + AI 判断，需人工确认）</h3>
+<br>
+<blockquote>🔍 数据源：Serper.dev 实时搜索 + 七牛云 AI 分析。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
+<br>
+<p>✅ <strong>正常</strong>（置信度：中）</p>
+<br>
+<p>近期无重大基本面异常。</p>
+<br>
+<p><strong>摘要：</strong> 中证红利指数成分股以高股息央企、银行、能源等传统行业为主，近期未见系统性重大负面事件。红利策略在低利率环境下仍具配置价值，指数运作正常，无清盘或停牌风险。</p>
+<br>
+<p><strong>参考来源：</strong></p>
+<p>  - 训练知识库（截至2025年初）</p>
+<p>  - 中证指数公司公开信息</p>
 <br>
 <hr>
 <h3>ETF 执行质量（515180.SH）</h3>
@@ -357,24 +454,24 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟡 轻微折价 -0.195%（1年5% / 3年5%分位）— 历史少见低折价（买入成本极优） → 小幅折价，正常范围，可下单</p>
-<p>- 趋势：5日-0.101% / 10日-0.273% → 折价扩大 → 买入窗口正在打开</p>
+<p>- 当前：🟡 轻微折价 -0.205%（1年4% / 3年3%分位）— 历史少见低折价（买入成本极优） → 小幅折价，正常范围，可下单</p>
+<p>- 趋势：5日-0.264% / 10日-0.241% → 折价扩大 → 买入窗口正在打开</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🟡 1周成交额在52周中处于65%分位 — 活跃度中等</p>
-<p>- 资金加速度：🟠 62% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 资金活跃度：🔥 1周成交额在52周中处于90%分位 — 市场高度活跃</p>
+<p>- 资金加速度：🟠 83% — 本周低于近4周均值，资金动能偏弱</p>
 <p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：17.5%，🔴 1年85%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
+<p>- 年化波动率：17.7%，🔴 1年86%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
 <p>- 最大回撤：14.9%，1年100%分位 — 已充分下跌，风险较释放 ✅</p>
 <p>- 综合风险：高波动 + 充分回撤 → 适合分批建仓，风险已有释放</p>
 <p>- 超额收益：✅ 年化超额约 +0.18% — 微正，跟踪正常</p>
-<p>- 近期动量：📈 近期超额改善中（5日MA > 20日MA）（MA 5日9.1119% / 10日9.0585% / 20日5.1669%）</p>
+<p>- 近期动量：📈 近期超额改善中（5日MA > 20日MA）（MA 5日9.5689% / 10日7.6222% / 20日5.0587%）</p>
 <p>- 跟踪误差：5.24% 正常</p>
 <br>
 <hr>
@@ -382,13 +479,13 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>2.23%</strong></td><td><strong>🟢 极度低估 (>=P90)</strong></td></tr>
-<tr><td>历史均值</td><td>-0.21%</td><td>2789条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>2.21%</strong></td><td><strong>🟢 极度低估 (>=P90)</strong></td></tr>
+<tr><td>历史均值</td><td>-0.21%</td><td>2790条样本</td></tr>
 </table>
 <br>
 <table>
 <tr><td>分位点</td><td>ERP值（越高越便宜）</td><td>价格估值状态</td></tr>
-<tr><td>P90</td><td>1.71%</td><td>极度低估</td></tr>
+<tr><td>P90</td><td>1.72%</td><td>极度低估</td></tr>
 <tr><td>P75</td><td>1.25%</td><td>显著低估</td></tr>
 <tr><td>P50</td><td>-0.68%</td><td>价值中枢</td></tr>
 <tr><td>P25</td><td>-1.40%</td><td>进入高估</td></tr>
@@ -409,13 +506,13 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>2.23%</strong>，历史分位 = <strong>99.0%</strong> 🟢 <strong>极度低估</strong></blockquote>
+<blockquote>当前 ERP = <strong>2.21%</strong>，历史分位 = <strong>98.8%</strong> 🟢 <strong>极度低估</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>99.0%</strong></td><td>历史上 99.0% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>极高（已超P90极度低估区）</strong></td><td>盈利空间 4.11% / 亏损空间 -0.52%</td></tr>
-<tr><td>当前 PE</td><td>25.1x</td><td>历史均值 43.9x，最高 119.5x，最低 21.6x</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>98.8%</strong></td><td>历史上 98.8% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>极高（已超P90极度低估区）</strong></td><td>盈利空间 4.08% / 亏损空间 -0.49%</td></tr>
+<tr><td>当前 PE</td><td>25.4x</td><td>历史均值 43.9x，最高 119.5x，最低 21.6x</td></tr>
 </table>
 <br>
 <p><strong>综合评级：🟢 已进入极度低估区，极佳买点</strong></p>
@@ -423,7 +520,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+1.13%</strong></blockquote>
+<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+1.10%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.08%（斜率 0.004%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -436,8 +534,17 @@
 <tr><td>2026-03</td><td>28.4x</td><td><strong>1.70%</strong> 🟢</td><td>▲0.19%</td></tr>
 <tr><td>2026-04</td><td>29.3x</td><td><strong>1.67%</strong> 🟢</td><td>▼0.03%</td></tr>
 <tr><td>2026-05</td><td>25.6x</td><td><strong>2.19%</strong> 🟢</td><td>▲0.52%</td></tr>
-<tr><td>2026-06</td><td>25.1x</td><td><strong>2.23%</strong> 🟢</td><td>▲0.04%</td></tr>
+<tr><td>2026-06</td><td>25.4x</td><td><strong>2.21%</strong> 🟢</td><td>▲0.02%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 99%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（512170.SH）</h3>
@@ -447,33 +554,33 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟢 折价 -0.600%（1年0% / 3年0%分位）— 历史少见低折价（买入成本极优） → 折价买入，执行成本占优，可直接下单</p>
-<p>- 趋势：5日-0.770% / 10日-0.497% → 折价扩大 → 买入窗口正在打开</p>
+<p>- 当前：🟠 轻微溢价 0.165%（1年82% / 3年83%分位）— 历史罕见高溢价，等待 → 小幅溢价，可接受，建议挂单而非市价</p>
+<p>- 趋势：5日+0.438% / 10日-0.211% → 溢价扩大 → 买入成本上升，等折价窗口</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🧊 1周成交额在52周中处于21%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 79% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 资金活跃度：🧊 1周成交额在52周中处于42%分位 — 成交清淡</p>
+<p>- 资金加速度：🟡 104% — 本周略高于近4周均值，温和放量</p>
 <p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：16.4%，🟢 1年36%分位 — 波动率偏低</p>
+<p>- 年化波动率：16.2%，🟢 1年33%分位 — 波动率偏低</p>
 <p>- 最大回撤：37.7%，1年98%分位 — 已充分下跌，风险较释放 ✅</p>
 <p>- 综合风险：风险水位正常</p>
-<p>- 超额收益：✅ 年化超额约 +0.78% — 微正，跟踪正常</p>
-<p>- 近期动量：📈 近期超额改善中（5日MA > 20日MA）（MA 5日15.5678% / 10日5.5732% / 20日5.9063%）</p>
-<p>- 跟踪误差：5.51% 正常</p>
+<p>- 超额收益：✅ 年化超额约 +0.52% — 微正，跟踪正常</p>
+<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日-8.6582% / 10日2.7979% / 20日2.7938%）</p>
+<p>- 跟踪误差：5.52% 正常</p>
 <br>
 <hr>
 <h1>═══ 人工智能 (931071) ═══</h1>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>-0.19%</strong></td><td><strong>🟠 合理区间 (P25-P50)</strong></td></tr>
-<tr><td>历史均值</td><td>-0.08%</td><td>1916条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>-0.23%</strong></td><td><strong>🟠 合理区间 (P25-P50)</strong></td></tr>
+<tr><td>历史均值</td><td>-0.08%</td><td>1917条样本</td></tr>
 </table>
 <br>
 <table>
@@ -499,13 +606,13 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>-0.19%</strong>，历史分位 = <strong>47.5%</strong> 🟠 <strong>合理区间</strong></blockquote>
+<blockquote>当前 ERP = <strong>-0.23%</strong>，历史分位 = <strong>43.2%</strong> 🟠 <strong>合理区间</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>47.5%</strong></td><td>历史上 47.5% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>0.63x</strong></td><td>盈利空间 0.71% / 亏损空间 1.13%</td></tr>
-<tr><td>当前 PE</td><td>64.3x</td><td>历史均值 41.2x，最高 68.9x，最低 25.6x</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>43.2%</strong></td><td>历史上 43.2% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>0.57x</strong></td><td>盈利空间 0.67% / 亏损空间 1.17%</td></tr>
+<tr><td>当前 PE</td><td>66.5x</td><td>历史均值 41.2x，最高 68.9x，最低 25.6x</td></tr>
 </table>
 <br>
 <p><strong>综合评级：🟠 中性偏弱</strong></p>
@@ -513,7 +620,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>+0.00%</strong></blockquote>
+<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>-0.04%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 -0.12%（斜率 -0.004%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -526,36 +634,59 @@
 <tr><td>2026-03</td><td>52.9x</td><td><strong>0.07%</strong> 🟡</td><td>▲0.09%</td></tr>
 <tr><td>2026-04</td><td>68.9x</td><td><strong>-0.30%</strong> 🟠</td><td>▼0.37%</td></tr>
 <tr><td>2026-05</td><td>61.6x</td><td><strong>-0.08%</strong> 🟡</td><td>▲0.21%</td></tr>
-<tr><td>2026-06</td><td>64.3x</td><td><strong>-0.19%</strong> 🟠</td><td>▼0.11%</td></tr>
+<tr><td>2026-06</td><td>66.5x</td><td><strong>-0.23%</strong> 🟠</td><td>▼0.15%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>⚡ ERP当前分位 43%（< P50），价格信号已激活</blockquote>
+<br>
+<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<br>
+<table>
+<tr><td>指标</td><td>数值</td><td>状态</td></tr>
+<tr><td>当前价格</td><td>1.279</td><td>─</td></tr>
+<tr><td>近期最高（120日内）</td><td>1.279</td><td>─</td></tr>
+<tr><td>从高点回撤</td><td><strong>0.0%</strong></td><td>✅ <10%</td></tr>
+<tr><td>MA20</td><td>1.156</td><td>✅ 站上</td></tr>
+<tr><td>MA120</td><td>0.990</td><td>✅ 站上</td></tr>
+</table>
+<br>
+<p><strong>触发条件：</strong></p>
+<p>  - 无</p>
+<br>
+<blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（515980.SH）</h3>
 <br>
-<p><strong>⚠️ 注意：价格/量背离→确认量能再入 · 长期跑输基准→考虑换ETF</strong></p>
+<p><strong>⚠️ 注意：长期跑输基准→考虑换ETF</strong></p>
 <br>
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：⚪ 平价 0.032%（1年76% / 3年74%分位）— 折价处于历史中高位（偏贵） → 平价，无额外成本，可下单</p>
-<p>- 趋势：5日+0.112% / 10日+0.086% → 溢价扩大 → 买入成本上升，等折价窗口</p>
+<p>- 当前：🟡 轻微折价 -0.094%（1年40% / 3年41%分位）— 折价处于历史中低位 → 小幅折价，正常范围，可下单</p>
+<p>- 趋势：5日-0.223% / 10日+0.133% → 折价扩大 → 买入窗口正在打开</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🧊 1周成交额在52周中处于21%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 67% — 本周低于近4周均值，资金动能偏弱</p>
-<p>- 价格/量背离：⚠️ 背离 — 价格走势与成交量方向相反，需警惕假突破/假跌破</p>
+<p>- 资金活跃度：🧊 1周成交额在52周中处于42%分位 — 成交清淡</p>
+<p>- 资金加速度：🟠 87% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：49.8%，🟠 1年84%分位 — 波动率中高，正常建仓</p>
+<p>- 年化波动率：50.1%，🟠 1年84%分位 — 波动率中高，正常建仓</p>
 <p>- 最大回撤：57.9%，1年33%分位 — 回撤偏小，下行风险未充分释放，别误以为安全 ⚠️</p>
 <p>- 综合风险：风险水位正常</p>
-<p>- 超额收益：🔴 年化超额约 -18.2% — 长期跑输基准，考虑换同指数更优ETF</p>
-<p>- 近期动量：➡️ 近期超额持平（MA 5日-3.5372% / 10日-6.9550% / 20日-3.5107%）</p>
-<p>- 跟踪误差：30.42% ⚠️ 偏高，建议关注同类替代品</p>
+<p>- 超额收益：🔴 年化超额约 -18.1% — 长期跑输基准，考虑换同指数更优ETF</p>
+<p>- 近期动量：📈 近期超额改善中（5日MA > 20日MA）（MA 5日3.7476% / 10日-7.4554% / 20日-1.4978%）</p>
+<p>- 跟踪误差：30.40% ⚠️ 偏高，建议关注同类替代品</p>
 <br>
 <hr>
 <h1>═══ 消费80 (000069) ═══</h1>
@@ -563,7 +694,7 @@
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
 <tr><td>当前 ERP</td><td><strong>3.75%</strong></td><td><strong>🟢 极度低估 (>=P90)</strong></td></tr>
-<tr><td>历史均值</td><td>1.27%</td><td>3760条样本</td></tr>
+<tr><td>历史均值</td><td>1.27%</td><td>3761条样本</td></tr>
 </table>
 <br>
 <table>
@@ -594,7 +725,7 @@
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
 <tr><td><strong>胜率</strong></td><td><strong>100.0%</strong></td><td>历史上 100.0% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>极高（已超P90极度低估区）</strong></td><td>盈利空间 4.02% / 亏损空间 -1.12%</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>极高（已超P90极度低估区）</strong></td><td>盈利空间 4.03% / 亏损空间 -1.13%</td></tr>
 <tr><td>当前 PE</td><td>18.2x</td><td>历史均值 24.6x，最高 58.9x，最低 14.9x</td></tr>
 </table>
 <br>
@@ -603,7 +734,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+1.40%</strong></blockquote>
+<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+1.41%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.37%（斜率 0.016%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -620,31 +752,40 @@
 </table>
 <br>
 <hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 100%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
+<br>
+<hr>
 <h3>ETF 执行质量（510150.SH）</h3>
 <br>
-<p><strong>⚠️ 注意：价格/量背离→确认量能再入</strong></p>
+<p><strong>✅ 执行条件正常</strong></p>
 <br>
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：⚪ 平价 0.000%（1年50% / 3年50%分位）— 折价处于历史中低位 → 平价，无额外成本，可下单</p>
-<p>- 趋势：5日+0.000% / 10日+0.000% → 折溢价近期稳定</p>
+<p>- 当前：🟡 轻微折价 -0.130%（1年30% / 3年31%分位）— 折价处于历史中低位 → 小幅折价，正常范围，可下单</p>
+<p>- 趋势：5日+0.023% / 10日-0.345% → 折溢价近期稳定</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🧊 1周成交额在52周中处于13%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 80% — 本周低于近4周均值，资金动能偏弱</p>
-<p>- 价格/量背离：⚠️ 背离 — 价格走势与成交量方向相反，需警惕假突破/假跌破</p>
+<p>- 资金活跃度：🧊 1周成交额在52周中处于21%分位 — 成交清淡</p>
+<p>- 资金加速度：🟠 100% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：16.2%，🟠 1年70%分位 — 波动率中高，正常建仓</p>
+<p>- 年化波动率：16.3%，🟠 1年70%分位 — 波动率中高，正常建仓</p>
 <p>- 最大回撤：27.4%，1年100%分位 — 已充分下跌，风险较释放 ✅</p>
 <p>- 综合风险：风险水位正常</p>
-<p>- 超额收益：✅ 年化超额约 +2.38% — 微正，跟踪正常</p>
-<p>- 近期动量：📈 近期超额改善中（5日MA > 20日MA）（MA 5日6.5070% / 10日5.5291% / 20日5.9248%）</p>
+<p>- 超额收益：✅ 年化超额约 +2.34% — 微正，跟踪正常</p>
+<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日1.9614% / 10日5.4385% / 20日4.4778%）</p>
 <p>- 跟踪误差：5.55% 正常</p>
 <br>
 <hr>
@@ -652,8 +793,8 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>0.51%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
-<tr><td>历史均值</td><td>-0.04%</td><td>2620条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>0.54%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
+<tr><td>历史均值</td><td>-0.04%</td><td>2621条样本</td></tr>
 </table>
 <br>
 <table>
@@ -679,13 +820,13 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>0.51%</strong>，历史分位 = <strong>70.7%</strong> 🟡 <strong>合理偏低</strong></blockquote>
+<blockquote>当前 ERP = <strong>0.54%</strong>，历史分位 = <strong>71.9%</strong> 🟡 <strong>合理偏低</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>70.7%</strong></td><td>历史上 70.7% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>2.65x</strong></td><td>盈利空间 1.68% / 亏损空间 0.64%</td></tr>
-<tr><td>当前 PE</td><td>44.3x</td><td>历史均值 39.7x，最高 101.2x，最低 18.4x</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>71.9%</strong></td><td>历史上 71.9% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>2.82x</strong></td><td>盈利空间 1.71% / 亏损空间 0.61%</td></tr>
+<tr><td>当前 PE</td><td>43.9x</td><td>历史均值 39.7x，最高 101.2x，最低 18.4x</td></tr>
 </table>
 <br>
 <p><strong>综合评级：🟡 胜率中等 + 赔率一般，可参与</strong></p>
@@ -693,7 +834,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>+0.25%</strong></blockquote>
+<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>+0.28%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.41%（斜率 0.021%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -706,35 +848,44 @@
 <tr><td>2026-03</td><td>39.7x</td><td><strong>0.70%</strong> 🟢</td><td>▲0.35%</td></tr>
 <tr><td>2026-04</td><td>39.4x</td><td><strong>0.79%</strong> 🟢</td><td>▲0.09%</td></tr>
 <tr><td>2026-05</td><td>52.9x</td><td><strong>0.18%</strong> 🟡</td><td>▼0.61%</td></tr>
-<tr><td>2026-06</td><td>44.3x</td><td><strong>0.51%</strong> 🟡</td><td>▲0.33%</td></tr>
+<tr><td>2026-06</td><td>43.9x</td><td><strong>0.54%</strong> 🟡</td><td>▲0.36%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 72%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（516620.SH）</h3>
 <br>
-<p><strong>✅ 执行条件正常</strong></p>
+<p><strong>⚠️ 注意：价格/量背离→确认量能再入</strong></p>
 <br>
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：⚪ 平价 -0.024%（1年53% / 3年48%分位）— 折价处于历史中高位（偏贵） → 平价，无额外成本，可下单</p>
-<p>- 趋势：5日-0.013% / 10日-0.091% → 折溢价近期稳定</p>
+<p>- 当前：🟡 轻微折价 -0.229%（1年15% / 3年15%分位）— 历史少见低折价（买入成本极优） → 小幅折价，正常范围，可下单</p>
+<p>- 趋势：5日-0.112% / 10日-0.018% → 折价扩大 → 买入窗口正在打开</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🧊 1周成交额在52周中处于33%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 55% — 本周低于近4周均值，资金动能偏弱</p>
-<p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
+<p>- 资金活跃度：🧊 1周成交额在52周中处于44%分位 — 成交清淡</p>
+<p>- 资金加速度：🟠 73% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 价格/量背离：⚠️ 背离 — 价格走势与成交量方向相反，需警惕假突破/假跌破</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：28.5%，🟢 1年53%分位 — 波动率偏低</p>
+<p>- 年化波动率：28.3%，🟢 1年51%分位 — 波动率偏低</p>
 <p>- 最大回撤：40.6%，1年100%分位 — 已充分下跌，风险较释放 ✅</p>
 <p>- 综合风险：风险水位正常</p>
-<p>- 超额收益：✅ 年化超额约 +0.60% — 微正，跟踪正常</p>
-<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日2.5583% / 10日3.3096% / 20日3.4193%）</p>
+<p>- 超额收益：✅ 年化超额约 +0.66% — 微正，跟踪正常</p>
+<p>- 近期动量：📈 近期超额改善中（5日MA > 20日MA）（MA 5日3.7486% / 10日2.4341% / 20日3.5595%）</p>
 <p>- 跟踪误差：5.98% 正常</p>
 <br>
 <hr>
@@ -742,8 +893,8 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>3.71%</strong></td><td><strong>🟢 极度低估 (>=P90)</strong></td></tr>
-<tr><td>历史均值</td><td>1.84%</td><td>3760条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>3.74%</strong></td><td><strong>🟢 极度低估 (>=P90)</strong></td></tr>
+<tr><td>历史均值</td><td>1.84%</td><td>3761条样本</td></tr>
 </table>
 <br>
 <table>
@@ -760,21 +911,21 @@
 <br>
 <p><strong>泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定</strong> (30%)</p>
 <p><strong>价值仓: 足够便宜的价格，40% 核心主力必须在场</strong> (40%)</p>
-<p><strong>投机仓: 极低估区，保持 20% 仓位积极做T降本</strong> (20%)</p>
+<p><strong>投机仓: 触发极端惯性下跌，30% 预备队全额出击</strong> (30%)</p>
 <br>
-<p>建议总仓位：<strong>90%</strong>（泡沫底仓 30% + 价值主力 40% + 投机奇兵 20%）</p>
+<p>建议总仓位：<strong>100%</strong>（泡沫底仓 30% + 价值主力 40% + 投机奇兵 30%）</p>
 <br>
 <hr>
 <h3>核心估值决策（基于 ERP 框架）</h3>
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>3.71%</strong>，历史分位 = <strong>94.6%</strong> 🟢 <strong>极度低估</strong></blockquote>
+<blockquote>当前 ERP = <strong>3.74%</strong>，历史分位 = <strong>95.0%</strong> 🟢 <strong>极度低估</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>94.6%</strong></td><td>历史上 94.6% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>极高（已超P90极度低估区）</strong></td><td>盈利空间 3.36% / 亏损空间 -0.27%</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>95.0%</strong></td><td>历史上 95.0% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>极高（已超P90极度低估区）</strong></td><td>盈利空间 3.40% / 亏损空间 -0.31%</td></tr>
 <tr><td>当前 PE</td><td>18.3x</td><td>历史均值 21.1x，最高 42.8x，最低 11.6x</td></tr>
 </table>
 <br>
@@ -783,7 +934,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+0.88%</strong></blockquote>
+<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+0.91%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.40%（斜率 0.012%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -796,8 +948,17 @@
 <tr><td>2026-03</td><td>18.8x</td><td><strong>3.50%</strong> 🟢</td><td>▲0.34%</td></tr>
 <tr><td>2026-04</td><td>19.3x</td><td><strong>3.44%</strong> 🟢</td><td>▼0.06%</td></tr>
 <tr><td>2026-05</td><td>19.3x</td><td><strong>3.48%</strong> 🟢</td><td>▲0.03%</td></tr>
-<tr><td>2026-06</td><td>18.3x</td><td><strong>3.71%</strong> 🟢</td><td>▲0.23%</td></tr>
+<tr><td>2026-06</td><td>18.3x</td><td><strong>3.74%</strong> 🟢</td><td>▲0.27%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 95%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（159936.SZ）</h3>
@@ -807,8 +968,8 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：⚪ 平价 0.000%（1年50% / 3年50%分位）— 折价处于历史中低位 → 平价，无额外成本，可下单</p>
-<p>- 趋势：5日+0.000% / 10日+0.000% → 折溢价近期稳定</p>
+<p>- 当前：🟠 轻微溢价 0.148%（1年78% / 3年75%分位）— 折价处于历史中高位（偏贵） → 小幅溢价，可接受，建议挂单而非市价</p>
+<p>- 趋势：5日-0.050% / 10日+0.128% → 折溢价近期稳定</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
@@ -833,7 +994,7 @@
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
 <tr><td>当前 ERP</td><td><strong>4.84%</strong></td><td><strong>🟢 极度低估 (>=P90)</strong></td></tr>
-<tr><td>历史均值</td><td>1.76%</td><td>1833条样本</td></tr>
+<tr><td>历史均值</td><td>1.76%</td><td>1834条样本</td></tr>
 </table>
 <br>
 <table>
@@ -873,7 +1034,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+0.87%</strong></blockquote>
+<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+0.88%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.69%（斜率 0.037%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -886,35 +1048,44 @@
 <tr><td>2026-03</td><td>16.0x</td><td><strong>4.44%</strong> 🟢</td><td>▲0.15%</td></tr>
 <tr><td>2026-04</td><td>15.8x</td><td><strong>4.59%</strong> 🟢</td><td>▲0.15%</td></tr>
 <tr><td>2026-05</td><td>17.2x</td><td><strong>4.11%</strong> 🟢</td><td>▼0.48%</td></tr>
-<tr><td>2026-06</td><td>15.2x</td><td><strong>4.84%</strong> 🟢</td><td>▲0.73%</td></tr>
+<tr><td>2026-06</td><td>15.2x</td><td><strong>4.84%</strong> 🟢</td><td>▲0.74%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 100%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（515650.SH）</h3>
 <br>
-<p><strong>⚠️ 注意：波动高位→分批建仓</strong></p>
+<p><strong>⚠️ 注意：价格/量背离→确认量能再入 · 波动高位→分批建仓</strong></p>
 <br>
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟠 轻微溢价 0.146%（1年98% / 3年93%分位）— 历史罕见高溢价，等待 → 小幅溢价，可接受，建议挂单而非市价</p>
-<p>- 趋势：5日+0.357% / 10日+0.018% → 溢价扩大 → 买入成本上升，等折价窗口</p>
+<p>- 当前：🟡 轻微折价 -0.063%（1年38% / 3年30%分位）— 折价处于历史中低位 → 小幅折价，正常范围，可下单</p>
+<p>- 趋势：5日-0.093% / 10日+0.124% → 折溢价近期稳定</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🧊 1周成交额在52周中处于15%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 63% — 本周低于近4周均值，资金动能偏弱</p>
-<p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
+<p>- 资金活跃度：🧊 1周成交额在52周中处于23%分位 — 成交清淡</p>
+<p>- 资金加速度：🟠 75% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 价格/量背离：⚠️ 背离 — 价格走势与成交量方向相反，需警惕假突破/假跌破</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：19.2%，🔴 1年92%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
+<p>- 年化波动率：19.3%，🔴 1年92%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
 <p>- 最大回撤：28.9%，1年100%分位 — 已充分下跌，风险较释放 ✅</p>
 <p>- 综合风险：高波动 + 充分回撤 → 适合分批建仓，风险已有释放</p>
-<p>- 超额收益：✅ 年化超额约 +3.4% — 长期跑赢基准，值得持有</p>
-<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日-4.3430% / 10日2.1461% / 20日3.1443%）</p>
+<p>- 超额收益：✅ 年化超额约 +3.5% — 长期跑赢基准，值得持有</p>
+<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日3.6252% / 10日1.2461% / 20日3.9211%）</p>
 <p>- 跟踪误差：3.18% 正常</p>
 <br>
 <hr>
@@ -964,6 +1135,7 @@
 <h3>近10月 ERP 趋势</h3>
 <br>
 <blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>-0.02%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.31%（斜率 0.005%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -980,6 +1152,29 @@
 </table>
 <br>
 <hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>⚡ ERP当前分位 32%（< P50），价格信号已激活</blockquote>
+<br>
+<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<br>
+<table>
+<tr><td>指标</td><td>数值</td><td>状态</td></tr>
+<tr><td>当前价格</td><td>2.518</td><td>─</td></tr>
+<tr><td>近期最高（120日内）</td><td>2.625</td><td>─</td></tr>
+<tr><td>从高点回撤</td><td><strong>-4.1%</strong></td><td>✅ <10%</td></tr>
+<tr><td>MA20</td><td>2.553</td><td>🔴 跌破</td></tr>
+<tr><td>MA120</td><td>2.408</td><td>✅ 站上</td></tr>
+</table>
+<br>
+<p><strong>触发条件：</strong></p>
+<p>  - 无</p>
+<br>
+<blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
+<br>
+<hr>
 <h3>ETF 执行质量（513500.SH）</h3>
 <br>
 <p><strong>✅ 执行条件正常</strong></p>
@@ -987,20 +1182,20 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟢 折价 -6.200%（1年28% / 3年19%分位）— 折价处于历史中低位 → 折价买入，执行成本占优，可直接下单</p>
-<p>- 趋势：5日+0.619% / 10日+0.946% → 折价收窄 → 买入窗口趋于关闭，抓紧或等下次</p>
+<p>- 当前：🟢 折价 -6.052%（1年30% / 3年20%分位）— 折价处于历史中低位 → 折价买入，执行成本占优，可直接下单</p>
+<p>- 趋势：5日+1.796% / 10日+1.298% → 折价收窄 → 买入窗口趋于关闭，抓紧或等下次</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🧊 1周成交额在52周中处于31%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 54% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 资金活跃度：🟡 1周成交额在52周中处于50%分位 — 活跃度中等</p>
+<p>- 资金加速度：🟠 69% — 本周低于近4周均值，资金动能偏弱</p>
 <p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：20.9%，🟠 1年83%分位 — 波动率中高，正常建仓</p>
+<p>- 年化波动率：20.9%，🟠 1年81%分位 — 波动率中高，正常建仓</p>
 <p>- 最大回撤：24.9%，1年40%分位 — 回撤偏小，下行风险未充分释放，别误以为安全 ⚠️</p>
 <p>- 综合风险：风险水位正常</p>
 <p>- 超额收益：🟡 年化超额约 0.00% — 轻微跑输，可接受</p>
@@ -1078,6 +1273,7 @@
 <h3>近10月 ERP 趋势</h3>
 <br>
 <blockquote>趋势方向：<strong>持续走低</strong>，区间变化：<strong>-0.47%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 -0.02%（斜率 0.004%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1094,6 +1290,29 @@
 </table>
 <br>
 <hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>⚡ ERP当前分位 2%（< P50），价格信号已激活</blockquote>
+<br>
+<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<br>
+<table>
+<tr><td>指标</td><td>数值</td><td>状态</td></tr>
+<tr><td>当前价格</td><td>2.041</td><td>─</td></tr>
+<tr><td>近期最高（120日内）</td><td>2.160</td><td>─</td></tr>
+<tr><td>从高点回撤</td><td><strong>-5.5%</strong></td><td>✅ <10%</td></tr>
+<tr><td>MA20</td><td>2.050</td><td>🔴 跌破</td></tr>
+<tr><td>MA120</td><td>1.781</td><td>✅ 站上</td></tr>
+</table>
+<br>
+<p><strong>触发条件：</strong></p>
+<p>  - 无</p>
+<br>
+<blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
+<br>
+<hr>
 <h3>ETF 执行质量（159696.SZ）</h3>
 <br>
 <p><strong>⚠️ 注意：波动高位→分批建仓</strong></p>
@@ -1101,8 +1320,8 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟢 折价 -9.885%（1年3% / 3年1%分位）— 历史少见低折价（买入成本极优） → 折价买入，执行成本占优，可直接下单</p>
-<p>- 趋势：5日+0.136% / 10日-0.397% → 折价收窄 → 买入窗口趋于关闭，抓紧或等下次</p>
+<p>- 当前：🟢 折价 -10.330%（1年2% / 3年1%分位）— 历史少见低折价（买入成本极优） → 折价买入，执行成本占优，可直接下单</p>
+<p>- 趋势：5日-0.309% / 10日-0.842% → 折价扩大 → 买入窗口正在打开</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
@@ -1168,6 +1387,7 @@
 <h3>近10月 ERP 趋势</h3>
 <br>
 <blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>+0.26%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.18%（斜率 0.005%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1184,6 +1404,15 @@
 </table>
 <br>
 <hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 58%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
+<br>
+<hr>
 <h3>ETF 执行质量（513080.SH）</h3>
 <br>
 <p><strong>✅ 执行条件正常</strong></p>
@@ -1191,21 +1420,21 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟡 轻微折价 -0.063%（1年80% / 3年81%分位）— 历史罕见高溢价，等待 → 小幅折价，正常范围，可下单</p>
-<p>- 趋势：5日-0.299% / 10日-0.539% → 折价扩大 → 买入窗口正在打开</p>
+<p>- 当前：🟡 轻微折价 -0.052%（1年81% / 3年81%分位）— 历史罕见高溢价，等待 → 小幅折价，正常范围，可下单</p>
+<p>- 趋势：5日+0.863% / 10日+0.409% → 折价收窄 → 买入窗口趋于关闭，抓紧或等下次</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🧊 1周成交额在52周中处于31%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 67% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 资金活跃度：🧊 1周成交额在52周中处于48%分位 — 成交清淡</p>
+<p>- 资金加速度：🟠 82% — 本周低于近4周均值，资金动能偏弱</p>
 <p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：23.9%，🟠 1年81%分位 — 波动率中高，正常建仓</p>
-<p>- 最大回撤：20.3%，1年87%分位 — 已充分下跌，风险较释放 ✅</p>
+<p>- 年化波动率：23.7%，🟠 1年80%分位 — 波动率中高，正常建仓</p>
+<p>- 最大回撤：20.3%，1年86%分位 — 已充分下跌，风险较释放 ✅</p>
 <p>- 综合风险：风险水位正常</p>
 <p>- 超额收益：🟡 年化超额约 0.00% — 轻微跑输，可接受</p>
 <p>- 近期动量：─（MA 5日─ / 10日─ / 20日─）</p>
@@ -1258,6 +1487,7 @@
 <h3>近10月 ERP 趋势</h3>
 <br>
 <blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>+0.11%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.34%（斜率 0.010%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1272,6 +1502,10 @@
 <tr><td>2026-05</td><td>18.5x</td><td><strong>2.49%</strong> 🔴</td><td>▼0.61%</td></tr>
 <tr><td>2026-06</td><td>17.0x</td><td><strong>2.97%</strong> 🟡</td><td>▲0.48%</td></tr>
 </table>
+<br>
+<blockquote>⚠️ 减仓信号：无ETF价格数据，跳过。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
 <br>
 <hr>
 <h1>═══ MSCI Japan (EWJ) ═══</h1>
@@ -1320,6 +1554,7 @@
 <h3>近10月 ERP 趋势</h3>
 <br>
 <blockquote>趋势方向：<strong>持续走低</strong>，区间变化：<strong>-0.94%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.09%（斜率 -0.013%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1336,6 +1571,29 @@
 </table>
 <br>
 <hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>⚡ ERP当前分位 12%（< P50），价格信号已激活</blockquote>
+<br>
+<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<br>
+<table>
+<tr><td>指标</td><td>数值</td><td>状态</td></tr>
+<tr><td>当前价格</td><td>2.418</td><td>─</td></tr>
+<tr><td>近期最高（120日内）</td><td>2.418</td><td>─</td></tr>
+<tr><td>从高点回撤</td><td><strong>0.0%</strong></td><td>✅ <10%</td></tr>
+<tr><td>MA20</td><td>2.209</td><td>✅ 站上</td></tr>
+<tr><td>MA120</td><td>1.880</td><td>✅ 站上</td></tr>
+</table>
+<br>
+<p><strong>触发条件：</strong></p>
+<p>  - 无</p>
+<br>
+<blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
+<br>
+<hr>
 <h3>ETF 执行质量（513880.SH）</h3>
 <br>
 <p><strong>⚠️ 注意：价格/量背离→确认量能再入 · 波动高位→分批建仓</strong></p>
@@ -1343,20 +1601,20 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟢 折价 -8.240%（1年5% / 3年2%分位）— 历史少见低折价（买入成本极优） → 折价买入，执行成本占优，可直接下单</p>
-<p>- 趋势：5日-2.453% / 10日-1.369% → 折价扩大 → 买入窗口正在打开</p>
+<p>- 当前：🟢 折价 -8.963%（1年3% / 3年1%分位）— 历史少见低折价（买入成本极优） → 折价买入，执行成本占优，可直接下单</p>
+<p>- 趋势：5日-3.641% / 10日-4.421% → 折价扩大 → 买入窗口正在打开</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🔥 1周成交额在52周中处于87%分位 — 市场高度活跃</p>
-<p>- 资金加速度：🟠 74% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 资金活跃度：🔥 1周成交额在52周中处于90%分位 — 市场高度活跃</p>
+<p>- 资金加速度：🟠 96% — 本周低于近4周均值，资金动能偏弱</p>
 <p>- 价格/量背离：⚠️ 背离 — 价格走势与成交量方向相反，需警惕假突破/假跌破</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：50.5%，🔴 1年100%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
+<p>- 年化波动率：52.3%，🔴 1年100%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
 <p>- 最大回撤：22.2%，1年46%分位 — 回撤偏小，下行风险未充分释放，别误以为安全 ⚠️</p>
 <p>- 综合风险：波动率高位 → 控制单次建仓量，等波动率回落再加</p>
 <p>- 超额收益：🟡 年化超额约 0.00% — 轻微跑输，可接受</p>
@@ -1368,7 +1626,7 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>3.91%</strong></td><td><strong>🟠 合理区间 (P25-P50)</strong></td></tr>
+<tr><td>当前 ERP</td><td><strong>3.92%</strong></td><td><strong>🟠 合理区间 (P25-P50)</strong></td></tr>
 <tr><td>历史均值</td><td>4.31%</td><td>5215条样本</td></tr>
 </table>
 <br>
@@ -1395,12 +1653,12 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>3.91%</strong>，历史分位 = <strong>33.0%</strong> 🟠 <strong>合理区间</strong></blockquote>
+<blockquote>当前 ERP = <strong>3.92%</strong>，历史分位 = <strong>33.3%</strong> 🟠 <strong>合理区间</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>33.0%</strong></td><td>历史上 33.0% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>0.63x</strong></td><td>盈利空间 1.73% / 亏损空间 2.76%</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>33.3%</strong></td><td>历史上 33.3% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>0.63x</strong></td><td>盈利空间 1.74% / 亏损空间 2.75%</td></tr>
 <tr><td>当前 PE</td><td>17.7x</td><td>历史均值 13.8x，最高 74.8x，最低 3.2x</td></tr>
 </table>
 <br>
@@ -1409,7 +1667,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>-0.10%</strong></blockquote>
+<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>-0.09%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.18%（斜率 -0.025%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1422,8 +1681,12 @@
 <tr><td>2026-03</td><td>17.0x</td><td><strong>4.06%</strong> 🟠</td><td>▼0.04%</td></tr>
 <tr><td>2026-04</td><td>16.5x</td><td><strong>4.32%</strong> 🟡</td><td>▲0.26%</td></tr>
 <tr><td>2026-05</td><td>18.3x</td><td><strong>3.76%</strong> 🟠</td><td>▼0.56%</td></tr>
-<tr><td>2026-06</td><td>17.7x</td><td><strong>3.91%</strong> 🟠</td><td>▲0.16%</td></tr>
+<tr><td>2026-06</td><td>17.7x</td><td><strong>3.92%</strong> 🟠</td><td>▲0.17%</td></tr>
 </table>
+<br>
+<blockquote>⚠️ 减仓信号：无ETF价格数据，跳过。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
 <br>
 <hr>
 <h1>═══ 恒生科技指数 (HSTECH) ═══</h1>
@@ -1472,6 +1735,8 @@
 <hr>
 <h3>近10月 PSY 趋势（营收口径）</h3>
 <br>
+<blockquote>📐 近20日斜率信号：🚨 <strong>恐慌踩踏</strong> — 近20日ERP急速飙升 4.87%（斜率 -0.020%/日）— 市场处于恐慌抛售期，PE急速压缩，历史上往往是买点临近的强化信号，但需警惕基本面是否同步恶化。</blockquote>
+<br>
 <table>
 <tr><td>月份</td><td>PS</td><td>PSY</td><td>环比</td></tr>
 <tr><td>2025-08</td><td>3.54x</td><td><strong>26.39%</strong></td><td>─</td></tr>
@@ -1487,6 +1752,15 @@
 </table>
 <br>
 <hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 76%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
+<br>
+<hr>
 <h3>ETF 执行质量（513180.SH）</h3>
 <br>
 <p><strong>⚠️ 注意：溢价偏高→等折价或限价 · 价格/量背离→确认量能再入 · 波动高位→分批建仓</strong></p>
@@ -1494,20 +1768,20 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🔴 溢价 0.419%（1年73% / 3年86%分位）— 折价处于历史中高位（偏贵） → 溢价偏高，建议等折价窗口或限价委托</p>
-<p>- 趋势：5日-0.338% / 10日+0.534% → 溢价收窄 → 执行成本改善中</p>
+<p>- 当前：🔴 溢价 2.341%（1年100% / 3年100%分位）— 历史罕见高溢价，等待 → 溢价偏高，建议等折价窗口或限价委托</p>
+<p>- 趋势：5日+1.552% / 10日+1.661% → 溢价扩大 → 买入成本上升，等折价窗口</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🧊 1周成交额在52周中处于12%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 73% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 资金活跃度：🧊 1周成交额在52周中处于15%分位 — 成交清淡</p>
+<p>- 资金加速度：🟠 93% — 本周低于近4周均值，资金动能偏弱</p>
 <p>- 价格/量背离：⚠️ 背离 — 价格走势与成交量方向相反，需警惕假突破/假跌破</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：29.8%，🔴 1年86%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
+<p>- 年化波动率：30.0%，🔴 1年87%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
 <p>- 最大回撤：36.2%，1年100%分位 — 已充分下跌，风险较释放 ✅</p>
 <p>- 综合风险：高波动 + 充分回撤 → 适合分批建仓，风险已有释放</p>
 <p>- 超额收益：🟡 年化超额约 0.00% — 轻微跑输，可接受</p>
@@ -1519,8 +1793,8 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>0.21%</strong></td><td><strong>🟢 极度低估 (>=P90)</strong></td></tr>
-<tr><td>历史均值</td><td>-1.25%</td><td>3068条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>0.23%</strong></td><td><strong>🟢 极度低估 (>=P90)</strong></td></tr>
+<tr><td>历史均值</td><td>-1.25%</td><td>3069条样本</td></tr>
 </table>
 <br>
 <table>
@@ -1546,13 +1820,13 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>0.21%</strong>，历史分位 = <strong>95.8%</strong> 🟢 <strong>极度低估</strong></blockquote>
+<blockquote>当前 ERP = <strong>0.23%</strong>，历史分位 = <strong>96.5%</strong> 🟢 <strong>极度低估</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>95.8%</strong></td><td>历史上 95.8% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>极高（已超P90极度低估区）</strong></td><td>盈利空间 2.60% / 亏损空间 -0.18%</td></tr>
-<tr><td>当前 PE</td><td>51.1x</td><td>历史均值 64.3x，最高 186.0x，最低 33.0x</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>96.5%</strong></td><td>历史上 96.5% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>极高（已超P90极度低估区）</strong></td><td>盈利空间 2.61% / 亏损空间 -0.20%</td></tr>
+<tr><td>当前 PE</td><td>51.0x</td><td>历史均值 64.3x，最高 186.0x，最低 33.0x</td></tr>
 </table>
 <br>
 <p><strong>综合评级：🟢 已进入极度低估区，极佳买点</strong></p>
@@ -1560,7 +1834,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>+0.43%</strong></blockquote>
+<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>+0.44%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.04%（斜率 -0.002%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1573,8 +1848,17 @@
 <tr><td>2026-03</td><td>62.9x</td><td><strong>-0.23%</strong> 🟢</td><td>▲0.21%</td></tr>
 <tr><td>2026-04</td><td>67.8x</td><td><strong>-0.27%</strong> 🟢</td><td>▼0.05%</td></tr>
 <tr><td>2026-05</td><td>51.1x</td><td><strong>0.25%</strong> 🟢</td><td>▲0.52%</td></tr>
-<tr><td>2026-06</td><td>51.1x</td><td><strong>0.21%</strong> 🟢</td><td>▼0.03%</td></tr>
+<tr><td>2026-06</td><td>51.0x</td><td><strong>0.23%</strong> 🟢</td><td>▼0.02%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 97%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（512660.SH）</h3>
@@ -1584,24 +1868,24 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟠 轻微溢价 0.063%（1年82% / 3年79%分位）— 历史罕见高溢价，等待 → 小幅溢价，可接受，建议挂单而非市价</p>
-<p>- 趋势：5日+0.111% / 10日-0.001% → 溢价扩大 → 买入成本上升，等折价窗口</p>
+<p>- 当前：🟠 轻微溢价 0.095%（1年90% / 3年87%分位）— 历史罕见高溢价，等待 → 小幅溢价，可接受，建议挂单而非市价</p>
+<p>- 趋势：5日+0.181% / 10日+0.161% → 溢价扩大 → 买入成本上升，等折价窗口</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
 <p>- 资金活跃度：🧊 1周成交额在52周中处于4%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 52% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 资金加速度：🟠 64% — 本周低于近4周均值，资金动能偏弱</p>
 <p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：30.5%，🟠 1年64%分位 — 波动率中高，正常建仓</p>
+<p>- 年化波动率：29.9%，🟠 1年63%分位 — 波动率中高，正常建仓</p>
 <p>- 最大回撤：36.2%，1年98%分位 — 已充分下跌，风险较释放 ✅</p>
 <p>- 综合风险：风险水位正常</p>
-<p>- 超额收益：✅ 年化超额约 +0.46% — 微正，跟踪正常</p>
-<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日-0.8214% / 10日0.7985% / 20日1.9834%）</p>
+<p>- 超额收益：✅ 年化超额约 +0.45% — 微正，跟踪正常</p>
+<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日-2.3187% / 10日-0.4599% / 20日1.5140%）</p>
 <p>- 跟踪误差：3.04% 正常</p>
 <br>
 <hr>
@@ -1609,8 +1893,8 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>-0.08%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
-<tr><td>历史均值</td><td>-0.24%</td><td>2119条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>-0.07%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
+<tr><td>历史均值</td><td>-0.24%</td><td>2120条样本</td></tr>
 </table>
 <br>
 <table>
@@ -1636,13 +1920,13 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>-0.08%</strong>，历史分位 = <strong>60.4%</strong> 🟡 <strong>合理偏低</strong></blockquote>
+<blockquote>当前 ERP = <strong>-0.07%</strong>，历史分位 = <strong>61.8%</strong> 🟡 <strong>合理偏低</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>60.4%</strong></td><td>历史上 60.4% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>1.60x</strong></td><td>盈利空间 0.92% / 亏损空间 0.57%</td></tr>
-<tr><td>当前 PE</td><td>60.1x</td><td>历史均值 43.0x，最高 89.2x，最低 25.1x</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>61.8%</strong></td><td>历史上 61.8% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>1.68x</strong></td><td>盈利空间 0.94% / 亏损空间 0.56%</td></tr>
+<tr><td>当前 PE</td><td>59.9x</td><td>历史均值 43.0x，最高 89.2x，最低 25.1x</td></tr>
 </table>
 <br>
 <p><strong>综合评级：🟡 胜率中等 + 赔率一般，可参与</strong></p>
@@ -1650,7 +1934,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>+0.21%</strong></blockquote>
+<blockquote>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>+0.23%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.04%（斜率 -0.002%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1663,8 +1948,30 @@
 <tr><td>2026-03</td><td>71.6x</td><td><strong>-0.42%</strong> 🟠</td><td>▲0.16%</td></tr>
 <tr><td>2026-04</td><td>72.2x</td><td><strong>-0.36%</strong> 🟠</td><td>▲0.06%</td></tr>
 <tr><td>2026-05</td><td>60.4x</td><td><strong>-0.05%</strong> 🟡</td><td>▲0.31%</td></tr>
-<tr><td>2026-06</td><td>60.1x</td><td><strong>-0.08%</strong> 🟡</td><td>▼0.03%</td></tr>
+<tr><td>2026-06</td><td>59.9x</td><td><strong>-0.07%</strong> 🟡</td><td>▼0.01%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 62%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<hr>
+<h3>基本面暴雷预警（Serper 实时搜索 + AI 判断，需人工确认）</h3>
+<br>
+<blockquote>🔍 数据源：Serper.dev 实时搜索 + 七牛云 AI 分析。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
+<br>
+<p>✅ <strong>正常</strong>（置信度：中）</p>
+<br>
+<p>近期无重大基本面异常。</p>
+<br>
+<p><strong>摘要：</strong> 军工龙头指数(931066)跟踪A股军工核心资产，截至知识截止日未发现重大财务造假、政策打压或系统性风险事件。国防预算持续增长，行业政策面整体向好，无明显基本面负面信号。</p>
+<br>
+<p><strong>参考来源：</strong></p>
+<p>  - 训练知识库（截止2025年初）</p>
+<p>  - 无实时新闻数据</p>
 <br>
 <hr>
 <h3>ETF 执行质量（512710.SH）</h3>
@@ -1674,24 +1981,24 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：⚪ 平价 -0.030%（1年51% / 3年55%分位）— 折价处于历史中高位（偏贵） → 平价，无额外成本，可下单</p>
-<p>- 趋势：5日+0.074% / 10日-0.090% → 折溢价近期稳定</p>
+<p>- 当前：⚪ 平价 -0.015%（1年57% / 3年59%分位）— 折价处于历史中高位（偏贵） → 平价，无额外成本，可下单</p>
+<p>- 趋势：5日+0.074% / 10日-0.061% → 折溢价近期稳定</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
 <p>- 资金活跃度：🧊 1周成交额在52周中处于4%分位 — 成交清淡</p>
-<p>- 资金加速度：🟠 49% — 本周低于近4周均值，资金动能偏弱</p>
+<p>- 资金加速度：🟠 64% — 本周低于近4周均值，资金动能偏弱</p>
 <p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：29.5%，🟢 1年56%分位 — 波动率偏低</p>
+<p>- 年化波动率：28.7%，🟢 1年53%分位 — 波动率偏低</p>
 <p>- 最大回撤：37.4%，1年98%分位 — 已充分下跌，风险较释放 ✅</p>
 <p>- 综合风险：风险水位正常</p>
-<p>- 超额收益：✅ 年化超额约 +0.72% — 微正，跟踪正常</p>
-<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日0.5008% / 10日1.7781% / 20日0.8484%）</p>
+<p>- 超额收益：✅ 年化超额约 +0.71% — 微正，跟踪正常</p>
+<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日0.1182% / 10日1.4571% / 20日1.1013%）</p>
 <p>- 跟踪误差：3.75% 正常</p>
 <br>
 <hr>
@@ -1699,13 +2006,13 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>19.35%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
-<tr><td>历史均值</td><td>10.83%</td><td>2745条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>19.36%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
+<tr><td>历史均值</td><td>10.84%</td><td>2746条样本</td></tr>
 </table>
 <br>
 <table>
 <tr><td>分位点</td><td>ERP值（越高越便宜）</td><td>价格估值状态</td></tr>
-<tr><td>P90</td><td>34.92%</td><td>极度低估</td></tr>
+<tr><td>P90</td><td>34.89%</td><td>极度低估</td></tr>
 <tr><td>P75</td><td>21.62%</td><td>显著低估</td></tr>
 <tr><td>P50</td><td>-0.06%</td><td>价值中枢</td></tr>
 <tr><td>P25</td><td>-1.70%</td><td>进入高估</td></tr>
@@ -1726,12 +2033,12 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>19.35%</strong>，历史分位 = <strong>70.0%</strong> 🟡 <strong>合理偏低</strong></blockquote>
+<blockquote>当前 ERP = <strong>19.36%</strong>，历史分位 = <strong>70.0%</strong> 🟡 <strong>合理偏低</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
 <tr><td><strong>胜率</strong></td><td><strong>70.0%</strong></td><td>历史上 70.0% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>1.37x</strong></td><td>盈利空间 21.39% / 亏损空间 15.56%</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>1.38x</strong></td><td>盈利空间 21.40% / 亏损空间 15.53%</td></tr>
 <tr><td>当前 PE</td><td>4.7x</td><td>历史均值 39.6x，最高 121.5x，最低 1.6x</td></tr>
 </table>
 <br>
@@ -1740,7 +2047,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+2.02%</strong></blockquote>
+<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+2.03%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🚨 <strong>恐慌踩踏</strong> — 近20日ERP急速飙升 2.39%（斜率 0.096%/日）— 市场处于恐慌抛售期，PE急速压缩，历史上往往是买点临近的强化信号，但需警惕基本面是否同步恶化。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1753,22 +2061,39 @@
 <tr><td>2026-03</td><td>4.5x</td><td><strong>20.26%</strong> 🟡</td><td>▲1.29%</td></tr>
 <tr><td>2026-04</td><td>5.3x</td><td><strong>16.94%</strong> 🟡</td><td>▼3.31%</td></tr>
 <tr><td>2026-05</td><td>5.3x</td><td><strong>17.27%</strong> 🟡</td><td>▲0.32%</td></tr>
-<tr><td>2026-06</td><td>4.7x</td><td><strong>19.35%</strong> 🟡</td><td>▲2.09%</td></tr>
+<tr><td>2026-06</td><td>4.7x</td><td><strong>19.36%</strong> 🟡</td><td>▲2.10%</td></tr>
 </table>
+<br>
+<blockquote>⚠️ 减仓信号：无ETF价格数据，跳过。</blockquote>
+<br>
+<hr>
+<h3>基本面暴雷预警（Serper 实时搜索 + AI 判断，需人工确认）</h3>
+<br>
+<blockquote>🔍 数据源：Serper.dev 实时搜索 + 七牛云 AI 分析。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
+<br>
+<p>⚠️ <strong>关注</strong>（置信度：低）</p>
+<br>
+<p>建议持续关注，暂不需要立即操作。</p>
+<br>
+<p><strong>摘要：</strong> 中美互联网指数(930794)涵盖中美两地互联网龙头股。当前中美科技博弈持续、国内互联网监管常态化、美联储政策不确定性等因素构成潜在压力，但未发现明确重大暴雷事件。因无实时新闻，置信度较低。</p>
+<br>
+<p><strong>参考来源：</strong></p>
+<p>  - 训练知识库（截至2024年初）</p>
+<p>  - 无实时数据支撑</p>
 <br>
 <hr>
 <h1>═══ 畜牧养殖 (931946) ═══</h1>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>3.80%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
-<tr><td>历史均值</td><td>3.71%</td><td>568条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>3.83%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
+<tr><td>历史均值</td><td>3.71%</td><td>569条样本</td></tr>
 </table>
 <br>
 <table>
 <tr><td>分位点</td><td>ERP值（越高越便宜）</td><td>价格估值状态</td></tr>
 <tr><td>P90</td><td>4.85%</td><td>极度低估</td></tr>
-<tr><td>P75</td><td>4.47%</td><td>显著低估</td></tr>
+<tr><td>P75</td><td>4.46%</td><td>显著低估</td></tr>
 <tr><td>P50</td><td>3.49%</td><td>价值中枢</td></tr>
 <tr><td>P25</td><td>3.06%</td><td>进入高估</td></tr>
 <tr><td>P10</td><td>2.73%</td><td>极度高估</td></tr>
@@ -1788,12 +2113,12 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>3.80%</strong>，历史分位 = <strong>54.6%</strong> 🟡 <strong>合理偏低</strong></blockquote>
+<blockquote>当前 ERP = <strong>3.83%</strong>，历史分位 = <strong>54.8%</strong> 🟡 <strong>合理偏低</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>54.6%</strong></td><td>历史上 54.6% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>1.02x</strong></td><td>盈利空间 1.07% / 亏损空间 1.05%</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>54.8%</strong></td><td>历史上 54.8% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>1.07x</strong></td><td>盈利空间 1.09% / 亏损空间 1.02%</td></tr>
 <tr><td>当前 PE</td><td>18.0x</td><td>历史均值 18.1x，最高 22.5x，最低 14.6x</td></tr>
 </table>
 <br>
@@ -1802,7 +2127,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>持续走低</strong>，区间变化：<strong>-0.78%</strong></blockquote>
+<blockquote>趋势方向：<strong>持续走低</strong>，区间变化：<strong>-0.76%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.56%（斜率 0.026%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1815,23 +2141,40 @@
 <tr><td>2026-03</td><td>16.6x</td><td><strong>4.22%</strong> 🟡</td><td>▲0.19%</td></tr>
 <tr><td>2026-04</td><td>17.1x</td><td><strong>4.10%</strong> 🟡</td><td>▼0.12%</td></tr>
 <tr><td>2026-05</td><td>20.1x</td><td><strong>3.26%</strong> 🟠</td><td>▼0.85%</td></tr>
-<tr><td>2026-06</td><td>18.0x</td><td><strong>3.80%</strong> 🟡</td><td>▲0.55%</td></tr>
+<tr><td>2026-06</td><td>18.0x</td><td><strong>3.83%</strong> 🟡</td><td>▲0.57%</td></tr>
 </table>
+<br>
+<blockquote>⚠️ 减仓信号：无ETF价格数据，跳过。</blockquote>
+<br>
+<hr>
+<h3>基本面暴雷预警（Serper 实时搜索 + AI 判断，需人工确认）</h3>
+<br>
+<blockquote>🔍 数据源：Serper.dev 实时搜索 + 七牛云 AI 分析。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
+<br>
+<p>⚠️ <strong>关注</strong>（置信度：低）</p>
+<br>
+<p>建议持续关注，暂不需要立即操作。</p>
+<br>
+<p><strong>摘要：</strong> 畜牧养殖板块受猪周期波动影响，当前猪价处于低位震荡阶段，部分养殖企业盈利承压。未获取实时新闻，基于训练知识判断，暂无明确重大暴雷事件，但行业景气度偏弱需持续关注。</p>
+<br>
+<p><strong>参考来源：</strong></p>
+<p>  - 训练知识库（截至2024年初）</p>
+<p>  - 无实时新闻数据</p>
 <br>
 <hr>
 <h1>═══ 稀土产业 (930598) ═══</h1>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 ERP</td><td><strong>1.04%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
-<tr><td>历史均值</td><td>0.06%</td><td>2857条样本</td></tr>
+<tr><td>当前 ERP</td><td><strong>1.03%</strong></td><td><strong>🟡 合理偏低 (P50-P75)</strong></td></tr>
+<tr><td>历史均值</td><td>0.06%</td><td>2858条样本</td></tr>
 </table>
 <br>
 <table>
 <tr><td>分位点</td><td>ERP值（越高越便宜）</td><td>价格估值状态</td></tr>
 <tr><td>P90</td><td>2.05%</td><td>极度低估</td></tr>
 <tr><td>P75</td><td>1.17%</td><td>显著低估</td></tr>
-<tr><td>P50</td><td>-0.17%</td><td>价值中枢</td></tr>
+<tr><td>P50</td><td>-0.16%</td><td>价值中枢</td></tr>
 <tr><td>P25</td><td>-0.92%</td><td>进入高估</td></tr>
 <tr><td>P10</td><td>-1.96%</td><td>极度高估</td></tr>
 </table>
@@ -1850,13 +2193,13 @@
 <br>
 <blockquote>胜率 = ERP历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）</blockquote>
-<blockquote>当前 ERP = <strong>1.04%</strong>，历史分位 = <strong>72.8%</strong> 🟡 <strong>合理偏低</strong></blockquote>
+<blockquote>当前 ERP = <strong>1.03%</strong>，历史分位 = <strong>72.6%</strong> 🟡 <strong>合理偏低</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
-<tr><td><strong>胜率</strong></td><td><strong>72.8%</strong></td><td>历史上 72.8% 的时间比现在更贵（ERP更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>2.96x</strong></td><td>盈利空间 3.00% / 亏损空间 1.01%</td></tr>
-<tr><td>当前 PE</td><td>35.9x</td><td>历史均值 39.7x，最高 121.5x，最低 14.5x</td></tr>
+<tr><td><strong>胜率</strong></td><td><strong>72.6%</strong></td><td>历史上 72.6% 的时间比现在更贵（ERP更低）</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>2.94x</strong></td><td>盈利空间 2.99% / 亏损空间 1.02%</td></tr>
+<tr><td>当前 PE</td><td>36.1x</td><td>历史均值 39.7x，最高 121.5x，最低 14.5x</td></tr>
 </table>
 <br>
 <p><strong>综合评级：🟡 胜率中等 + 赔率一般，可参与</strong></p>
@@ -1864,7 +2207,8 @@
 <hr>
 <h3>近10月 ERP 趋势</h3>
 <br>
-<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+0.53%</strong></blockquote>
+<blockquote>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+0.52%</strong></blockquote>
+<blockquote>📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 -0.19%（斜率 -0.016%/日）— 估值无明显趋势，保持既有仓位。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PE</td><td>ERP</td><td>环比变化</td></tr>
@@ -1877,36 +2221,45 @@
 <tr><td>2026-03</td><td>37.2x</td><td><strong>0.87%</strong> 🟡</td><td>▲0.50%</td></tr>
 <tr><td>2026-04</td><td>40.0x</td><td><strong>0.76%</strong> 🟡</td><td>▼0.12%</td></tr>
 <tr><td>2026-05</td><td>33.1x</td><td><strong>1.31%</strong> 🟢</td><td>▲0.56%</td></tr>
-<tr><td>2026-06</td><td>35.9x</td><td><strong>1.04%</strong> 🟡</td><td>▼0.27%</td></tr>
+<tr><td>2026-06</td><td>36.1x</td><td><strong>1.03%</strong> 🟡</td><td>▼0.28%</td></tr>
 </table>
+<br>
+<hr>
+<h3>减仓 / 清仓信号</h3>
+<br>
+<blockquote>🛡️ <strong>低估区保护（ERP ≥ P50，当前分位 73%）</strong></blockquote>
+<blockquote>均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。</blockquote>
+<blockquote>减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。</blockquote>
+<br>
+<blockquote>⚠️ 基本面预警：发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（516150.SH）</h3>
 <br>
-<p><strong>⚠️ 注意：波动高位→分批建仓</strong></p>
+<p><strong>✅ 执行条件正常</strong></p>
 <br>
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：⚪ 平价 -0.014%（1年52% / 3年45%分位）— 折价处于历史中高位（偏贵） → 平价，无额外成本，可下单</p>
-<p>- 趋势：5日+0.210% / 10日-0.091% → 折价收窄 → 买入窗口趋于关闭，抓紧或等下次</p>
+<p>- 当前：🟢 折价 -0.349%（1年8% / 3年4%分位）— 历史少见低折价（买入成本极优） → 折价买入，执行成本占优，可直接下单</p>
+<p>- 趋势：5日+0.148% / 10日-0.365% → 折价收窄 → 买入窗口趋于关闭，抓紧或等下次</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
 <br>
-<p>- 资金活跃度：🟡 1周成交额在52周中处于60%分位 — 活跃度中等</p>
-<p>- 资金加速度：🟡 118% — 本周略高于近4周均值，温和放量</p>
+<p>- 资金活跃度：🟡 1周成交额在52周中处于73%分位 — 活跃度中等</p>
+<p>- 资金加速度：🟡 138% — 本周略高于近4周均值，温和放量</p>
 <p>- 价格/量背离：✅ 无背离 — 价格与成交量方向一致，走势有量配合</p>
 <br>
 <p><strong>C · 风险水位 / 要不要换ETF（波动 + 超额收益）</strong></p>
 <blockquote>波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。</blockquote>
 <br>
-<p>- 年化波动率：48.1%，🔴 1年93%分位 — 波动率历史高位，单次建仓量要小，分批进</p>
+<p>- 年化波动率：46.5%，🟠 1年84%分位 — 波动率中高，正常建仓</p>
 <p>- 最大回撤：38.5%，1年85%分位 — 回撤中等，尚有下行空间</p>
-<p>- 综合风险：高波动 + 充分回撤 → 适合分批建仓，风险已有释放</p>
-<p>- 超额收益：✅ 年化超额约 +0.97% — 微正，跟踪正常</p>
-<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日-2.1269% / 10日3.4399% / 20日1.1669%）</p>
-<p>- 跟踪误差：4.85% 正常</p>
+<p>- 综合风险：风险水位正常</p>
+<p>- 超额收益：✅ 年化超额约 +0.96% — 微正，跟踪正常</p>
+<p>- 近期动量：📉 近期超额走弱中（5日MA < 20日MA）（MA 5日-7.6052% / 10日2.7216% / 20日1.4764%）</p>
+<p>- 跟踪误差：4.84% 正常</p>
 <br>
 <div class="footer">自动生成于 2026-06-25 · equity-risk-premium-monitor</div>
 </div>
