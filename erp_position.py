@@ -15,9 +15,10 @@ from etf_metrics import load_etf_metrics, build_etf_metrics_block, ERP_TO_ETF
 
 SHILLER_PATH = os.getenv("SHILLER_PATH", "./data/ie_data.xls")
 
-# CAPE 分组区间定义（用于 Shiller 长期回报锚）
 _CAPE_BINS   = [0,  10,  15,  20,  25,  30,  35,  40,  999]
 _CAPE_LABELS = ['<10', '10-15', '15-20', '20-25', '25-30', '30-35', '35-40', '>40']
+
+_FUND_ICON = {"疑似暴雷": "🚨", "关注": "⚠️", "正常": "✅", "─": "─"}
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -155,10 +156,10 @@ def calc_odds(cur_val, val_series):
 
 
 # ══════════════════════════════════════════════════════════════════════
-#  【新增】ERP 斜率信号模块
+#  ERP 斜率信号模块
 # ══════════════════════════════════════════════════════════════════════
 
-_SLOPE_EXTREME_THRESHOLD = 0.02   # 20日内ERP绝对变化 >= 2% 视为极陡
+_SLOPE_EXTREME_THRESHOLD = 0.02
 
 
 def compute_erp_slope_signal(erp_series: pd.Series) -> dict:
@@ -197,7 +198,7 @@ def compute_erp_slope_signal(erp_series: pd.Series) -> dict:
 
 
 # ══════════════════════════════════════════════════════════════════════
-#  【新增】减仓信号模块
+#  减仓信号模块
 # ══════════════════════════════════════════════════════════════════════
 
 ETF_PRICE_PATH = "./etf_price.csv"
@@ -226,7 +227,6 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
     if price_s is None or len(price_s) < 5:
         return "\n> ⚠️ 减仓信号：无ETF价格数据，跳过。\n"
 
-    # 低估区门控
     if current_erp_percentile >= 0.50:
         return f"""
 ---
@@ -298,29 +298,26 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
 
 
 # ══════════════════════════════════════════════════════════════════════
-#  基本面暴雷预警模块（Serper.dev 替代 Tavily）
+#  基本面暴雷预警模块（Serper.dev + 结构化返回）
 # ══════════════════════════════════════════════════════════════════════
 
 _ANTHROPIC_API_URL  = "https://api.qnaigc.com/v1/messages"
 _SEARCH_CACHE_DIR   = Path("./data/search_cache")
 _SEARCH_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-_SEARCH_CACHE_TTL_HOURS = 20  # 每日运行一次，20小时内命中缓存直接复用
+_SEARCH_CACHE_TTL_HOURS = 20
 
 
 def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> list[dict]:
     """
     使用 Serper.dev Google News API 搜索新闻。
-    免费额度：2500次/月（月度刷新），覆盖 42次/天 × 30天 = 1260次/月。
-    返回格式与原 Tavily 版兼容：[{"title": ..., "url": ..., "content": ...}]
-
+    免费额度：2500次/月（月度刷新）。
+    返回格式：[{"title": ..., "url": ..., "content": ...}]
     环境变量：SERPER_API_KEY
-    注册地址：https://serper.dev
     """
     serper_key = os.getenv("SERPER_API_KEY", "")
     if not serper_key:
         return []
 
-    # ── 缓存检查（同日重跑不消耗额度）────────────────────────────────
     cache_key  = hashlib.md5(f"{lang}:{query}".encode()).hexdigest()
     cache_file = _SEARCH_CACHE_DIR / f"{cache_key}.json"
     if cache_file.exists():
@@ -331,7 +328,7 @@ def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> lis
             if datetime.now() - cached_at < timedelta(hours=_SEARCH_CACHE_TTL_HOURS):
                 return cached["results"]
         except Exception:
-            pass  # 缓存损坏，重新请求
+            pass
 
     try:
         resp = requests.post(
@@ -345,6 +342,7 @@ def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> lis
                 "num": max_results,
                 "hl":  lang,
                 "gl":  "cn" if lang == "zh-cn" else ("hk" if lang == "zh-tw" else "us"),
+                "tbs": "qdr:w",
             },
             timeout=20,
         )
@@ -360,7 +358,6 @@ def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> lis
             for item in raw
         ]
 
-        # ── 写缓存 ────────────────────────────────────────────────────
         import json as _json
         cache_file.write_text(
             _json.dumps(
@@ -376,7 +373,6 @@ def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> lis
 
 
 def _fundamental_queries() -> dict:
-    """动态生成搜索词，年份跟随当前年份"""
     y = datetime.now().year
     return {
         "000300": (f"沪深300 基本面 重大风险 监管 暴雷 {y}", f"CSI 300 major risk earnings collapse {y}"),
@@ -403,16 +399,22 @@ def _fundamental_queries() -> dict:
     }
 
 
-def build_fundamental_alert_block(code: str, name: str) -> str:
+def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
+    """
+    返回 (result_dict, markdown_str) 元组。
+    result_dict 供仪表盘汇总用：{"alert_level": ..., "confidence": ..., "summary": ...}
+    markdown_str 供正文详情用。
+    """
+    _empty = {"alert_level": "─", "confidence": "─", "summary": ""}
+
     queries = _fundamental_queries().get(code)
     if queries is None:
-        return ""
+        return _empty, ""
 
     import json
 
     query_cn, query_en = queries
 
-    # ── 1. Serper 搜索（中英文各一次）────────────────────────────────
     results_cn = _serper_search(query_cn, max_results=5, lang="zh-cn")
     results_en = _serper_search(query_en, max_results=3, lang="en")
     all_results = results_cn + results_en
@@ -428,7 +430,6 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
         search_block = "（未能获取实时新闻，请根据你的训练知识判断）"
         sources_from_search = []
 
-    # ── 2. 组装 prompt，让模型基于搜索结果判断 ───────────────────────
     prompt = f"""你是一位专业的股票基本面分析师。请根据以下实时新闻，判断"{name}({code})"近期是否存在重大基本面负面事件。
 
 {search_block}
@@ -449,8 +450,8 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
             "messages": [{"role": "user", "content": prompt}]
         }
         headers = {
-            "Content-Type":    "application/json",
-            "x-api-key":       os.getenv("ANTHROPIC_API_KEY", ""),
+            "Content-Type":      "application/json",
+            "x-api-key":         os.getenv("ANTHROPIC_API_KEY", ""),
             "anthropic-version": "2023-06-01",
         }
         resp = requests.post(_ANTHROPIC_API_URL, json=payload, headers=headers, timeout=60)
@@ -478,7 +479,12 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
 
         sources_md = "\n".join(f"  - {s}" for s in sources) if sources else "  - 无"
 
-        return f"""
+        result_dict = {
+            "alert_level": alert_level,
+            "confidence":  confidence,
+            "summary":     summary,
+        }
+        markdown_str = f"""
 ---
 ### 基本面暴雷预警（Serper 实时搜索 + AI 判断，需人工确认）
 
@@ -493,10 +499,18 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
 **参考来源：**
 {sources_md}
 """
+        return result_dict, markdown_str
+
     except requests.exceptions.Timeout:
-        return "\n> ⚠️ 基本面预警：API请求超时，跳过。\n"
+        return (
+            {"alert_level": "─", "confidence": "─", "summary": "超时"},
+            "\n> ⚠️ 基本面预警：API请求超时，跳过。\n",
+        )
     except Exception as e:
-        return f"\n> ⚠️ 基本面预警：发生异常（{e}），跳过。\n"
+        return (
+            {"alert_level": "─", "confidence": "─", "summary": str(e)},
+            f"\n> ⚠️ 基本面预警：发生异常（{e}），跳过。\n",
+        )
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -504,12 +518,6 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
 # ══════════════════════════════════════════════════════════════════════
 
 def build_unified_valuation_block(df, code):
-    """
-    统一的估值决策模块
-    胜率 = ERP历史分位
-    赔率 = (当前ERP - P10) / (P90 - 当前ERP)，ERP绝对值法
-    支持 ERP (通用) 和 PSY (HSTECH)
-    """
     is_hstech = (code == "HSTECH")
 
     if is_hstech:
@@ -600,9 +608,6 @@ def build_unified_valuation_block(df, code):
 
 
 def build_trend_block(df, erp_series, code, quantiles):
-    """
-    生成近10个月末 ERP 数据点的趋势模块。
-    """
     if code == "HSTECH":
         ps_df = load_ps_data()
         if ps_df is None or "psy" not in ps_df.columns:
@@ -771,6 +776,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
         "ERP斜率：🚨恐慌踩踏 🟢快速改善 ⚠️情绪过热 🟠快速恶化 🟡横盘\n\n"
         "减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强烈清仓 🛡️低估区保护\n\n"
+        "基本面：✅正常 ⚠️关注 🚨疑似暴雷 ─未获取\n\n"
         "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n---"
     )
 
@@ -782,19 +788,21 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 continue
             lines.append(f"\n**{group_label}**")
             for r in group_items:
-                disc       = r.get("etf_discount",   "─")
-                divg       = r.get("etf_divergence", "─")
-                vol        = r.get("etf_vol",        "─")
-                slope_sig  = r.get("slope_signal",   "─")
-                exit_sig   = r.get("exit_signal",    "─")
+                disc       = r.get("etf_discount",      "─")
+                divg       = r.get("etf_divergence",    "─")
+                vol        = r.get("etf_vol",           "─")
+                slope_sig  = r.get("slope_signal",      "─")
+                exit_sig   = r.get("exit_signal",       "─")
+                fund_alert = r.get("fundamental_alert", "─")
                 zone_label = r.get("erp_zone", "")
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
                 cat        = HOLDING_CATEGORY.get(r["code"], "")
                 cat_str    = f" [{cat}]" if cat else ""
                 pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
+                fund_icon  = _FUND_ICON.get(fund_alert, "─")
                 lines.append(
                     f"\n{r['name']} · {r['total_pct']}%({pos_structure}) · "
-                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_sig} · {action}{cat_str}"
+                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_sig} · 基本面{fund_icon} · {action}{cat_str}"
                 )
         return "\n".join(lines) + "\n\n---\n"
 
@@ -805,7 +813,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
             if not group_items:
                 continue
             rows_html.append(
-                f'<tr><td colspan="5" class="section-header">{group_label}</td></tr>'
+                f'<tr><td colspan="6" class="section-header">{group_label}</td></tr>'
             )
             for r in group_items:
                 code        = r.get("code", "")
@@ -814,21 +822,24 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 total_pct     = r["total_pct"]
                 pos_cls       = pos_color_class(total_pct)
                 pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
-                disc       = r.get("etf_discount",   "─")
-                divg       = r.get("etf_divergence", "─")
-                vol        = r.get("etf_vol",        "─")
-                slope_sig  = r.get("slope_signal",   "─")
-                exit_sig   = r.get("exit_signal",    "─")
+                disc       = r.get("etf_discount",      "─")
+                divg       = r.get("etf_divergence",    "─")
+                vol        = r.get("etf_vol",           "─")
+                slope_sig  = r.get("slope_signal",      "─")
+                exit_sig   = r.get("exit_signal",       "─")
+                fund_alert = r.get("fundamental_alert", "─")
                 zone_label = r.get("erp_zone", "")
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
                 cat        = HOLDING_CATEGORY.get(code, "")
                 cat_str    = f" [{cat}]" if cat else ""
+                fund_icon  = _FUND_ICON.get(fund_alert, "─")
                 rows_html.append(
                     f'<tr>'
                     f'<td class="col-name">{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
                     f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
                     f'<td class="col-sig">量{divg}&nbsp;波{vol}&nbsp;折{disc}</td>'
                     f'<td class="col-sig2">斜{slope_sig}&nbsp;仓{exit_sig}</td>'
+                    f'<td class="col-fund">面{fund_icon}</td>'
                     f'<td class="col-action">{action}{cat_str}</td>'
                     f'</tr>'
                 )
@@ -952,12 +963,13 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
   .dashboard-table {{ width: 100%; border-collapse: collapse; }}
   .dashboard-table tr {{ border-bottom: 1px solid #21262d; }}
   .dashboard-table td {{ padding: 10px 8px; vertical-align: middle; border: none; }}
-  .col-name  {{ width: 110px; font-weight: bold; }}
-  .col-etf   {{ color: #8b949e; font-size: 11px; }}
-  .col-pos   {{ width: 64px; text-align: center; font-size: 20px; font-weight: bold; }}
-  .col-sub   {{ font-size: 10px; color: #8b949e; }}
-  .col-sig   {{ width: 120px; }}
-  .col-sig2  {{ width: 80px; }}
+  .col-name   {{ width: 110px; font-weight: bold; }}
+  .col-etf    {{ color: #8b949e; font-size: 11px; }}
+  .col-pos    {{ width: 64px; text-align: center; font-size: 20px; font-weight: bold; }}
+  .col-sub    {{ font-size: 10px; color: #8b949e; }}
+  .col-sig    {{ width: 120px; }}
+  .col-sig2   {{ width: 80px; }}
+  .col-fund   {{ width: 36px; text-align: center; }}
   .col-action {{ font-size: 12px; }}
   .pos-high   {{ color: #3fb950; }}
   .pos-mid    {{ color: #d29922; }}
@@ -1161,6 +1173,10 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     elif "低估区保护" in exit_block:    _exit_signal = "🛡️"
     else:                               _exit_signal = "✅"
 
+    # ── 基本面预警（一次调用，结果同时给仪表盘和正文）────────────────
+    fundamental_result, fundamental_block = build_fundamental_alert_block(code, name)
+    _fund_alert = fundamental_result.get("alert_level", "─")
+
     if summary_list is not None:
         summary_list.append({
             "name": name, "code": code,
@@ -1169,12 +1185,13 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
             "b_pct": b_pct, "v_pct": v_pct, "t_pct": t_pct,
             "win_rate": _win,
             "odds": _odds,
-            "etf_signal":     _etf_signal,
-            "etf_discount":   _etf_discount_signal,
-            "etf_divergence": _etf_divergence_signal,
-            "etf_vol":        _etf_vol_signal,
-            "slope_signal":   slope_info["signal_icon"],
-            "exit_signal":    _exit_signal,
+            "etf_signal":        _etf_signal,
+            "etf_discount":      _etf_discount_signal,
+            "etf_divergence":    _etf_divergence_signal,
+            "etf_vol":           _etf_vol_signal,
+            "slope_signal":      slope_info["signal_icon"],
+            "exit_signal":       _exit_signal,
+            "fundamental_alert": _fund_alert,       # ← 新增
         })
 
     # ── 报告头部 ──────────────────────────────────────────────────────
@@ -1224,12 +1241,11 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 """
 
     # ── 组装各模块 ────────────────────────────────────────────────────
-    unified_block     = build_unified_valuation_block(df, code)
-    trend_block       = build_trend_block(df, erp_series, code, quantiles)
-    exit_block_final  = exit_block
-    fundamental_block = build_fundamental_alert_block(code, name)
-    etf_block         = build_etf_metrics_block(code, etf_df)
-    shiller_block     = build_shiller_block(code)
+    unified_block    = build_unified_valuation_block(df, code)
+    trend_block      = build_trend_block(df, erp_series, code, quantiles)
+    exit_block_final = exit_block
+    etf_block        = build_etf_metrics_block(code, etf_df)
+    shiller_block    = build_shiller_block(code)
 
     md = f"""{header_block}
 ---
