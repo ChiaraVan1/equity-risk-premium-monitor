@@ -198,7 +198,7 @@ def compute_erp_slope_signal(erp_series: pd.Series) -> dict:
 #  【新增】减仓信号模块
 # ══════════════════════════════════════════════════════════════════════
 
-ETF_PRICE_PATH = "./data/etf_price.csv"
+ETF_PRICE_PATH = "./etf_price.csv"
 _ETF_PRICE_CACHE = {}
 
 
@@ -299,7 +299,7 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
 #  【新增】基本面暴雷预警模块
 # ══════════════════════════════════════════════════════════════════════
 
-_ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
+_ANTHROPIC_API_URL = "https://api.qnaigc.com/v1/messages"
 
 def _fundamental_queries() -> dict:
     """动态生成搜索词，年份跟随当前年份"""
