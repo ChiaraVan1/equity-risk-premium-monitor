@@ -9,48 +9,40 @@ on:
         description: '预览模式（只生成报告文件，不推送微信）'
         type: boolean
         default: false
-
 jobs:
   run-erp-strategy:
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
-
     steps:
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
-
       # 2. 设置 Python 环境
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-
       # 3. 安装依赖
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
       # 4. 运行 ETF 指标计算（生成 simple_etf_metrics.csv 供后续步骤使用）
       - name: Run ETF Metrics
         run: python simple_etf_metrics.py
-
       # 5. 执行增量抓取数据
       - name: Fetch Data
         env:
           QQQ_PE_TODAY: ${{ vars.QQQ_PE_TODAY }}
         run: python fetch_bond_yield_incremental.py
-
       # 6. 执行分析，生成 HTML 报告 + 推送仪表盘到微信
       - name: Analyze and Push to WeChat
         env:
           SCT_KEY: ${{ secrets.SCT_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: python erp_position.py
-
       # 7. 预览模式：上传报告文件供下载查看
       - name: Upload preview report
         if: ${{ github.event.inputs.dry_run == 'true' }}
@@ -58,7 +50,6 @@ jobs:
         with:
           name: report-preview
           path: output_preview.md
-
       # 8. 将更新后的数据保存回 GitHub 仓库
       - name: Commit and Push data
         run: |
@@ -67,7 +58,6 @@ jobs:
           git add data/
           git commit -m "Auto update ERP data [skip ci]" || exit 0
           git push
-
       # 9. 部署 HTML 报告到 gh-pages 分支
       - name: Deploy HTML report to gh-pages
         if: ${{ github.event.inputs.dry_run != 'true' }}
