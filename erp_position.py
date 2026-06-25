@@ -1,7 +1,9 @@
 import pandas as pd
 import numpy as np
 import os
-from datetime import datetime
+import hashlib
+from datetime import datetime, timedelta
+from pathlib import Path
 import requests
 
 from etf_metrics import load_etf_metrics, build_etf_metrics_block, ERP_TO_ETF
@@ -296,10 +298,82 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
 
 
 # ══════════════════════════════════════════════════════════════════════
-#  【新增】基本面暴雷预警模块
+#  基本面暴雷预警模块（Serper.dev 替代 Tavily）
 # ══════════════════════════════════════════════════════════════════════
 
-_ANTHROPIC_API_URL = "https://api.qnaigc.com/v1/messages"
+_ANTHROPIC_API_URL  = "https://api.qnaigc.com/v1/messages"
+_SEARCH_CACHE_DIR   = Path("./data/search_cache")
+_SEARCH_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+_SEARCH_CACHE_TTL_HOURS = 20  # 每日运行一次，20小时内命中缓存直接复用
+
+
+def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> list[dict]:
+    """
+    使用 Serper.dev Google News API 搜索新闻。
+    免费额度：2500次/月（月度刷新），覆盖 42次/天 × 30天 = 1260次/月。
+    返回格式与原 Tavily 版兼容：[{"title": ..., "url": ..., "content": ...}]
+
+    环境变量：SERPER_API_KEY
+    注册地址：https://serper.dev
+    """
+    serper_key = os.getenv("SERPER_API_KEY", "")
+    if not serper_key:
+        return []
+
+    # ── 缓存检查（同日重跑不消耗额度）────────────────────────────────
+    cache_key  = hashlib.md5(f"{lang}:{query}".encode()).hexdigest()
+    cache_file = _SEARCH_CACHE_DIR / f"{cache_key}.json"
+    if cache_file.exists():
+        try:
+            import json as _json
+            cached    = _json.loads(cache_file.read_text(encoding="utf-8"))
+            cached_at = datetime.fromisoformat(cached["cached_at"])
+            if datetime.now() - cached_at < timedelta(hours=_SEARCH_CACHE_TTL_HOURS):
+                return cached["results"]
+        except Exception:
+            pass  # 缓存损坏，重新请求
+
+    try:
+        resp = requests.post(
+            "https://google.serper.dev/news",
+            headers={
+                "X-API-KEY":    serper_key,
+                "Content-Type": "application/json",
+            },
+            json={
+                "q":   query,
+                "num": max_results,
+                "hl":  lang,
+                "gl":  "cn" if lang == "zh-cn" else ("hk" if lang == "zh-tw" else "us"),
+            },
+            timeout=20,
+        )
+        resp.raise_for_status()
+        raw = resp.json().get("news", [])
+
+        results = [
+            {
+                "title":   item.get("title", ""),
+                "url":     item.get("link", ""),
+                "content": item.get("snippet", "")[:150],
+            }
+            for item in raw
+        ]
+
+        # ── 写缓存 ────────────────────────────────────────────────────
+        import json as _json
+        cache_file.write_text(
+            _json.dumps(
+                {"cached_at": datetime.now().isoformat(), "results": results},
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+        return results
+
+    except Exception:
+        return []
+
 
 def _fundamental_queries() -> dict:
     """动态生成搜索词，年份跟随当前年份"""
@@ -329,33 +403,6 @@ def _fundamental_queries() -> dict:
     }
 
 
-def _tavily_search(query: str, max_results: int = 5) -> list[dict]:
-    """
-    调用 Tavily Search API，返回搜索结果列表。
-    每条结果包含 title / url / content。
-    失败时返回空列表，不抛异常。
-    """
-    tavily_key = os.getenv("TAVILY_API_KEY", "")
-    if not tavily_key:
-        return []
-    try:
-        resp = requests.post(
-            "https://api.tavily.com/search",
-            json={
-                "api_key":      tavily_key,
-                "query":        query,
-                "max_results":  max_results,
-                "search_depth": "basic",
-                "include_answer": False,
-            },
-            timeout=20,
-        )
-        resp.raise_for_status()
-        return resp.json().get("results", [])
-    except Exception:
-        return []
-
-
 def build_fundamental_alert_block(code: str, name: str) -> str:
     queries = _fundamental_queries().get(code)
     if queries is None:
@@ -365,9 +412,9 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
 
     query_cn, query_en = queries
 
-    # ── 1. Tavily 搜索（中英文各搜一次）─────────────────────────────
-    results_cn = _tavily_search(query_cn, max_results=5)
-    results_en = _tavily_search(query_en, max_results=3)
+    # ── 1. Serper 搜索（中英文各一次）────────────────────────────────
+    results_cn = _serper_search(query_cn, max_results=5, lang="zh-cn")
+    results_en = _serper_search(query_en, max_results=3, lang="en")
     all_results = results_cn + results_en
 
     if all_results:
@@ -402,8 +449,8 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
             "messages": [{"role": "user", "content": prompt}]
         }
         headers = {
-            "Content-Type": "application/json",
-            "x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
+            "Content-Type":    "application/json",
+            "x-api-key":       os.getenv("ANTHROPIC_API_KEY", ""),
             "anthropic-version": "2023-06-01",
         }
         resp = requests.post(_ANTHROPIC_API_URL, json=payload, headers=headers, timeout=60)
@@ -417,8 +464,7 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
         alert_level = result.get("alert_level", "正常")
         confidence  = result.get("confidence", "低")
         summary     = result.get("summary", "")
-        # 优先用模型返回的 sources，兜底用搜索 URL
-        sources = result.get("sources") or sources_from_search[:3]
+        sources     = result.get("sources") or sources_from_search[:3]
 
         if alert_level == "疑似暴雷":
             level_icon = "🚨"
@@ -434,9 +480,9 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
 
         return f"""
 ---
-### 基本面暴雷预警（Tavily 实时搜索 + AI 判断，需人工确认）
+### 基本面暴雷预警（Serper 实时搜索 + AI 判断，需人工确认）
 
-> 🔍 数据源：Tavily 实时搜索 + 七牛云 AI 分析。**本模块仅供参考，不自动触发任何交易动作。**
+> 🔍 数据源：Serper.dev 实时搜索 + 七牛云 AI 分析。**本模块仅供参考，不自动触发任何交易动作。**
 
 {level_icon} **{alert_level}**（置信度：{confidence}）
 
