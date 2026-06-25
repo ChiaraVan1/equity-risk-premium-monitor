@@ -329,16 +329,62 @@ def _fundamental_queries() -> dict:
     }
 
 
+def _tavily_search(query: str, max_results: int = 5) -> list[dict]:
+    """
+    调用 Tavily Search API，返回搜索结果列表。
+    每条结果包含 title / url / content。
+    失败时返回空列表，不抛异常。
+    """
+    tavily_key = os.getenv("TAVILY_API_KEY", "")
+    if not tavily_key:
+        return []
+    try:
+        resp = requests.post(
+            "https://api.tavily.com/search",
+            json={
+                "api_key":      tavily_key,
+                "query":        query,
+                "max_results":  max_results,
+                "search_depth": "basic",
+                "include_answer": False,
+            },
+            timeout=20,
+        )
+        resp.raise_for_status()
+        return resp.json().get("results", [])
+    except Exception:
+        return []
+
+
 def build_fundamental_alert_block(code: str, name: str) -> str:
     queries = _fundamental_queries().get(code)
     if queries is None:
         return ""
 
-    query_cn, query_en = queries
-    prompt = f"""你是一位专业的股票基本面分析师。请搜索以下两个查询，判断"{name}({code})"在过去30天内是否存在重大基本面负面事件。
+    import json
 
-搜索查询1（中文）：{query_cn}
-搜索查询2（英文）：{query_en}
+    query_cn, query_en = queries
+
+    # ── 1. Tavily 搜索（中英文各搜一次）─────────────────────────────
+    results_cn = _tavily_search(query_cn, max_results=5)
+    results_en = _tavily_search(query_en, max_results=3)
+    all_results = results_cn + results_en
+
+    if all_results:
+        news_snippets = "\n".join(
+            f"- [{r.get('title','')}]({r.get('url','')})：{r.get('content','')[:150]}"
+            for r in all_results
+        )
+        search_block = f"以下是近期相关新闻（来自实时搜索）：\n{news_snippets}"
+        sources_from_search = [r.get("url", "") for r in all_results if r.get("url")]
+    else:
+        search_block = "（未能获取实时新闻，请根据你的训练知识判断）"
+        sources_from_search = []
+
+    # ── 2. 组装 prompt，让模型基于搜索结果判断 ───────────────────────
+    prompt = f"""你是一位专业的股票基本面分析师。请根据以下实时新闻，判断"{name}({code})"近期是否存在重大基本面负面事件。
+
+{search_block}
 
 判断标准（以下任一即为"疑似暴雷"）：
 - 核心成分股出现重大财务造假、业绩暴雷、退市风险
@@ -350,11 +396,9 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
 {{"alert_level": "正常" | "关注" | "疑似暴雷", "confidence": "低" | "中" | "高", "summary": "不超过80字的摘要", "sources": ["来源1", "来源2"]}}"""
 
     try:
-        import json
         payload = {
             "model": "claude-sonnet-4-6",
             "max_tokens": 1000,
-            "tools": [{"type": "web_search_20250305", "name": "web_search"}],
             "messages": [{"role": "user", "content": prompt}]
         }
         headers = {
@@ -373,7 +417,8 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
         alert_level = result.get("alert_level", "正常")
         confidence  = result.get("confidence", "低")
         summary     = result.get("summary", "")
-        sources     = result.get("sources", [])
+        # 优先用模型返回的 sources，兜底用搜索 URL
+        sources = result.get("sources") or sources_from_search[:3]
 
         if alert_level == "疑似暴雷":
             level_icon = "🚨"
@@ -389,9 +434,9 @@ def build_fundamental_alert_block(code: str, name: str) -> str:
 
         return f"""
 ---
-### 基本面暴雷预警（AI辅助，需人工确认）
+### 基本面暴雷预警（Tavily 实时搜索 + AI 判断，需人工确认）
 
-> 🤖 搜索近30天新闻。**本模块仅供参考，不自动触发任何交易动作。**
+> 🔍 数据源：Tavily 实时搜索 + 七牛云 AI 分析。**本模块仅供参考，不自动触发任何交易动作。**
 
 {level_icon} **{alert_level}**（置信度：{confidence}）
 
