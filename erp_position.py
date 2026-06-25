@@ -410,9 +410,9 @@ def generate_action_sentence(disc, divg, vol, zone_label):
     if vol == "🔴":
         mid = "分批建仓"
     elif vol == "🟠":
-        mid = "可建仓"
+        mid = "建仓，注意分批"
     else:
-        mid = "正常建仓"
+        mid = "一次建仓"
 
     # 后缀：折溢价
     if disc == "🔴":
@@ -425,7 +425,7 @@ def generate_action_sentence(disc, divg, vol, zone_label):
     return prefix + mid + suffix
 
 
-def build_summary_block(summary_list: list) -> str:
+def build_summary_block(summary_list: list, output_format: str = "html") -> str:
     if not summary_list:
         return ""
 
@@ -453,50 +453,74 @@ def build_summary_block(summary_list: list) -> str:
         "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n---"
     )
 
-    rows_html = []
-    for group_label, match_fn in zone_groups:
-        group_items = [r for r in summary_list if match_fn(r.get("erp_zone", ""))]
-        if not group_items:
-            continue
+    if output_format == "markdown":
+        # 纯文本版，用于微信推送
+        lines = [header, "", legend, ""]
+        for group_label, match_fn in zone_groups:
+            group_items = [r for r in summary_list if match_fn(r.get("erp_zone", ""))]
+            if not group_items:
+                continue
+            lines.append(f"\n**{group_label}**")
+            for r in group_items:
+                disc       = r.get("etf_discount",   "─")
+                divg       = r.get("etf_divergence", "─")
+                vol        = r.get("etf_vol",        "─")
+                zone_label = r.get("erp_zone", "")
+                action     = generate_action_sentence(disc, divg, vol, zone_label)
+                cat        = HOLDING_CATEGORY.get(r["code"], "")
+                cat_str    = f" [{cat}]" if cat else ""
+                lines.append(
+                    f"{r['name']} · {r['total_pct']}% · "
+                    f"量{divg} 波{vol} 折{disc} · {action}{cat_str}"
+                )
+        return "\n".join(lines) + "\n\n---\n"
 
-        rows_html.append(
-            f'<tr><td colspan="4" class="section-header">{group_label}</td></tr>'
-        )
-
-        for r in group_items:
-            code = r.get("code", "")
-            etf_ticker  = ERP_TO_ETF.get(code, "─")
-            etf_display = etf_ticker.split(".")[0] if "." in str(etf_ticker) else str(etf_ticker)
-
-            total_pct     = r["total_pct"]
-            pos_cls       = pos_color_class(total_pct)
-            pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
-
-            disc       = r.get("etf_discount",   "─")
-            divg       = r.get("etf_divergence", "─")
-            vol        = r.get("etf_vol",        "─")
-            zone_label = r.get("erp_zone", "")
-
-            action  = generate_action_sentence(disc, divg, vol, zone_label)
-            cat     = HOLDING_CATEGORY.get(code, "")
-            cat_str = f" [{cat}]" if cat else ""
+    else:
+        # HTML表格版，用于report.html
+        rows_html = []
+        for group_label, match_fn in zone_groups:
+            group_items = [r for r in summary_list if match_fn(r.get("erp_zone", ""))]
+            if not group_items:
+                continue
 
             rows_html.append(
-                f'<tr>'
-                f'<td class="col-name">{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
-                f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
-                f'<td class="col-sig">量{divg}&nbsp;波{vol}&nbsp;折{disc}</td>'
-                f'<td class="col-action">{action}{cat_str}</td>'
-                f'</tr>'
+                f'<tr><td colspan="4" class="section-header">{group_label}</td></tr>'
             )
 
-    table_html = (
-        '<table class="dashboard-table">\n'
-        + "\n".join(rows_html)
-        + "\n</table>"
-    )
+            for r in group_items:
+                code        = r.get("code", "")
+                etf_ticker  = ERP_TO_ETF.get(code, "─")
+                etf_display = etf_ticker.split(".")[0] if "." in str(etf_ticker) else str(etf_ticker)
 
-    return f"{header}\n{legend}\n\n{table_html}\n\n---\n"
+                total_pct     = r["total_pct"]
+                pos_cls       = pos_color_class(total_pct)
+                pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
+
+                disc       = r.get("etf_discount",   "─")
+                divg       = r.get("etf_divergence", "─")
+                vol        = r.get("etf_vol",        "─")
+                zone_label = r.get("erp_zone", "")
+
+                action  = generate_action_sentence(disc, divg, vol, zone_label)
+                cat     = HOLDING_CATEGORY.get(code, "")
+                cat_str = f" [{cat}]" if cat else ""
+
+                rows_html.append(
+                    f'<tr>'
+                    f'<td class="col-name">{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
+                    f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
+                    f'<td class="col-sig">量{divg}&nbsp;波{vol}&nbsp;折{disc}</td>'
+                    f'<td class="col-action">{action}{cat_str}</td>'
+                    f'</tr>'
+                )
+
+        table_html = (
+            '<table class="dashboard-table">\n'
+            + "\n".join(rows_html)
+            + "\n</table>"
+        )
+
+        return f"{header}\n{legend}\n\n{table_html}\n\n---\n"
 
 
 LEGEND_BLOCK = """
@@ -614,14 +638,14 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
   /* 仪表盘表格 */
   .dashboard-table {{ width: 100%; border-collapse: collapse; }}
   .dashboard-table tr {{ border-bottom: 1px solid #21262d; }}
-  .dashboard-table td {{ padding: 10px 8px; vertical-align: middle; }}
+  .dashboard-table td {{ padding: 10px 8px; vertical-align: middle; border: none; }}
 
   /* 列宽 */
   .col-name  {{ width: 110px; font-weight: bold; }}
   .col-etf   {{ color: #8b949e; font-size: 11px; }}
   .col-pos   {{ width: 64px; text-align: center; font-size: 20px; font-weight: bold; }}
   .col-sub   {{ font-size: 10px; color: #8b949e; }}
-  .col-sig   {{ width: 100px; }}
+  .col-sig   {{ width: 120px; }}
   .col-action {{ font-size: 12px; }}
 
   /* 仓位颜色 */
@@ -635,6 +659,7 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
     font-size: 10px; color: #8b949e;
     text-transform: uppercase; letter-spacing: 1px;
     border-bottom: 1px solid #21262d; padding: 12px 0 5px;
+    border: none;
   }}
 </style>
 </head>
@@ -952,9 +977,8 @@ if __name__ == "__main__":
         ("399967", "中证军工"),
         ("931066", "军工龙头"),
         ("930794", "中美互联网"),
-        ("931946", "畜牧养殖"),   # ← 新增
-        ("930598", "稀土产业")
-
+        ("931946", "畜牧养殖"),
+        ("930598", "稀土产业"),
     ]
 
     summary_list = []
@@ -986,11 +1010,13 @@ if __name__ == "__main__":
     summary_list.sort(key=_sort_key)
 
     if report_list:
-        date_str   = datetime.now().strftime("%Y-%m-%d")
-        summary_md = build_summary_block(summary_list)
+        date_str     = datetime.now().strftime("%Y-%m-%d")
+        summary_html = build_summary_block(summary_list, output_format="html")
+        summary_wechat = build_summary_block(summary_list, output_format="markdown")
+
         full_report = (
             "# ERP 策略每日监控报告\n"
-            + summary_md
+            + summary_html
             + LEGEND_BLOCK
             + "".join(report_list)
         )
@@ -1004,8 +1030,7 @@ if __name__ == "__main__":
                 f.write(full_report)
             print(f"✅ dry-run 模式，报告已写入 {preview_path}，不推送微信。")
         else:
-            # 只推仪表盘 + 链接，完整报告在 gh-pages 查看
             print("正在生成报告并准备推送...")
-            send_to_wechat(summary_md, date_str)
+            send_to_wechat(summary_wechat, date_str)
     else:
         print("❌ 未生成任何有效报告，请检查数据文件。")
