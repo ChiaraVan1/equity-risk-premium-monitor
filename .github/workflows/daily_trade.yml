@@ -41,6 +41,7 @@ jobs:
         env:
           SCT_KEY: ${{ secrets.SCT_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: python erp_position.py
       # 7. 预览模式：上传报告文件供下载查看
