@@ -20,6 +20,12 @@ _CAPE_LABELS = ['<10', '10-15', '15-20', '20-25', '25-30', '30-35', '35-40', '>4
 
 _FUND_ICON = {"疑似暴雷": "🚨", "关注": "⚠️", "正常": "✅", "─": "─"}
 
+# ── 减仓阈值配置（集中管理，方便调整）────────────────────────────────
+_DD_L1 = 0.10   # 第一级：回撤≥10% + 跌破MA20 → 减仓1/3
+_DD_L2 = 0.15   # 第二级：回撤≥15% + 跌破MA60 → 减仓至底仓
+_DD_L3 = 0.20   # 第三级：回撤≥20%            → 全清止损
+_QQQ_SINGLE_DAY_DROP = 0.05  # QQQ单日急跌阈值
+
 
 # ══════════════════════════════════════════════════════════════════════
 #  Shiller CAPE 长期回报锚模块
@@ -222,63 +228,153 @@ def _load_etf_price_series(erp_code: str):
 
 
 def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str:
+    """
+    三级回撤止损 + QQQ单日急跌独立信号。
+
+    回撤阈值（所有标的，无论估值区间）：
+      L1: 回撤≥10% + 跌破MA20  → ⚠️ 减仓预警（减持1/3仓位）
+      L2: 回撤≥15% + 跌破MA60  → 🔴 清仓预警（减至底仓，只留泡沫仓）
+      L3: 回撤≥20%              → 🚨 强制全清（止损优先，判断失误认错）
+
+    低估区（ERP≥P50）与高估区的差异：
+      - 高估区：三级全部激活，逻辑不变
+      - 低估区：L1/L2 降低一级显示（提示而非警报），L3 不降级（20%全清无论何时）
+
+    QQQ单日急跌（独立于回撤逻辑）：
+      - 单日跌幅≥5%：
+        · 高估区（ERP<P50）→ ⚠️ 减仓预警
+        · 低估区（ERP≥P50）→ 📢 提示（可能是加仓机会，需结合ERP判断）
+    """
     price_s = _load_etf_price_series(erp_code)
 
-    if price_s is None or len(price_s) < 5:
-        return "\n> ⚠️ 减仓信号：无ETF价格数据，跳过。\n"
-
-    if current_erp_percentile >= 0.50:
-        return f"""
+    # ── QQQ 单日急跌信号（独立计算，数据不足也尝试）────────────────
+    qqq_drop_block = ""
+    if erp_code == "QQQ" and price_s is not None and len(price_s) >= 2:
+        today_price = price_s.iloc[-1]
+        prev_price  = price_s.iloc[-2]
+        single_day_chg = (today_price - prev_price) / prev_price
+        if single_day_chg <= -_QQQ_SINGLE_DAY_DROP:
+            drop_pct = single_day_chg * 100
+            if current_erp_percentile < 0.50:
+                qqq_drop_icon   = "⚠️"
+                qqq_drop_action = f"**⚠️ QQQ单日急跌 {drop_pct:.1f}%（阈值-{_QQQ_SINGLE_DAY_DROP*100:.0f}%），当前估值偏贵（ERP {current_erp_percentile:.0%}分位），建议减仓1/3**"
+            else:
+                qqq_drop_icon   = "📢"
+                qqq_drop_action = f"**📢 QQQ单日急跌 {drop_pct:.1f}%，但当前ERP处于低估区（{current_erp_percentile:.0%}分位），急跌可能是加仓机会，结合ERP框架判断**"
+            qqq_drop_block = f"""
 ---
-### 减仓 / 清仓信号
+### QQQ 单日急跌信号
 
-> 🛡️ **低估区保护（ERP ≥ P50，当前分位 {current_erp_percentile:.0%}）**
-> 均线与回撤条件已屏蔽，避免在恐慌底部触发错误减仓。
-> 减仓只由 ERP 框架本身决定（ERP < P50 时重新激活）。
+{qqq_drop_action}
+
+| 今日收盘 | 昨日收盘 | 单日变化 | 阈值 |
+|--------:|---------:|---------:|-----:|
+| {today_price:.3f} | {prev_price:.3f} | **{drop_pct:.2f}%** | -{_QQQ_SINGLE_DAY_DROP*100:.0f}% |
 """
 
-    cur_price    = price_s.iloc[-1]
-    lookback     = min(120, len(price_s))
-    recent_high  = price_s.iloc[-lookback:].max()
-    drawdown_from_high = (cur_price - recent_high) / recent_high
+    if price_s is None or len(price_s) < 5:
+        return qqq_drop_block + "\n> ⚠️ 减仓信号：无ETF价格数据，跳过。\n"
+
+    cur_price   = price_s.iloc[-1]
+    lookback    = min(120, len(price_s))
+    recent_high = price_s.iloc[-lookback:].max()
+    dd          = (cur_price - recent_high) / recent_high  # 负数
+    dd_pct      = dd * 100
 
     ma20  = price_s.iloc[-min(20,  len(price_s)):].mean() if len(price_s) >= 5  else np.nan
+    ma60  = price_s.iloc[-min(60,  len(price_s)):].mean() if len(price_s) >= 20 else np.nan
     ma120 = price_s.iloc[-min(120, len(price_s)):].mean() if len(price_s) >= 30 else np.nan
 
     below_ma20  = cur_price < ma20  if pd.notna(ma20)  else False
+    below_ma60  = cur_price < ma60  if pd.notna(ma60)  else False
     below_ma120 = cur_price < ma120 if pd.notna(ma120) else False
-    dd_pct      = drawdown_from_high * 100
 
+    in_undervalued = current_erp_percentile >= 0.50  # 低估区
+
+    # ── 计算触发级别 ──────────────────────────────────────────────────
     alerts    = []
-    max_level = 0
+    max_level = 0  # 0=正常, 1=减仓, 2=清仓, 3=强制全清
 
-    if drawdown_from_high <= -0.10 and below_ma20:
-        alerts.append(f"回撤 {dd_pct:.1f}%（≥10%）且跌破20日均线（MA20={ma20:.3f}）")
-        max_level = max(max_level, 1)
-    if drawdown_from_high <= -0.20:
-        alerts.append(f"回撤 {dd_pct:.1f}%（≥20%），已触发强制清仓阈值")
-        max_level = max(max_level, 2)
-    if below_ma120 and pd.notna(ma120):
-        alerts.append(f"跌破120日均线（MA120={ma120:.3f}，当前={cur_price:.3f}）")
-        max_level = max(max_level, 2)
+    # L1: 回撤≥10% + 跌破MA20
+    if dd <= -_DD_L1 and below_ma20:
+        if in_undervalued:
+            # 低估区降级：L1 → 仅提示，不升level
+            alerts.append(
+                f"📢 回撤 {dd_pct:.1f}%（≥{_DD_L1*100:.0f}%）且跌破MA20={ma20:.3f}"
+                f"，但ERP处于低估区（{current_erp_percentile:.0%}分位），建议持有观察而非减仓"
+            )
+        else:
+            alerts.append(
+                f"回撤 {dd_pct:.1f}%（≥{_DD_L1*100:.0f}%）且跌破MA20={ma20:.3f}"
+                f" → 建议减持1/3仓位"
+            )
+            max_level = max(max_level, 1)
+
+    # L2: 回撤≥15% + 跌破MA60
+    if dd <= -_DD_L2 and below_ma60:
+        if in_undervalued:
+            # 低估区降级：L2 → ⚠️ 减仓预警（而非清仓）
+            alerts.append(
+                f"⚠️ 回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60={ma60:.3f:.3f}"
+                f"，低估区降级处理：建议减仓至底仓（保留泡沫仓30%），而非全清"
+            ) if pd.notna(ma60) else alerts.append(
+                f"⚠️ 回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60"
+                f"，低估区降级：减至底仓"
+            )
+            max_level = max(max_level, 1)
+        else:
+            alerts.append(
+                f"回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60={ma60:.3f}"
+                f" → 趋势破坏，减至底仓（只保留泡沫仓30%）"
+            ) if pd.notna(ma60) else alerts.append(
+                f"回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%），减至底仓"
+            )
+            max_level = max(max_level, 2)
+
+    # L3: 回撤≥20%，无论估值区间，强制全清
+    if dd <= -_DD_L3:
+        alerts.append(
+            f"🚨 回撤 {dd_pct:.1f}%（≥{_DD_L3*100:.0f}%），触发强制止损线"
+            f"{'（注：当前为低估区，但20%是硬止损，判断失误须认错）' if in_undervalued else ''}"
+            f" → 全部清仓，止损优先"
+        )
+        max_level = max(max_level, 3)
+
+    # ── 生成级别标题行 ────────────────────────────────────────────────
+    if max_level == 0 and not any("📢" in a for a in alerts):
+        level_line = "✅ **无减仓信号** — 价格结构健康，持仓不动"
+    elif max_level == 0:
+        # 仅有低估区提示
+        level_line = "🛡️ **低估区保护** — 回撤条件触发但ERP低估，降级为观察提示"
+    elif max_level == 1:
+        if in_undervalued:
+            level_line = "⚠️ **减仓预警（低估区降级）** — 建议减至底仓，保留泡沫仓30%"
+        else:
+            level_line = "⚠️ **第一级减仓预警** — 建议减持1/3仓位"
+    elif max_level == 2:
+        level_line = "🔴 **第二级清仓预警** — 趋势破坏，建议减至底仓（保留泡沫仓30%）"
+    else:
+        level_line = "🚨 **强制全清止损** — 回撤超过硬止损线，判断失误须认错，止损优先"
 
     ma20_str  = f"{ma20:.3f}"  if pd.notna(ma20)  else "─"
+    ma60_str  = f"{ma60:.3f}"  if pd.notna(ma60)  else "─"
     ma120_str = f"{ma120:.3f}" if pd.notna(ma120) else "─"
 
-    if max_level == 0:
-        level_line = "✅ **无减仓信号** — 价格结构健康，持仓不动"
-    elif max_level == 1:
-        level_line = "⚠️ **第一次减仓预警** — 建议酌情减持部分仓位"
-    else:
-        level_line = "🚨 **强烈清仓预警**" if len(alerts) >= 2 else "🔴 **清仓预警** — 趋势破坏，建议清仓"
+    def dd_status(threshold, actual_dd):
+        return f"🔴 ≥{threshold*100:.0f}%" if actual_dd <= -threshold else f"✅ <{threshold*100:.0f}%"
 
     alerts_md = "\n".join(f"  - {a}" for a in alerts) if alerts else "  - 无"
 
-    return f"""
+    erp_zone_label = f"低估区（{current_erp_percentile:.0%}分位，ERP≥P50）" if in_undervalued \
+                     else f"高估区（{current_erp_percentile:.0%}分位，ERP<P50）"
+
+    exit_block = f"""
 ---
 ### 减仓 / 清仓信号
 
-> ⚡ ERP当前分位 {current_erp_percentile:.0%}（< P50），价格信号已激活
+> ERP区间：**{erp_zone_label}**
+> 阈值：L1 回撤{_DD_L1*100:.0f}%+MA20 → 减1/3 · L2 回撤{_DD_L2*100:.0f}%+MA60 → 减至底仓 · L3 回撤{_DD_L3*100:.0f}% → 全清（硬止损）
+> 低估区时L1/L2降级处理，L3硬止损无论何种情况均执行
 
 {level_line}
 
@@ -286,8 +382,9 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
 |:-----|-----:|:-----|
 | 当前价格 | {cur_price:.3f} | ─ |
 | 近期最高（120日内） | {recent_high:.3f} | ─ |
-| 从高点回撤 | **{dd_pct:.1f}%** | {"🔴 ≥20%" if drawdown_from_high <= -0.20 else ("⚠️ ≥10%" if drawdown_from_high <= -0.10 else "✅ <10%")} |
+| 从高点回撤 | **{dd_pct:.1f}%** | {dd_status(_DD_L3, dd)} |
 | MA20 | {ma20_str} | {"🔴 跌破" if below_ma20 else "✅ 站上"} |
+| MA60 | {ma60_str} | {"🔴 跌破" if below_ma60 else "✅ 站上"} |
 | MA120 | {ma120_str} | {"🔴 跌破" if below_ma120 else "✅ 站上"} |
 
 **触发条件：**
@@ -295,6 +392,8 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
 
 > ⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。
 """
+    # QQQ急跌块放在减仓块之前
+    return qqq_drop_block + exit_block
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -308,12 +407,6 @@ _SEARCH_CACHE_TTL_HOURS = 20
 
 
 def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> list[dict]:
-    """
-    使用 Serper.dev Google News API 搜索新闻。
-    免费额度：2500次/月（月度刷新）。
-    返回格式：[{"title": ..., "url": ..., "content": ...}]
-    环境变量：SERPER_API_KEY
-    """
     serper_key = os.getenv("SERPER_API_KEY", "")
     if not serper_key:
         return []
@@ -400,11 +493,6 @@ def _fundamental_queries() -> dict:
 
 
 def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
-    """
-    返回 (result_dict, markdown_str) 元组。
-    result_dict 供仪表盘汇总用：{"alert_level": ..., "confidence": ..., "summary": ...}
-    markdown_str 供正文详情用。
-    """
     _empty = {"alert_level": "─", "confidence": "─", "summary": ""}
 
     queries = _fundamental_queries().get(code)
@@ -775,7 +863,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 🟢极高=已超P90\n\n"
         "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
         "ERP斜率：🚨恐慌踩踏 🟢快速改善 ⚠️情绪过热 🟠快速恶化 🟡横盘\n\n"
-        "减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强烈清仓 🛡️低估区保护\n\n"
+        f"减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强制全清({_DD_L3*100:.0f}%硬止损) 🛡️低估区降级\n\n"
         "基本面：✅正常 ⚠️关注 🚨疑似暴雷 ─未获取\n\n"
         "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n---"
     )
@@ -851,9 +939,11 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         return f"{header}\n{legend}\n\n{table_html}\n\n---\n"
 
 
-LEGEND_BLOCK = """
+LEGEND_BLOCK = f"""
 ERP = 1/PE − 无风险利率；PSY = 1/PS − 无风险利率。越高越便宜。
 赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+止损：L1 回撤{_DD_L1*100:.0f}%+MA20减1/3 · L2 回撤{_DD_L2*100:.0f}%+MA60减至底仓 · L3 回撤{_DD_L3*100:.0f}%全清（硬止损）
+低估区L1/L2降级，L3无豁免 · QQQ单日跌{_QQQ_SINGLE_DAY_DROP*100:.0f}%触发独立预警
 
 ---
 """
@@ -1167,13 +1257,16 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     # ── 减仓信号 ──────────────────────────────────────────────────────
     erp_percentile = (erp_series < current_erp).mean()
     exit_block     = build_exit_signal_block(code, erp_percentile)
-    if "强烈清仓预警" in exit_block:   _exit_signal = "🚨"
-    elif "清仓预警" in exit_block:      _exit_signal = "🔴"
-    elif "减仓预警" in exit_block:      _exit_signal = "⚠️"
-    elif "低估区保护" in exit_block:    _exit_signal = "🛡️"
-    else:                               _exit_signal = "✅"
 
-    # ── 基本面预警（一次调用，结果同时给仪表盘和正文）────────────────
+    # 仪表盘信号
+    if "强制全清止损" in exit_block:                                    _exit_signal = "🚨"
+    elif "第二级清仓预警" in exit_block:                                _exit_signal = "🔴"
+    elif "减仓预警" in exit_block:                                      _exit_signal = "⚠️"
+    elif "QQQ单日急跌" in exit_block and erp_percentile < 0.50:        _exit_signal = "⚠️"
+    elif "低估区保护" in exit_block or "低估区降级" in exit_block:      _exit_signal = "🛡️"
+    else:                                                               _exit_signal = "✅"
+
+    # ── 基本面预警 ────────────────────────────────────────────────────
     fundamental_result, fundamental_block = build_fundamental_alert_block(code, name)
     _fund_alert = fundamental_result.get("alert_level", "─")
 
@@ -1191,7 +1284,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
             "etf_vol":           _etf_vol_signal,
             "slope_signal":      slope_info["signal_icon"],
             "exit_signal":       _exit_signal,
-            "fundamental_alert": _fund_alert,       # ← 新增
+            "fundamental_alert": _fund_alert,
         })
 
     # ── 报告头部 ──────────────────────────────────────────────────────
@@ -1240,7 +1333,6 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
 """
 
-    # ── 组装各模块 ────────────────────────────────────────────────────
     unified_block    = build_unified_valuation_block(df, code)
     trend_block      = build_trend_block(df, erp_series, code, quantiles)
     exit_block_final = exit_block
@@ -1259,6 +1351,11 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 {unified_block}{trend_block}{exit_block_final}{fundamental_block}{etf_block}{shiller_block}"""
     print(md)
     return md
+
+
+def current_erp_percentile_for_signal(p):
+    """辅助函数，避免闭包问题"""
+    return p
 
 
 # ══════════════════════════════════════════════════════════════════════
