@@ -32,6 +32,8 @@
   .dashboard-table { width: 100%; border-collapse: collapse; }
   .dashboard-table tr { border-bottom: 1px solid #21262d; }
   .dashboard-table td { padding: 10px 8px; vertical-align: middle; border: none; }
+  .holdings-table tr { border-bottom: 1px solid #21262d; }
+  .holdings-table .col-name { width: 110px; font-weight: bold; }
   .col-name   { width: 110px; font-weight: bold; }
   .col-etf    { color: #8b949e; font-size: 11px; }
   .col-pos    { width: 64px; text-align: center; font-size: 20px; font-weight: bold; }
@@ -56,7 +58,18 @@
 <div class="wrap">
 <h1>📊 ERP 策略监控报告 · 2026-06-30</h1>
 <h1>ERP 策略每日监控报告</h1>
-<h2>📊 决策仪表盘 · 2026-06-30</h2>
+<h2>📌 我的持仓 · 减仓信号</h2>
+<table class="dashboard-table holdings-table">
+<tr><td class="col-name">📌 中证军工</td><td class="col-action" colspan="5">🚨 强制全清止损 — 回撤-26.6%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</td></tr>
+<tr><td class="col-name">📌 中证医疗</td><td class="col-action" colspan="5">🚨 强制全清止损 — 回撤-20.3%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</td></tr>
+<tr><td class="col-name">📌 恒生科技指数</td><td class="col-action" colspan="5">🚨 强制全清止损 — 回撤-28.2%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</td></tr>
+<tr><td class="col-name">📌 消费80</td><td class="col-action" colspan="5">⚠️ 减仓预警（低估区降级）— 回撤-18.2%，建议减至底仓，保留泡沫仓30%</td></tr>
+<tr><td class="col-name">📌 稀土产业</td><td class="col-action" colspan="5">🛡️ 低估区保护 — 回撤-13.9%触发条件但ERP低估，降级为观察提示</td></tr>
+<tr><td class="col-name">📌 沪深300</td><td class="col-action" colspan="5">✅ 无减仓信号 — 价格结构健康，持仓不动</td></tr>
+<tr><td class="col-name">📌 S&P 500</td><td class="col-action" colspan="5">✅ 无减仓信号 — 价格结构健康，持仓不动</td></tr>
+<tr><td class="col-name">📌 科创50</td><td class="col-action" colspan="5">✅ 无减仓信号 — 价格结构健康，持仓不动</td></tr>
+</table>
+<hr>## 📊 决策仪表盘 · 2026-06-30
 <p>胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 🟢极高=已超P90</p>
 <br>
 <p>折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批</p>
@@ -69,32 +82,34 @@
 <br>
 <p>估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)</p>
 <br>
+<p>📌 = 我的持仓</p>
+<br>
 <hr>
 <br>
 <table class="dashboard-table">
 <tr><td colspan="6" class="section-header">🟢 极度低估</td></tr>
-<tr><td class="col-name">消费80<br><span class="col-etf">510150</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓⚠️</td><td class="col-fund">面─</td><td class="col-action">等量能确认，分批建仓 [低估-消费]</td></tr>
+<tr><td class="col-name">📌 消费80<br><span class="col-etf">510150</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓⚠️</td><td class="col-fund">面─</td><td class="col-action">等量能确认，分批建仓</td></tr>
 <tr><td class="col-name">CS消费50<br><span class="col-etf">515650</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓⚠️</td><td class="col-fund">面─</td><td class="col-action">等量能确认，分批建仓</td></tr>
-<tr><td class="col-name">中证军工<br><span class="col-etf">512660</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量✅&nbsp;波🟢&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨</td><td class="col-fund">面─</td><td class="col-action">一次建仓 [低估-军工]</td></tr>
-<tr><td class="col-name">中证医疗<br><span class="col-etf">512170</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量⚠️&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨</td><td class="col-fund">面─</td><td class="col-action">等量能确认，建仓，注意分批 [低估-医疗]</td></tr>
+<tr><td class="col-name">📌 中证军工<br><span class="col-etf">512660</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量✅&nbsp;波🟢&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
+<tr><td class="col-name">📌 中证医疗<br><span class="col-etf">512170</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量⚠️&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨</td><td class="col-fund">面─</td><td class="col-action">等量能确认，建仓，注意分批</td></tr>
 <tr><td class="col-name">全指可选<br><span class="col-etf">159936</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">量✅&nbsp;波🟢&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓⚠️</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
 <tr><td colspan="6" class="section-header">🟢 显著低估</td></tr>
-<tr><td class="col-name">恒生科技指数<br><span class="col-etf">513180</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🚨&nbsp;仓🚨</td><td class="col-fund">面─</td><td class="col-action">分批建仓 [低估-港股科技]</td></tr>
+<tr><td class="col-name">📌 恒生科技指数<br><span class="col-etf">513180</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🚨&nbsp;仓🚨</td><td class="col-fund">面─</td><td class="col-action">分批建仓</td></tr>
 <tr><td class="col-name">中证红利<br><span class="col-etf">515180</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟢&nbsp;仓🛡️</td><td class="col-fund">面✅</td><td class="col-action">建仓，注意分批</td></tr>
-<tr><td class="col-name">稀土产业<br><span class="col-etf">516150</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批 [低估-资源]</td></tr>
+<tr><td class="col-name">📌 稀土产业<br><span class="col-etf">516150</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批</td></tr>
 <tr><td colspan="6" class="section-header">🟡 合理偏低</td></tr>
 <tr><td class="col-name">中证影视<br><span class="col-etf">516620</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批</td></tr>
-<tr><td class="col-name">中美互联网<br><span class="col-etf">None</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟢&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
+<tr><td class="col-name">中美互联网<br><span class="col-etf">None</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟢&nbsp;仓─</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
 <tr><td class="col-name">军工龙头<br><span class="col-etf">512710</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟢&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
 <tr><td class="col-name">MSCI France<br><span class="col-etf">513080</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟢</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批，折价窗口开着</td></tr>
-<tr><td class="col-name">畜牧养殖<br><span class="col-etf">─</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
+<tr><td class="col-name">畜牧养殖<br><span class="col-etf">─</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓─</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
 <tr><td class="col-name">人工智能<br><span class="col-etf">515980</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批</td></tr>
 <tr><td colspan="6" class="section-header">🟠 合理区间</td></tr>
-<tr><td class="col-name">沪深300<br><span class="col-etf">510300</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面✅</td><td class="col-action">分批建仓 [低估-宽基]</td></tr>
-<tr><td class="col-name">MSCI Germany<br><span class="col-etf">None</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
-<tr><td class="col-name">MSCI Emerging<br><span class="col-etf">None</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
-<tr><td class="col-name">S&P 500<br><span class="col-etf">513500</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折💎</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批，折价窗口开着</td></tr>
-<tr><td class="col-name">科创50<br><span class="col-etf">588000</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面✅</td><td class="col-action">等量能确认，分批建仓 [科技-A股]</td></tr>
+<tr><td class="col-name">📌 沪深300<br><span class="col-etf">510300</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面✅</td><td class="col-action">分批建仓</td></tr>
+<tr><td class="col-name">MSCI Germany<br><span class="col-etf">None</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓─</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
+<tr><td class="col-name">MSCI Emerging<br><span class="col-etf">None</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓─</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
+<tr><td class="col-name">📌 S&P 500<br><span class="col-etf">513500</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折💎</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">建仓，注意分批，折价窗口开着</td></tr>
+<tr><td class="col-name">📌 科创50<br><span class="col-etf">588000</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面✅</td><td class="col-action">等量能确认，分批建仓</td></tr>
 <tr><td colspan="6" class="section-header">🔴 高估/规避</td></tr>
 <tr><td class="col-name">MSCI Japan<br><span class="col-etf">513880</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折💎</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">规避，不建仓</td></tr>
 <tr><td class="col-name">Nasdaq 100<br><span class="col-etf">159696</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折💎</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">规避，不建仓</td></tr>
@@ -179,7 +194,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -205,7 +220,7 @@
 <br>
 <p>近期无重大基本面异常。</p>
 <br>
-<p><strong>摘要：</strong> 沪深300为A股核心宽基指数，成分股分散，截至训练数据无系统性暴雷事件。当前需关注宏观经济修复节奏、房地产行业风险及外部地缘扰动，但尚未达到重大负面基本面事件标准。</p>
+<p><strong>摘要：</strong> 截至训练数据截止，沪深300未见系统性重大负面事件。成分股整体运营稳定，监管政策以支持资本市场为主基调，无金融危机苗头或指数结构性风险，但需关注宏观经济复苏节奏及地产行业尾部风险。</p>
 <br>
 <p><strong>参考来源：</strong></p>
 <p>  - 训练知识库（截至2025年初）</p>
@@ -309,7 +324,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -331,14 +346,15 @@
 <br>
 <blockquote>🔍 数据源：Serper.dev 实时搜索 + 七牛云 AI 分析。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
 <br>
-<p>✅ <strong>正常</strong>（置信度：低）</p>
+<p>✅ <strong>正常</strong>（置信度：中）</p>
 <br>
 <p>近期无重大基本面异常。</p>
 <br>
-<p><strong>摘要：</strong> 基于训练知识，科创50指数成分股以半导体、生物医药、高端制造为主，近期未发现系统性重大负面事件。但因无法获取实时新闻，存在信息盲区，建议关注个股业绩预告及政策动态。</p>
+<p><strong>摘要：</strong> 截至训练数据截止，科创50核心成分股未出现系统性财务造假或退市风险，半导体、生物医药等主要板块政策整体偏支持态势，未见重大监管打压或宏观系统性危机信号。</p>
 <br>
 <p><strong>参考来源：</strong></p>
-<p>  - 训练知识库（存在时效局限）</p>
+<p>  - 训练数据综合判断</p>
+<p>  - 无实时新闻数据</p>
 <br>
 <hr>
 <h3>ETF 执行质量（588000.SH）</h3>
@@ -438,7 +454,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>🛡️ <strong>低估区保护</strong> — 回撤条件触发但ERP低估，降级为观察提示</p>
+<p>🛡️ 低估区保护 — 回撤-12.9%触发条件但ERP低估，降级为观察提示</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -464,11 +480,11 @@
 <br>
 <p>近期无重大基本面异常。</p>
 <br>
-<p><strong>摘要：</strong> 中证红利指数成分股以高股息央企、银行、煤炭、基建类为主，截至训练数据，未见重大财务造假、退市风险或系统性政策打压事件。当前政策环境对高股息资产整体偏友好，指数运作正常。</p>
+<p><strong>摘要：</strong> 中证红利指数成分股以银行、煤炭、交运等高股息传统行业为主，截至训练数据截止前未发现系统性暴雷事件。当前处于政策支持高股息资产的宏观环境，整体基本面稳健，无重大负面事件信号。</p>
 <br>
 <p><strong>参考来源：</strong></p>
 <p>  - 训练知识库（截至2025年初）</p>
-<p>  - 无实时新闻数据</p>
+<p>  - 无实时新闻数据，结论存在时效局限性</p>
 <br>
 <hr>
 <h3>ETF 执行质量（515180.SH）</h3>
@@ -568,7 +584,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>🚨 <strong>强制全清止损</strong> — 回撤超过硬止损线，判断失误须认错，止损优先</p>
+<p>🚨 强制全清止损 — 回撤-20.3%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -686,7 +702,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -803,7 +819,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>⚠️ <strong>减仓预警（低估区降级）</strong> — 建议减至底仓，保留泡沫仓30%</p>
+<p>⚠️ 减仓预警（低估区降级）— 回撤-18.2%，建议减至底仓，保留泡沫仓30%</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -920,7 +936,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>🚨 <strong>强制全清止损</strong> — 回撤超过硬止损线，判断失误须认错，止损优先</p>
+<p>🚨 强制全清止损 — 回撤-41.8%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -1039,7 +1055,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>⚠️ <strong>减仓预警（低估区降级）</strong> — 建议减至底仓，保留泡沫仓30%</p>
+<p>⚠️ 减仓预警（低估区降级）— 回撤-18.2%，建议减至底仓，保留泡沫仓30%</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -1157,7 +1173,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>⚠️ <strong>减仓预警（低估区降级）</strong> — 建议减至底仓，保留泡沫仓30%</p>
+<p>⚠️ 减仓预警（低估区降级）— 回撤-18.9%，建议减至底仓，保留泡沫仓30%</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -1275,7 +1291,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -1416,7 +1432,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -1533,7 +1549,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -1717,7 +1733,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>✅ <strong>无减仓信号</strong> — 价格结构健康，持仓不动</p>
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -1837,8 +1853,8 @@
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>估值区间</td></tr>
-<tr><td>当前 PSY</td><td><strong>36.42%</strong></td><td><strong>🟢 显著低估 (P75-P90)</strong></td></tr>
-<tr><td>历史均值</td><td>27.35%</td><td>72条样本</td></tr>
+<tr><td>当前 PSY</td><td><strong>36.43%</strong></td><td><strong>🟢 显著低估 (P75-P90)</strong></td></tr>
+<tr><td>历史均值</td><td>27.36%</td><td>72条样本</td></tr>
 </table>
 <br>
 <table>
@@ -1864,12 +1880,12 @@
 <br>
 <blockquote>胜率 = PSY历史分位（越高代表当前越便宜）</blockquote>
 <blockquote>赔率 = PSY回落盈利空间（当前PSY − P10） / PSY走高亏损空间（P90 − 当前PSY）</blockquote>
-<blockquote>当前 PSY = <strong>36.42%</strong>，历史分位 = <strong>83.3%</strong> 🟢 <strong>显著低估</strong></blockquote>
+<blockquote>当前 PSY = <strong>36.43%</strong>，历史分位 = <strong>83.3%</strong> 🟢 <strong>显著低估</strong></blockquote>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>说明</td></tr>
 <tr><td><strong>胜率</strong></td><td><strong>83.3%</strong></td><td>历史上 83.3% 的时间比现在更贵（PSY更低）</td></tr>
-<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>14.00x</strong></td><td>盈利空间 23.57% / 亏损空间 1.68%</td></tr>
+<tr><td><strong>赔率（盈亏比）</strong></td><td><strong>14.13x</strong></td><td>盈利空间 23.58% / 亏损空间 1.67%</td></tr>
 <tr><td>当前 PS</td><td>2.6x</td><td>历史均值 3.8x，最高 7.2x，最低 2.0x</td></tr>
 </table>
 <br>
@@ -1878,7 +1894,7 @@
 <hr>
 <h3>近10月 PSY 趋势（营收口径）</h3>
 <br>
-<blockquote>📐 近20日斜率信号：🚨 <strong>恐慌踩踏</strong> — 近20日ERP急速飙升 5.19%（斜率 0.072%/日）— 市场处于恐慌抛售期，PE急速压缩，历史上往往是买点临近的强化信号，但需警惕基本面是否同步恶化。</blockquote>
+<blockquote>📐 近20日斜率信号：🚨 <strong>恐慌踩踏</strong> — 近20日ERP急速飙升 5.20%（斜率 0.072%/日）— 市场处于恐慌抛售期，PE急速压缩，历史上往往是买点临近的强化信号，但需警惕基本面是否同步恶化。</blockquote>
 <br>
 <table>
 <tr><td>月份</td><td>PS</td><td>PSY</td><td>环比</td></tr>
@@ -1891,7 +1907,7 @@
 <tr><td>2026-03</td><td>2.80x</td><td><strong>33.87%</strong></td><td>▲4.13%</td></tr>
 <tr><td>2026-04</td><td>2.89x</td><td><strong>32.84%</strong></td><td>▼1.03%</td></tr>
 <tr><td>2026-05</td><td>2.82x</td><td><strong>33.81%</strong></td><td>▲0.97%</td></tr>
-<tr><td>2026-06</td><td>2.62x</td><td><strong>36.42%</strong></td><td>▲2.61%</td></tr>
+<tr><td>2026-06</td><td>2.62x</td><td><strong>36.43%</strong></td><td>▲2.62%</td></tr>
 </table>
 <br>
 <hr>
@@ -1901,7 +1917,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>🚨 <strong>强制全清止损</strong> — 回撤超过硬止损线，判断失误须认错，止损优先</p>
+<p>🚨 强制全清止损 — 回撤-28.2%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -2020,7 +2036,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>🚨 <strong>强制全清止损</strong> — 回撤超过硬止损线，判断失误须认错，止损优先</p>
+<p>🚨 强制全清止损 — 回撤-26.6%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -2139,7 +2155,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>🚨 <strong>强制全清止损</strong> — 回撤超过硬止损线，判断失误须认错，止损优先</p>
+<p>🚨 强制全清止损 — 回撤-32.5%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
@@ -2392,7 +2408,7 @@
 <blockquote>阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）</blockquote>
 <blockquote>低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</blockquote>
 <br>
-<p>🛡️ <strong>低估区保护</strong> — 回撤条件触发但ERP低估，降级为观察提示</p>
+<p>🛡️ 低估区保护 — 回撤-13.9%触发条件但ERP低估，降级为观察提示</p>
 <br>
 <table>
 <tr><td>指标</td><td>数值</td><td>状态</td></tr>
