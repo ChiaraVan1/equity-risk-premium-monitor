@@ -227,28 +227,22 @@ def _load_etf_price_series(erp_code: str):
     return df[erp_code].dropna()
 
 
-def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str:
+def compute_exit_signal_summary(erp_code: str, current_erp_percentile: float) -> dict:
     """
-    三级回撤止损 + QQQ单日急跌独立信号。
+    计算减仓/清仓信号的核心结论，返回结构化字典（用于置顶区域和详情区域共享）：
+      {
+        "level": 0-3,                 # 0=正常 1=减仓预警 2=清仓预警 3=强制全清
+        "verdict_icon": "✅"/"⚠️"/"🔴"/"🚨"/"🛡️",
+        "verdict_line": "✅ 无减仓信号 — 价格结构健康，持仓不动",
+        "qqq_drop_note": "" 或 QQQ单日急跌的一句话提示,
+        "has_data": True/False,
+      }
 
-    回撤阈值（所有标的，无论估值区间）：
-      L1: 回撤≥10% + 跌破MA20  → ⚠️ 减仓预警（减持1/3仓位）
-      L2: 回撤≥15% + 跌破MA60  → 🔴 清仓预警（减至底仓，只留泡沫仓）
-      L3: 回撤≥20%              → 🚨 强制全清（止损优先，判断失误认错）
-
-    低估区（ERP≥P50）与高估区的差异：
-      - 高估区：三级全部激活，逻辑不变
-      - 低估区：L1/L2 降低一级显示（提示而非警报），L3 不降级（20%全清无论何时）
-
-    QQQ单日急跌（独立于回撤逻辑）：
-      - 单日跌幅≥5%：
-        · 高估区（ERP<P50）→ ⚠️ 减仓预警
-        · 低估区（ERP≥P50）→ 📢 提示（可能是加仓机会，需结合ERP判断）
+    三级回撤止损 + QQQ单日急跌独立信号，逻辑与 build_exit_signal_block 一致。
     """
     price_s = _load_etf_price_series(erp_code)
 
-    # ── QQQ 单日急跌信号（独立计算，数据不足也尝试）────────────────
-    qqq_drop_block = ""
+    qqq_drop_note = ""
     if erp_code == "QQQ" and price_s is not None and len(price_s) >= 2:
         today_price = price_s.iloc[-1]
         prev_price  = price_s.iloc[-2]
@@ -256,29 +250,107 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
         if single_day_chg <= -_QQQ_SINGLE_DAY_DROP:
             drop_pct = single_day_chg * 100
             if current_erp_percentile < 0.50:
-                qqq_drop_icon   = "⚠️"
-                qqq_drop_action = f"**⚠️ QQQ单日急跌 {drop_pct:.1f}%（阈值-{_QQQ_SINGLE_DAY_DROP*100:.0f}%），当前估值偏贵（ERP {current_erp_percentile:.0%}分位），建议减仓1/3**"
+                qqq_drop_note = f"⚠️ QQQ单日急跌{drop_pct:.1f}%，估值偏贵，建议减仓1/3"
             else:
-                qqq_drop_icon   = "📢"
-                qqq_drop_action = f"**📢 QQQ单日急跌 {drop_pct:.1f}%，但当前ERP处于低估区（{current_erp_percentile:.0%}分位），急跌可能是加仓机会，结合ERP框架判断**"
-            qqq_drop_block = f"""
+                qqq_drop_note = f"📢 QQQ单日急跌{drop_pct:.1f}%，但处于低估区，可能是加仓机会"
+
+    if price_s is None or len(price_s) < 5:
+        return {
+            "level": -1, "verdict_icon": "─",
+            "verdict_line": "─ 无ETF价格数据，跳过",
+            "qqq_drop_note": qqq_drop_note, "has_data": False,
+        }
+
+    cur_price   = price_s.iloc[-1]
+    lookback    = min(120, len(price_s))
+    recent_high = price_s.iloc[-lookback:].max()
+    dd          = (cur_price - recent_high) / recent_high
+    dd_pct      = dd * 100
+
+    ma20 = price_s.iloc[-min(20, len(price_s)):].mean() if len(price_s) >= 5  else np.nan
+    ma60 = price_s.iloc[-min(60, len(price_s)):].mean() if len(price_s) >= 20 else np.nan
+
+    below_ma20 = cur_price < ma20 if pd.notna(ma20) else False
+    below_ma60 = cur_price < ma60 if pd.notna(ma60) else False
+
+    in_undervalued = current_erp_percentile >= 0.50
+
+    max_level    = 0
+    is_protected = False  # 低估区降级提示（未实际触发减仓）
+
+    if dd <= -_DD_L1 and below_ma20:
+        if in_undervalued:
+            is_protected = True
+        else:
+            max_level = max(max_level, 1)
+
+    if dd <= -_DD_L2 and below_ma60:
+        if in_undervalued:
+            max_level = max(max_level, 1)  # 低估区降级：L2→减至底仓，归为1级展示
+        else:
+            max_level = max(max_level, 2)
+
+    if dd <= -_DD_L3:
+        max_level = max(max_level, 3)
+
+    if max_level == 0 and is_protected:
+        verdict_icon = "🛡️"
+        verdict_line = f"🛡️ 低估区保护 — 回撤{dd_pct:.1f}%触发条件但ERP低估，降级为观察提示"
+    elif max_level == 0:
+        verdict_icon = "✅"
+        verdict_line = "✅ 无减仓信号 — 价格结构健康，持仓不动"
+    elif max_level == 1:
+        if in_undervalued:
+            verdict_icon = "⚠️"
+            verdict_line = f"⚠️ 减仓预警（低估区降级）— 回撤{dd_pct:.1f}%，建议减至底仓，保留泡沫仓30%"
+        else:
+            verdict_icon = "⚠️"
+            verdict_line = f"⚠️ 第一级减仓预警 — 回撤{dd_pct:.1f}%且跌破MA20，建议减持1/3仓位"
+    elif max_level == 2:
+        verdict_icon = "🔴"
+        verdict_line = f"🔴 第二级清仓预警 — 回撤{dd_pct:.1f}%且跌破MA60，建议减至底仓（保留泡沫仓30%）"
+    else:
+        verdict_icon = "🚨"
+        verdict_line = f"🚨 强制全清止损 — 回撤{dd_pct:.1f}%触及硬止损线，止损优先{'（注：低估区但20%硬止损无豁免）' if in_undervalued else ''}"
+
+    return {
+        "level": max_level, "verdict_icon": verdict_icon,
+        "verdict_line": verdict_line, "qqq_drop_note": qqq_drop_note,
+        "has_data": True,
+    }
+
+
+def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str:
+    """
+    三级回撤止损 + QQQ单日急跌独立信号（详情区域完整版，含表格）。
+    复用 compute_exit_signal_summary 的核心判断，避免逻辑重复。
+    """
+    price_s = _load_etf_price_series(erp_code)
+    summary = compute_exit_signal_summary(erp_code, current_erp_percentile)
+
+    qqq_drop_block = ""
+    if erp_code == "QQQ" and price_s is not None and len(price_s) >= 2 and summary["qqq_drop_note"]:
+        today_price = price_s.iloc[-1]
+        prev_price  = price_s.iloc[-2]
+        drop_pct    = (today_price - prev_price) / prev_price * 100
+        qqq_drop_block = f"""
 ---
 ### QQQ 单日急跌信号
 
-{qqq_drop_action}
+**{summary['qqq_drop_note']}**
 
 | 今日收盘 | 昨日收盘 | 单日变化 | 阈值 |
 |--------:|---------:|---------:|-----:|
 | {today_price:.3f} | {prev_price:.3f} | **{drop_pct:.2f}%** | -{_QQQ_SINGLE_DAY_DROP*100:.0f}% |
 """
 
-    if price_s is None or len(price_s) < 5:
+    if not summary["has_data"]:
         return qqq_drop_block + "\n> ⚠️ 减仓信号：无ETF价格数据，跳过。\n"
 
     cur_price   = price_s.iloc[-1]
     lookback    = min(120, len(price_s))
     recent_high = price_s.iloc[-lookback:].max()
-    dd          = (cur_price - recent_high) / recent_high  # 负数
+    dd          = (cur_price - recent_high) / recent_high
     dd_pct      = dd * 100
 
     ma20  = price_s.iloc[-min(20,  len(price_s)):].mean() if len(price_s) >= 5  else np.nan
@@ -289,16 +361,11 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
     below_ma60  = cur_price < ma60  if pd.notna(ma60)  else False
     below_ma120 = cur_price < ma120 if pd.notna(ma120) else False
 
-    in_undervalued = current_erp_percentile >= 0.50  # 低估区
+    in_undervalued = current_erp_percentile >= 0.50
 
-    # ── 计算触发级别 ──────────────────────────────────────────────────
-    alerts    = []
-    max_level = 0  # 0=正常, 1=减仓, 2=清仓, 3=强制全清
-
-    # L1: 回撤≥10% + 跌破MA20
+    alerts = []
     if dd <= -_DD_L1 and below_ma20:
         if in_undervalued:
-            # 低估区降级：L1 → 仅提示，不升level
             alerts.append(
                 f"📢 回撤 {dd_pct:.1f}%（≥{_DD_L1*100:.0f}%）且跌破MA20={ma20:.3f}"
                 f"，但ERP处于低估区（{current_erp_percentile:.0%}分位），建议持有观察而非减仓"
@@ -308,53 +375,31 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
                 f"回撤 {dd_pct:.1f}%（≥{_DD_L1*100:.0f}%）且跌破MA20={ma20:.3f}"
                 f" → 建议减持1/3仓位"
             )
-            max_level = max(max_level, 1)
 
-    # L2: 回撤≥15% + 跌破MA60
     if dd <= -_DD_L2 and below_ma60:
         if in_undervalued:
-            # 低估区降级：L2 → ⚠️ 减仓预警（而非清仓）
             alerts.append(
-                f"⚠️ 回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60={ma60:.3f}"
-                f"，低估区降级处理：建议减仓至底仓（保留泡沫仓30%），而非全清"
-            ) if pd.notna(ma60) else alerts.append(
-                f"⚠️ 回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60"
-                f"，低估区降级：减至底仓"
+                (f"⚠️ 回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60={ma60:.3f}"
+                 f"，低估区降级处理：建议减仓至底仓（保留泡沫仓30%），而非全清")
+                if pd.notna(ma60) else
+                f"⚠️ 回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60，低估区降级：减至底仓"
             )
-            max_level = max(max_level, 1)
         else:
             alerts.append(
-                f"回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60={ma60:.3f}"
-                f" → 趋势破坏，减至底仓（只保留泡沫仓30%）"
-            ) if pd.notna(ma60) else alerts.append(
+                (f"回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60={ma60:.3f}"
+                 f" → 趋势破坏，减至底仓（只保留泡沫仓30%）")
+                if pd.notna(ma60) else
                 f"回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%），减至底仓"
             )
-            max_level = max(max_level, 2)
 
-    # L3: 回撤≥20%，无论估值区间，强制全清
     if dd <= -_DD_L3:
         alerts.append(
             f"🚨 回撤 {dd_pct:.1f}%（≥{_DD_L3*100:.0f}%），触发强制止损线"
             f"{'（注：当前为低估区，但20%是硬止损，判断失误须认错）' if in_undervalued else ''}"
             f" → 全部清仓，止损优先"
         )
-        max_level = max(max_level, 3)
 
-    # ── 生成级别标题行 ────────────────────────────────────────────────
-    if max_level == 0 and not any("📢" in a for a in alerts):
-        level_line = "✅ **无减仓信号** — 价格结构健康，持仓不动"
-    elif max_level == 0:
-        # 仅有低估区提示
-        level_line = "🛡️ **低估区保护** — 回撤条件触发但ERP低估，降级为观察提示"
-    elif max_level == 1:
-        if in_undervalued:
-            level_line = "⚠️ **减仓预警（低估区降级）** — 建议减至底仓，保留泡沫仓30%"
-        else:
-            level_line = "⚠️ **第一级减仓预警** — 建议减持1/3仓位"
-    elif max_level == 2:
-        level_line = "🔴 **第二级清仓预警** — 趋势破坏，建议减至底仓（保留泡沫仓30%）"
-    else:
-        level_line = "🚨 **强制全清止损** — 回撤超过硬止损线，判断失误须认错，止损优先"
+    level_line = summary["verdict_line"]
 
     ma20_str  = f"{ma20:.3f}"  if pd.notna(ma20)  else "─"
     ma60_str  = f"{ma60:.3f}"  if pd.notna(ma60)  else "─"
@@ -392,7 +437,6 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
 
 > ⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。
 """
-    # QQQ急跌块放在减仓块之前
     return qqq_drop_block + exit_block
 
 
@@ -794,29 +838,35 @@ def build_trend_block(df, erp_series, code, quantiles):
 #  仪表盘 & 图例
 # ══════════════════════════════════════════════════════════════════════
 
+# 持仓标记：True = 我持有该标的对应的ETF/指数，仅用于在仪表盘显示📌徽章
+# 及生成「我的持仓·减仓信号」置顶区域。不再承载分类文字。
 HOLDING_CATEGORY = {
-    "000300": "低估-宽基",
-    "000688": "科技-A股",
-    "000922": "",
-    "399989": "低估-医疗",
-    "931071": "",
-    "000069": "低估-消费",
-    "930781": "",
-    "000989": "",
-    "931139": "",
-    "SPY":    "",
-    "QQQ":    "",
-    "EWQ":    "",
-    "EWG":    "",
-    "EWJ":    "",
-    "EEM":    "",
-    "HSTECH": "低估-港股科技",
-    "399967": "低估-军工",
-    "931066": "",
-    "930794": "",
-    "931946": "",
-    "930598": "低估-资源",
+    "000300": True,
+    "000688": True,
+    "000922": False,
+    "399989": True,
+    "931071": False,
+    "000069": True,
+    "930781": False,
+    "000989": False,
+    "931139": False,
+    "SPY":    True,
+    "QQQ":    False,
+    "EWQ":    False,
+    "EWG":    False,
+    "EWJ":    False,
+    "EEM":    False,
+    "HSTECH": True,
+    "399967": True,
+    "931066": False,
+    "930794": False,
+    "931946": False,
+    "930598": True,
 }
+
+
+def is_holding(code: str) -> bool:
+    return bool(HOLDING_CATEGORY.get(code, False))
 
 
 def generate_action_sentence(disc, divg, vol, zone_label):
@@ -836,6 +886,50 @@ def generate_action_sentence(disc, divg, vol, zone_label):
     else:
         suffix = ""
     return prefix + mid + suffix
+
+
+def build_holdings_exit_block(summary_list: list, output_format: str = "html") -> str:
+    """
+    置顶区域：我的持仓 · 减仓/清仓信号一览。
+    仅展示 HOLDING_CATEGORY 中标记为持仓（True）的标的，
+    显示每个标的的减仓信号一句话结论（verdict_line）。
+    """
+    held = [r for r in summary_list if is_holding(r.get("code", ""))]
+    if not held:
+        return ""
+
+    # 触发信号的排在前面（非✅/🛡️），正常的排在后面
+    def _sort_key(r):
+        icon = r.get("exit_verdict_icon", "✅")
+        priority = {"🚨": 0, "🔴": 1, "⚠️": 2, "🛡️": 3, "✅": 4, "─": 5}
+        return priority.get(icon, 9)
+
+    held_sorted = sorted(held, key=_sort_key)
+
+    if output_format == "markdown":
+        lines = ["\n**📌 我的持仓 · 减仓信号**\n"]
+        for r in held_sorted:
+            lines.append(f"- {r['name']}：{r.get('exit_verdict_line', '─')}")
+        lines.append("")
+        return "\n".join(lines) + "\n---\n"
+    else:
+        rows_html = []
+        for r in held_sorted:
+            verdict = r.get("exit_verdict_line", "─")
+            rows_html.append(
+                f'<tr><td class="col-name">📌 {r["name"]}</td>'
+                f'<td class="col-action" colspan="5">{verdict}</td></tr>'
+            )
+        table_html = (
+            '<table class="dashboard-table holdings-table">\n'
+            + "\n".join(rows_html)
+            + "\n</table>"
+        )
+        return (
+            '<h2>📌 我的持仓 · 减仓信号</h2>\n'
+            + table_html
+            + '\n<hr>'
+        )
 
 
 def build_summary_block(summary_list: list, output_format: str = "html") -> str:
@@ -865,7 +959,8 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         "ERP斜率：🚨恐慌踩踏 🟢快速改善 ⚠️情绪过热 🟠快速恶化 🟡横盘\n\n"
         f"减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强制全清({_DD_L3*100:.0f}%硬止损) 🛡️低估区降级\n\n"
         "基本面：✅正常 ⚠️关注 🚨疑似暴雷 ─未获取\n\n"
-        "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n---"
+        "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n"
+        "📌 = 我的持仓\n\n---"
     )
 
     if output_format == "markdown":
@@ -884,13 +979,12 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 fund_alert = r.get("fundamental_alert", "─")
                 zone_label = r.get("erp_zone", "")
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
-                cat        = HOLDING_CATEGORY.get(r["code"], "")
-                cat_str    = f" [{cat}]" if cat else ""
+                badge      = "📌 " if is_holding(r["code"]) else ""
                 pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
                 fund_icon  = _FUND_ICON.get(fund_alert, "─")
                 lines.append(
-                    f"\n{r['name']} · {r['total_pct']}%({pos_structure}) · "
-                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_sig} · 基本面{fund_icon} · {action}{cat_str}"
+                    f"\n{badge}{r['name']} · {r['total_pct']}%({pos_structure}) · "
+                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_sig} · 基本面{fund_icon} · {action}"
                 )
         return "\n".join(lines) + "\n\n---\n"
 
@@ -918,17 +1012,16 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 fund_alert = r.get("fundamental_alert", "─")
                 zone_label = r.get("erp_zone", "")
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
-                cat        = HOLDING_CATEGORY.get(code, "")
-                cat_str    = f" [{cat}]" if cat else ""
+                badge      = "📌 " if is_holding(code) else ""
                 fund_icon  = _FUND_ICON.get(fund_alert, "─")
                 rows_html.append(
                     f'<tr>'
-                    f'<td class="col-name">{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
+                    f'<td class="col-name">{badge}{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
                     f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
                     f'<td class="col-sig">量{divg}&nbsp;波{vol}&nbsp;折{disc}</td>'
                     f'<td class="col-sig2">斜{slope_sig}&nbsp;仓{exit_sig}</td>'
                     f'<td class="col-fund">面{fund_icon}</td>'
-                    f'<td class="col-action">{action}{cat_str}</td>'
+                    f'<td class="col-action">{action}</td>'
                     f'</tr>'
                 )
         table_html = (
@@ -1053,6 +1146,8 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
   .dashboard-table {{ width: 100%; border-collapse: collapse; }}
   .dashboard-table tr {{ border-bottom: 1px solid #21262d; }}
   .dashboard-table td {{ padding: 10px 8px; vertical-align: middle; border: none; }}
+  .holdings-table tr {{ border-bottom: 1px solid #21262d; }}
+  .holdings-table .col-name {{ width: 110px; font-weight: bold; }}
   .col-name   {{ width: 110px; font-weight: bold; }}
   .col-etf    {{ color: #8b949e; font-size: 11px; }}
   .col-pos    {{ width: 64px; text-align: center; font-size: 20px; font-weight: bold; }}
@@ -1256,15 +1351,12 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 
     # ── 减仓信号 ──────────────────────────────────────────────────────
     erp_percentile = (erp_series < current_erp).mean()
-    exit_block     = build_exit_signal_block(code, erp_percentile)
-
-    # 仪表盘信号
-    if "强制全清止损" in exit_block:                                    _exit_signal = "🚨"
-    elif "第二级清仓预警" in exit_block:                                _exit_signal = "🔴"
-    elif "减仓预警" in exit_block:                                      _exit_signal = "⚠️"
-    elif "QQQ单日急跌" in exit_block and erp_percentile < 0.50:        _exit_signal = "⚠️"
-    elif "低估区保护" in exit_block or "低估区降级" in exit_block:      _exit_signal = "🛡️"
-    else:                                                               _exit_signal = "✅"
+    exit_summary    = compute_exit_signal_summary(code, erp_percentile)
+    exit_block      = build_exit_signal_block(code, erp_percentile)
+    _exit_signal       = exit_summary["verdict_icon"]
+    _exit_verdict_line = exit_summary["verdict_line"]
+    if exit_summary["qqq_drop_note"]:
+        _exit_verdict_line = _exit_verdict_line + f"；{exit_summary['qqq_drop_note']}"
 
     # ── 基本面预警 ────────────────────────────────────────────────────
     fundamental_result, fundamental_block = build_fundamental_alert_block(code, name)
@@ -1278,13 +1370,15 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
             "b_pct": b_pct, "v_pct": v_pct, "t_pct": t_pct,
             "win_rate": _win,
             "odds": _odds,
-            "etf_signal":        _etf_signal,
-            "etf_discount":      _etf_discount_signal,
-            "etf_divergence":    _etf_divergence_signal,
-            "etf_vol":           _etf_vol_signal,
-            "slope_signal":      slope_info["signal_icon"],
-            "exit_signal":       _exit_signal,
-            "fundamental_alert": _fund_alert,
+            "etf_signal":         _etf_signal,
+            "etf_discount":       _etf_discount_signal,
+            "etf_divergence":     _etf_divergence_signal,
+            "etf_vol":            _etf_vol_signal,
+            "slope_signal":       slope_info["signal_icon"],
+            "exit_signal":        _exit_signal,
+            "exit_verdict_icon":  _exit_signal,
+            "exit_verdict_line":  _exit_verdict_line,
+            "fundamental_alert":  _fund_alert,
         })
 
     # ── 报告头部 ──────────────────────────────────────────────────────
@@ -1415,11 +1509,14 @@ if __name__ == "__main__":
 
     if report_list:
         date_str       = datetime.now().strftime("%Y-%m-%d")
+        holdings_html   = build_holdings_exit_block(summary_list, output_format="html")
+        holdings_wechat = build_holdings_exit_block(summary_list, output_format="markdown")
         summary_html   = build_summary_block(summary_list, output_format="html")
         summary_wechat = build_summary_block(summary_list, output_format="markdown")
 
         full_report = (
             "# ERP 策略每日监控报告\n"
+            + holdings_html
             + summary_html
             + LEGEND_BLOCK
             + "".join(report_list)
@@ -1434,6 +1531,6 @@ if __name__ == "__main__":
             print(f"✅ dry-run 模式，报告已写入 {preview_path}，不推送微信。")
         else:
             print("正在生成报告并准备推送...")
-            send_to_wechat(summary_wechat, date_str)
+            send_to_wechat(holdings_wechat + summary_wechat, date_str)
     else:
         print("❌ 未生成任何有效报告，请检查数据文件。")
