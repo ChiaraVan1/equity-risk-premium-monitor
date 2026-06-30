@@ -315,7 +315,7 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
         if in_undervalued:
             # 低估区降级：L2 → ⚠️ 减仓预警（而非清仓）
             alerts.append(
-                f"⚠️ 回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60={ma60:.3f:.3f}"
+                f"⚠️ 回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60={ma60:.3f}"
                 f"，低估区降级处理：建议减仓至底仓（保留泡沫仓30%），而非全清"
             ) if pd.notna(ma60) else alerts.append(
                 f"⚠️ 回撤 {dd_pct:.1f}%（≥{_DD_L2*100:.0f}%）且跌破MA60"
