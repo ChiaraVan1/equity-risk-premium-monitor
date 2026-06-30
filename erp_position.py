@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import time
 import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -25,6 +26,16 @@ _DD_L1 = 0.10   # 第一级：回撤≥10% + 跌破MA20 → 减仓1/3
 _DD_L2 = 0.15   # 第二级：回撤≥15% + 跌破MA60 → 减仓至底仓
 _DD_L3 = 0.20   # 第三级：回撤≥20%            → 全清止损
 _QQQ_SINGLE_DAY_DROP = 0.05  # QQQ单日急跌阈值
+
+# ── API 重试 / 限流配置（集中管理）──────────────────────────────────
+_API_MAX_RETRIES = 3
+_API_RETRY_BASE_DELAY = 5     # 秒，每次重试翻倍：5s, 10s, 20s
+_API_CALL_MIN_INTERVAL = 2    # 秒，连续两次AI调用之间的最小间隔
+
+_SERPER_MAX_RETRIES = 2
+_SERPER_RETRY_BASE_DELAY = 3  # 秒，每次重试翻倍：3s, 6s
+
+_last_api_call_ts = {"t": 0.0}
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -450,6 +461,52 @@ _SEARCH_CACHE_DIR.mkdir(parents=True, exist_ok=True)
 _SEARCH_CACHE_TTL_HOURS = 20
 
 
+def _call_anthropic_with_retry(payload, headers):
+    """
+    调用 AI 接口，带限流感知的重试 + 间隔控制。
+    - 连续两次调用之间至少间隔 _API_CALL_MIN_INTERVAL 秒（无论上次成功与否）
+    - 遇到 429 时按 _API_RETRY_BASE_DELAY * 2^attempt 退避重试，最多 _API_MAX_RETRIES 次
+    - 优先遵循响应头 Retry-After（如果有）
+    - 重试耗尽后抛出最后一次的异常，交由调用方的 except 块处理
+    """
+    elapsed = time.time() - _last_api_call_ts["t"]
+    if elapsed < _API_CALL_MIN_INTERVAL:
+        time.sleep(_API_CALL_MIN_INTERVAL - elapsed)
+
+    last_exc = None
+    for attempt in range(_API_MAX_RETRIES):
+        try:
+            resp = requests.post(_ANTHROPIC_API_URL, json=payload, headers=headers, timeout=60)
+            _last_api_call_ts["t"] = time.time()
+
+            if resp.status_code == 429:
+                wait = _API_RETRY_BASE_DELAY * (2 ** attempt)
+                retry_after = resp.headers.get("retry-after")
+                if retry_after:
+                    try:
+                        wait = max(wait, float(retry_after))
+                    except ValueError:
+                        pass
+                if attempt < _API_MAX_RETRIES - 1:
+                    time.sleep(wait)
+                    continue
+                resp.raise_for_status()  # 重试耗尽，抛出 429
+
+            resp.raise_for_status()
+            return resp
+
+        except requests.exceptions.HTTPError as e:
+            last_exc = e
+            if e.response is not None and e.response.status_code == 429 and attempt < _API_MAX_RETRIES - 1:
+                continue
+            raise
+        except requests.exceptions.RequestException as e:
+            last_exc = e
+            raise
+
+    raise last_exc
+
+
 def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> list[dict]:
     serper_key = os.getenv("SERPER_API_KEY", "")
     if not serper_key:
@@ -467,46 +524,61 @@ def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> lis
         except Exception:
             pass
 
-    try:
-        resp = requests.post(
-            "https://google.serper.dev/news",
-            headers={
-                "X-API-KEY":    serper_key,
-                "Content-Type": "application/json",
-            },
-            json={
-                "q":   query,
-                "num": max_results,
-                "hl":  lang,
-                "gl":  "cn" if lang == "zh-cn" else ("hk" if lang == "zh-tw" else "us"),
-                "tbs": "qdr:w",
-            },
-            timeout=20,
-        )
-        resp.raise_for_status()
-        raw = resp.json().get("news", [])
+    last_exc = None
+    for attempt in range(_SERPER_MAX_RETRIES + 1):
+        try:
+            resp = requests.post(
+                "https://google.serper.dev/news",
+                headers={
+                    "X-API-KEY":    serper_key,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "q":   query,
+                    "num": max_results,
+                    "hl":  lang,
+                    "gl":  "cn" if lang == "zh-cn" else ("hk" if lang == "zh-tw" else "us"),
+                    "tbs": "qdr:w",
+                },
+                timeout=20,
+            )
 
-        results = [
-            {
-                "title":   item.get("title", ""),
-                "url":     item.get("link", ""),
-                "content": item.get("snippet", "")[:150],
-            }
-            for item in raw
-        ]
+            if resp.status_code == 429 and attempt < _SERPER_MAX_RETRIES:
+                time.sleep(_SERPER_RETRY_BASE_DELAY * (2 ** attempt))
+                continue
 
-        import json as _json
-        cache_file.write_text(
-            _json.dumps(
-                {"cached_at": datetime.now().isoformat(), "results": results},
-                ensure_ascii=False,
-            ),
-            encoding="utf-8",
-        )
-        return results
+            resp.raise_for_status()
+            raw = resp.json().get("news", [])
 
-    except Exception:
-        return []
+            results = [
+                {
+                    "title":   item.get("title", ""),
+                    "url":     item.get("link", ""),
+                    "content": item.get("snippet", "")[:150],
+                }
+                for item in raw
+            ]
+
+            import json as _json
+            cache_file.write_text(
+                _json.dumps(
+                    {"cached_at": datetime.now().isoformat(), "results": results},
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+            return results
+
+        except requests.exceptions.RequestException as e:
+            last_exc = e
+            if attempt < _SERPER_MAX_RETRIES:
+                time.sleep(_SERPER_RETRY_BASE_DELAY * (2 ** attempt))
+                continue
+            break
+
+    # 重试耗尽：不写入缓存（避免下次直接复用失败结果），打印日志便于排查
+    print(f"⚠️ Serper搜索失败（已重试{_SERPER_MAX_RETRIES}次）：{query[:30]}... — {last_exc}")
+    return []
 
 
 def _fundamental_queries() -> dict:
@@ -586,8 +658,7 @@ def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
             "x-api-key":         os.getenv("ANTHROPIC_API_KEY", ""),
             "anthropic-version": "2023-06-01",
         }
-        resp = requests.post(_ANTHROPIC_API_URL, json=payload, headers=headers, timeout=60)
-        resp.raise_for_status()
+        resp = _call_anthropic_with_retry(payload, headers)
         data = resp.json()
 
         text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
@@ -636,12 +707,18 @@ def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
     except requests.exceptions.Timeout:
         return (
             {"alert_level": "─", "confidence": "─", "summary": "超时"},
-            "\n> ⚠️ 基本面预警：API请求超时，跳过。\n",
+            "\n> ⚠️ 基本面预警：API请求超时（已重试），跳过。本次结果为「未知」，不代表基本面正常。\n",
+        )
+    except requests.exceptions.HTTPError as e:
+        status = e.response.status_code if e.response is not None else "?"
+        return (
+            {"alert_level": "─", "confidence": "─", "summary": f"HTTP {status}"},
+            f"\n> ⚠️ 基本面预警：API返回错误（HTTP {status}，已重试{_API_MAX_RETRIES}次），跳过。本次结果为「未知」，不代表基本面正常。\n",
         )
     except Exception as e:
         return (
             {"alert_level": "─", "confidence": "─", "summary": str(e)},
-            f"\n> ⚠️ 基本面预警：发生异常（{e}），跳过。\n",
+            f"\n> ⚠️ 基本面预警：发生异常（{e}），跳过。本次结果为「未知」，不代表基本面正常。\n",
         )
 
 
@@ -958,7 +1035,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
         "ERP斜率：🚨恐慌踩踏 🟢快速改善 ⚠️情绪过热 🟠快速恶化 🟡横盘\n\n"
         f"减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强制全清({_DD_L3*100:.0f}%硬止损) 🛡️低估区降级\n\n"
-        "基本面：✅正常 ⚠️关注 🚨疑似暴雷 ─未获取\n\n"
+        "基本面：✅正常 ⚠️关注 🚨疑似暴雷 ─未获取（API失败/限流，不代表正常）\n\n"
         "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n"
         "📌 = 我的持仓\n\n---"
     )
