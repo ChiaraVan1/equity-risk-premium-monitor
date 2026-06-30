@@ -6,6 +6,7 @@ import hashlib
 from datetime import datetime, timedelta
 from pathlib import Path
 import requests
+import akshare as ak
 
 from etf_metrics import load_etf_metrics, build_etf_metrics_block, ERP_TO_ETF
 
@@ -19,7 +20,7 @@ SHILLER_PATH = os.getenv("SHILLER_PATH", "./data/ie_data.xls")
 _CAPE_BINS   = [0,  10,  15,  20,  25,  30,  35,  40,  999]
 _CAPE_LABELS = ['<10', '10-15', '15-20', '20-25', '25-30', '30-35', '35-40', '>40']
 
-_FUND_ICON = {"疑似暴雷": "🚨", "关注": "⚠️", "正常": "✅", "─": "─"}
+_FUND_ICON = {"疑似暴雷": "🚨", "关注": "⚠️", "正常": "✅", "N/A": "ℹ️", "─": "─"}
 
 # ── 减仓阈值配置（集中管理，方便调整）────────────────────────────────
 _DD_L1 = 0.10   # 第一级：回撤≥10% + 跌破MA20 → 减仓1/3
@@ -452,13 +453,10 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float) -> str
 
 
 # ══════════════════════════════════════════════════════════════════════
-#  基本面暴雷预警模块（Serper.dev + 结构化返回）
+#  基本面暴雷预警模块（东方财富快讯本地粗筛 + AI 二次过滤 + 结构化返回）
 # ══════════════════════════════════════════════════════════════════════
 
 _ANTHROPIC_API_URL  = "https://api.qnaigc.com/v1/messages"
-_SEARCH_CACHE_DIR   = Path("./data/search_cache")
-_SEARCH_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-_SEARCH_CACHE_TTL_HOURS = 20
 
 
 def _call_anthropic_with_retry(payload, headers):
@@ -507,132 +505,185 @@ def _call_anthropic_with_retry(payload, headers):
     raise last_exc
 
 
-def _serper_search(query: str, max_results: int = 5, lang: str = "zh-cn") -> list[dict]:
-    serper_key = os.getenv("SERPER_API_KEY", "")
-    if not serper_key:
-        return []
+_SKIP_FUNDAMENTAL_CODES = {
+    "000300",  # 沪深300 - 宽基
+    "000688",  # 科创50 - 宽基
+    "SPY", "QQQ",  # 美股宽基
+    "EWQ", "EWG", "EWJ", "EEM",  # MSCI 国别宽基
+}
 
-    cache_key  = hashlib.md5(f"{lang}:{query}".encode()).hexdigest()
-    cache_file = _SEARCH_CACHE_DIR / f"{cache_key}.json"
-    if cache_file.exists():
-        try:
-            import json as _json
-            cached    = _json.loads(cache_file.read_text(encoding="utf-8"))
-            cached_at = datetime.fromisoformat(cached["cached_at"])
-            if datetime.now() - cached_at < timedelta(hours=_SEARCH_CACHE_TTL_HOURS):
-                return cached["results"]
-        except Exception:
-            pass
+_EM_NEWS_CACHE = {"df": None, "fetched_at": 0.0}
+_EM_NEWS_CACHE_TTL_SECONDS = 1800  # 30分钟内复用同一批快讯，避免21个标的各拉一次
+
+
+def _fetch_em_news_df():
+    """
+    拉取东方财富全球财经快讯（ak.stock_info_global_em），30分钟内复用缓存。
+    覆盖窗口通常只有最近几小时（约200条），不依赖任何API key。
+    失败时返回 None，由调用方决定如何降级。
+    """
+    now = time.time()
+    if _EM_NEWS_CACHE["df"] is not None and (now - _EM_NEWS_CACHE["fetched_at"]) < _EM_NEWS_CACHE_TTL_SECONDS:
+        return _EM_NEWS_CACHE["df"]
 
     last_exc = None
     for attempt in range(_SERPER_MAX_RETRIES + 1):
         try:
-            resp = requests.post(
-                "https://google.serper.dev/news",
-                headers={
-                    "X-API-KEY":    serper_key,
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "q":   query,
-                    "num": max_results,
-                    "hl":  lang,
-                    "gl":  "cn" if lang == "zh-cn" else ("hk" if lang == "zh-tw" else "us"),
-                    "tbs": "qdr:w",
-                },
-                timeout=20,
-            )
-
-            if resp.status_code == 429 and attempt < _SERPER_MAX_RETRIES:
-                time.sleep(_SERPER_RETRY_BASE_DELAY * (2 ** attempt))
-                continue
-
-            resp.raise_for_status()
-            raw = resp.json().get("news", [])
-
-            results = [
-                {
-                    "title":   item.get("title", ""),
-                    "url":     item.get("link", ""),
-                    "content": item.get("snippet", "")[:150],
-                }
-                for item in raw
-            ]
-
-            import json as _json
-            cache_file.write_text(
-                _json.dumps(
-                    {"cached_at": datetime.now().isoformat(), "results": results},
-                    ensure_ascii=False,
-                ),
-                encoding="utf-8",
-            )
-            return results
-
-        except requests.exceptions.RequestException as e:
+            df = ak.stock_info_global_em()
+            if df is None or len(df) == 0:
+                return None
+            _EM_NEWS_CACHE["df"] = df
+            _EM_NEWS_CACHE["fetched_at"] = now
+            return df
+        except Exception as e:
             last_exc = e
             if attempt < _SERPER_MAX_RETRIES:
                 time.sleep(_SERPER_RETRY_BASE_DELAY * (2 ** attempt))
                 continue
-            break
 
-    # 重试耗尽：不写入缓存（避免下次直接复用失败结果），打印日志便于排查
-    print(f"⚠️ Serper搜索失败（已重试{_SERPER_MAX_RETRIES}次）：{query[:30]}... — {last_exc}")
-    return []
+    print(f"⚠️ 东方财富快讯拉取失败（已重试{_SERPER_MAX_RETRIES}次）：{last_exc}")
+    return None
 
 
-def _fundamental_queries() -> dict:
-    y = datetime.now().year
+def _em_news_search(keywords: list[str], max_results: int = 8) -> list[dict]:
+    """
+    本地关键词粗筛：在最近的东方财富快讯标题+摘要里匹配任意关键词命中。
+    粗筛允许一定假阳性（比如"军工"命中无关新闻），交由后续 AI 二次过滤判断
+    是否真正与该标的相关，而不是在这一步就追求精确匹配。
+    """
+    df = _fetch_em_news_df()
+    if df is None or len(df) == 0:
+        return []
+
+    if not keywords:
+        return []
+
+    pattern = "|".join(keywords)
+    try:
+        mask = (
+            df["标题"].str.contains(pattern, na=False) |
+            df["摘要"].str.contains(pattern, na=False)
+        )
+    except Exception:
+        return []
+
+    matched = df[mask].head(max_results)
+
+    results = []
+    for _, row in matched.iterrows():
+        results.append({
+            "title":   str(row.get("标题", "")),
+            "url":     str(row.get("链接", "")),
+            "content": str(row.get("摘要", ""))[:150],
+        })
+    return results
+
+
+def _fundamental_keywords() -> dict:
+    """
+    本地关键词粗筛词表，仅覆盖行业/主题类指数（宽基/国别指数走 _SKIP_FUNDAMENTAL_CODES
+    直接跳过，不需要在此列出）。每个标的的关键词同时包含"标的核心词"和"风险类词"，
+    粗筛时只要任一关键词命中即可（粗筛允许假阳性，交给 AI 二次过滤）。
+    """
     return {
-        "000300": (f"沪深300 基本面 重大风险 监管 暴雷 {y}", f"CSI 300 major risk earnings collapse {y}"),
-        "000688": (f"科创50 基本面 重大风险 监管 退市 {y}", f"STAR50 major risk earnings warning {y}"),
-        "000922": (f"中证红利 分红 基本面 风险 {y}", f"CSI dividend index major risk {y}"),
-        "399989": (f"中证医疗 医药 监管 集采 暴雷 {y}", f"China medical index regulation risk {y}"),
-        "931071": (f"人工智能指数 监管 泡沫 风险 {y}", f"China AI index regulation bubble risk {y}"),
-        "000069": (f"消费80 消费指数 基本面 风险 {y}", f"China consumer index fundamental risk {y}"),
-        "930781": (f"中证影视 监管 票房 基本面 {y}", f"China media entertainment index risk {y}"),
-        "000989": (f"全指可选 消费 基本面 风险 {y}", f"China optional consumer index risk {y}"),
-        "931139": (f"CS消费50 基本面 风险 {y}", f"China consumer 50 index risk {y}"),
-        "SPY":    (f"S&P 500 earnings collapse recession risk {y}", f"标普500 经济衰退 基本面 风险 {y}"),
-        "QQQ":    (f"Nasdaq 100 tech earnings collapse regulation {y}", f"纳斯达克 科技股 监管 暴雷 {y}"),
-        "EWQ":    (f"France stock market fundamental risk recession {y}", f"法国股市 经济 风险 {y}"),
-        "EWG":    (f"Germany stock market fundamental risk recession {y}", f"德国股市 经济 风险 {y}"),
-        "EWJ":    (f"Japan stock market fundamental risk BOJ {y}", f"日本股市 央行 基本面 风险 {y}"),
-        "EEM":    (f"emerging market fundamental risk geopolitical {y}", f"新兴市场 地缘 基本面 风险 {y}"),
-        "HSTECH": (f"恒生科技 监管 互联网 基本面 暴雷 {y}", f"Hang Seng Tech regulation crackdown earnings {y}"),
-        "399967": (f"中证军工 军工 政策 订单 风险 {y}", f"China defense index policy orders risk {y}"),
-        "931066": (f"军工龙头 业绩 基本面 风险 {y}", f"China defense leading stocks earnings risk {y}"),
-        "930794": (f"中美互联网 监管 中美关系 风险 {y}", f"China US internet index regulation geopolitical risk {y}"),
-        "931946": (f"畜牧养殖 猪价 周期 基本面 风险 {y}", f"China livestock index hog price cycle risk {y}"),
-        "930598": (f"稀土产业 政策 出口管制 风险 {y}", f"China rare earth index policy export control risk {y}"),
+        "000922": ["红利", "分红", "高股息"],
+        "399989": ["医药", "医疗", "集采", "药监", "创新药"],
+        "931071": ["人工智能", "AI", "大模型", "算力"],
+        "000069": ["消费", "零售", "餐饮"],
+        "930781": ["影视", "票房", "广电", "传媒"],
+        "000989": ["可选消费", "家电", "汽车消费", "消费"],
+        "931139": ["消费", "零售", "餐饮"],
+        "HSTECH": ["恒生科技", "互联网", "港股科技", "反垄断"],
+        "399967": ["军工", "国防", "军贸", "武器装备"],
+        "931066": ["军工", "国防", "军贸", "武器装备"],
+        "930794": ["中美互联网", "中概股", "互联网", "中美关系"],
+        "931946": ["猪价", "生猪", "养殖", "畜牧", "饲料"],
+        "930598": ["稀土", "出口管制", "稀有金属"],
     }
 
 
 def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
     _empty = {"alert_level": "─", "confidence": "─", "summary": ""}
 
-    queries = _fundamental_queries().get(code)
-    if queries is None:
+    if code in _SKIP_FUNDAMENTAL_CODES:
+        return (
+            {"alert_level": "N/A", "confidence": "─", "summary": "宽基/国别指数，基本面预警不适用"},
+            "\n> ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，"
+            "本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。\n",
+        )
+
+    keywords = _fundamental_keywords().get(code)
+    if not keywords:
         return _empty, ""
 
     import json
 
-    query_cn, query_en = queries
+    candidates = _em_news_search(keywords, max_results=8)
 
-    results_cn = _serper_search(query_cn, max_results=5, lang="zh-cn")
-    results_en = _serper_search(query_en, max_results=3, lang="en")
-    all_results = results_cn + results_en
-
-    if all_results:
-        news_snippets = "\n".join(
-            f"- [{r.get('title','')}]({r.get('url','')})：{r.get('content','')[:150]}"
-            for r in all_results
+    if not candidates:
+        # 硬性短路：没有任何关键词命中时，绝不让AI用训练知识"脑补"判断。
+        return (
+            {"alert_level": "─", "confidence": "─", "summary": "未获取到相关新闻"},
+            "\n> ⚠️ 基本面预警：本地关键词粗筛未命中任何近期快讯，"
+            "本次跳过 AI 判断。结果为「未知」，请人工核实，不代表基本面正常。\n",
         )
-        search_block = f"以下是近期相关新闻（来自实时搜索）：\n{news_snippets}"
-        sources_from_search = [r.get("url", "") for r in all_results if r.get("url")]
-    else:
-        search_block = "（未能获取实时新闻，请根据你的训练知识判断）"
-        sources_from_search = []
+
+    # ── 第一步：AI 相关性过滤 ──────────────────────────────────────────
+    # 关键词粗筛允许假阳性（如"军工"命中无关新闻），这一步让AI逐条剔除
+    # 真正不相关的新闻，避免"沪深300/监管"这类宽泛关键词把无关新闻带入
+    # 最终判断，拉低判断质量。
+    candidates_list_str = "\n".join(
+        f"{i+1}. {c['title']}：{c['content']}" for i, c in enumerate(candidates)
+    )
+    filter_prompt = f"""以下是通过关键词粗筛得到的近期财经快讯候选列表，可能包含与"{name}({code})"无关的新闻（粗筛允许误报）。
+请逐条判断每条新闻是否真正与"{name}({code})"的基本面相关（即报道的是该行业/指数本身或其核心成分股的情况，而非仅因字面关键词撞车）。
+
+候选新闻：
+{candidates_list_str}
+
+请严格按以下JSON格式输出，不要输出任何其他内容：
+{{"relevant_indices": [与"{name}"真正相关的新闻序号列表，如 [1, 3]，如果一条都不相关则为空列表 []]}}"""
+
+    try:
+        filter_payload = {
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 500,
+            "messages": [{"role": "user", "content": filter_prompt}]
+        }
+        headers = {
+            "Content-Type":      "application/json",
+            "x-api-key":         os.getenv("ANTHROPIC_API_KEY", ""),
+            "anthropic-version": "2023-06-01",
+        }
+        filter_resp = _call_anthropic_with_retry(filter_payload, headers)
+        filter_data = filter_resp.json()
+        filter_text_blocks = [b["text"] for b in filter_data.get("content", []) if b.get("type") == "text"]
+        filter_raw = "\n".join(filter_text_blocks).strip().replace("```json", "").replace("```", "").strip()
+        filter_result = json.loads(filter_raw)
+        relevant_indices = filter_result.get("relevant_indices", [])
+        all_results = [candidates[i - 1] for i in relevant_indices if 1 <= i <= len(candidates)]
+    except Exception as e:
+        # 相关性过滤失败：保守起见，不要把未经过滤的粗筛结果直接当作"相关新闻"
+        # 喂给最终判断（会重新引入假阳性问题），明确标记为未知。
+        return (
+            {"alert_level": "─", "confidence": "─", "summary": f"相关性过滤失败：{e}"},
+            f"\n> ⚠️ 基本面预警：AI相关性过滤步骤发生异常（{e}），跳过本次判断。"
+            "结果为「未知」，不代表基本面正常。\n",
+        )
+
+    if not all_results:
+        return (
+            {"alert_level": "─", "confidence": "─", "summary": "粗筛命中均与标的无关"},
+            "\n> ℹ️ 基本面预警：本地关键词粗筛命中的新闻经AI判断均与该标的无关，"
+            "本次无可用新闻进行基本面判断。结果为「未知」，不代表基本面正常。\n",
+        )
+
+    news_snippets = "\n".join(
+        f"- [{r.get('title','')}]({r.get('url','')})：{r.get('content','')[:150]}"
+        for r in all_results
+    )
+    search_block = f"以下是近期相关新闻（来自实时快讯，已经过相关性过滤）：\n{news_snippets}"
+    sources_from_search = [r.get("url", "") for r in all_results if r.get("url")]
 
     prompt = f"""你是一位专业的股票基本面分析师。请根据以下实时新闻，判断"{name}({code})"近期是否存在重大基本面负面事件。
 
@@ -689,9 +740,9 @@ def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
         }
         markdown_str = f"""
 ---
-### 基本面暴雷预警（Serper 实时搜索 + AI 判断，需人工确认）
+### 基本面暴雷预警（东方财富快讯本地粗筛 + AI 二次过滤判断，需人工确认）
 
-> 🔍 数据源：Serper.dev 实时搜索 + 七牛云 AI 分析。**本模块仅供参考，不自动触发任何交易动作。**
+> 🔍 数据源：东方财富全球财经快讯（akshare，免key）+ AI 相关性过滤 + AI 判断。**本模块仅供参考，不自动触发任何交易动作。**
 
 {level_icon} **{alert_level}**（置信度：{confidence}）
 
@@ -1035,7 +1086,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
         "ERP斜率：🚨恐慌踩踏 🟢快速改善 ⚠️情绪过热 🟠快速恶化 🟡横盘\n\n"
         f"减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强制全清({_DD_L3*100:.0f}%硬止损) 🛡️低估区降级\n\n"
-        "基本面：✅正常 ⚠️关注 🚨疑似暴雷 ─未获取（API失败/限流，不代表正常）\n\n"
+        "基本面：✅正常 ⚠️关注 🚨疑似暴雷 ℹ️不适用(宽基/国别指数) ─未获取（粗筛无命中/AI失败，不代表正常）\n\n"
         "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n"
         "📌 = 我的持仓\n\n---"
     )
