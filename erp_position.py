@@ -685,7 +685,7 @@ def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
     search_block = f"以下是近期相关新闻（来自实时快讯，已经过相关性过滤）：\n{news_snippets}"
     sources_from_search = [r.get("url", "") for r in all_results if r.get("url")]
 
-    prompt = f"""你是一位专业的股票基本面分析师。请根据以下实时新闻，判断"{name}({code})"近期是否存在重大基本面负面事件。
+    prompt = f"""你是一位专业的股票基本面分析师。请根据以下实时新闻，判断"{name}({code})"近期是否存在重大基本面负面事件，并对每条新闻做正负面分类。
 
 {search_block}
 
@@ -695,8 +695,15 @@ def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
 - 宏观层面出现系统性风险（如金融危机苗头、主权债务危机）
 - 指数或ETF本身出现清盘、停牌等结构性风险
 
+同时请对上面每一条新闻单独判断其对"{name}({code})"是利好（positive）、利空（negative）还是中性（neutral）：
+- positive：对行业/标的有积极影响（如政策支持、业绩超预期、需求增长）
+- negative：对行业/标的有消极影响（如监管收紧、业绩下滑、负面舆情）
+- neutral：纯客观陈述，无明显方向性影响（如指数行情播报、无关联背景新闻）
+
 请严格按以下JSON格式输出，不要输出任何其他内容：
-{{"alert_level": "正常" | "关注" | "疑似暴雷", "confidence": "低" | "中" | "高", "summary": "不超过80字的摘要", "sources": ["来源1", "来源2"]}}"""
+{{"alert_level": "正常" | "关注" | "疑似暴雷", "confidence": "低" | "中" | "高", "summary": "不超过80字的摘要", "sources": ["来源1", "来源2"], "news_sentiment": ["positive" | "negative" | "neutral", ...]}}
+
+news_sentiment 数组的长度和顺序必须与上面新闻列表一一对应（共{len(all_results)}条）。"""
 
     try:
         payload = {
@@ -721,6 +728,18 @@ def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
         summary     = result.get("summary", "")
         sources     = result.get("sources") or sources_from_search[:3]
 
+        # 逐条新闻正负面计数。AI返回数组长度若与新闻数不一致（解析异常/模型未严格遵循格式），
+        # 不强行对齐，计数置为不可用而非猜测性截断/补齐，避免产出虚假的精确数字。
+        news_sentiment = result.get("news_sentiment", [])
+        if isinstance(news_sentiment, list) and len(news_sentiment) == len(all_results):
+            positive_count = sum(1 for s in news_sentiment if s == "positive")
+            negative_count = sum(1 for s in news_sentiment if s == "negative")
+            neutral_count  = sum(1 for s in news_sentiment if s == "neutral")
+            sentiment_available = True
+        else:
+            positive_count = negative_count = neutral_count = 0
+            sentiment_available = False
+
         if alert_level == "疑似暴雷":
             level_icon = "🚨"
             action_tip = "**⚠️ 需人工确认后才可触发减仓/清仓操作，请立即核查。**"
@@ -737,7 +756,17 @@ def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
             "alert_level": alert_level,
             "confidence":  confidence,
             "summary":     summary,
+            "positive_count": positive_count,
+            "negative_count": negative_count,
+            "neutral_count":  neutral_count,
+            "sentiment_available": sentiment_available,
         }
+
+        if sentiment_available:
+            sentiment_line = f"📊 当日相关新闻：🟢正面 {positive_count} 条 · 🔴负面 {negative_count} 条 · ⚪中性 {neutral_count} 条（共{len(all_results)}条）"
+        else:
+            sentiment_line = "📊 当日相关新闻：正负面计数不可用（模型输出格式异常）"
+
         markdown_str = f"""
 ---
 ### 基本面暴雷预警（东方财富快讯本地粗筛 + AI 二次过滤判断，需人工确认）
@@ -747,6 +776,8 @@ def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
 {level_icon} **{alert_level}**（置信度：{confidence}）
 
 {action_tip}
+
+{sentiment_line}
 
 **摘要：** {summary}
 
@@ -1110,9 +1141,13 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 badge      = "📌 " if is_holding(r["code"]) else ""
                 pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
                 fund_icon  = _FUND_ICON.get(fund_alert, "─")
+                if r.get("fundamental_sentiment_available"):
+                    fund_sentiment = f"({r.get('fundamental_positive',0)}正/{r.get('fundamental_negative',0)}负)"
+                else:
+                    fund_sentiment = ""
                 lines.append(
                     f"\n{badge}{r['name']} · {r['total_pct']}%({pos_structure}) · "
-                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_sig} · 基本面{fund_icon} · {action}"
+                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_sig} · 基本面{fund_icon}{fund_sentiment} · {action}"
                 )
         return "\n".join(lines) + "\n\n---\n"
 
@@ -1142,13 +1177,17 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
                 badge      = "📌 " if is_holding(code) else ""
                 fund_icon  = _FUND_ICON.get(fund_alert, "─")
+                if r.get("fundamental_sentiment_available"):
+                    fund_sentiment_html = f'<br><span class="col-sub">{r.get("fundamental_positive",0)}正/{r.get("fundamental_negative",0)}负</span>'
+                else:
+                    fund_sentiment_html = ""
                 rows_html.append(
                     f'<tr>'
                     f'<td class="col-name">{badge}{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
                     f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
                     f'<td class="col-sig">量{divg}&nbsp;波{vol}&nbsp;折{disc}</td>'
                     f'<td class="col-sig2">斜{slope_sig}&nbsp;仓{exit_sig}</td>'
-                    f'<td class="col-fund">面{fund_icon}</td>'
+                    f'<td class="col-fund">面{fund_icon}{fund_sentiment_html}</td>'
                     f'<td class="col-action">{action}</td>'
                     f'</tr>'
                 )
@@ -1489,6 +1528,9 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     # ── 基本面预警 ────────────────────────────────────────────────────
     fundamental_result, fundamental_block = build_fundamental_alert_block(code, name)
     _fund_alert = fundamental_result.get("alert_level", "─")
+    _fund_pos   = fundamental_result.get("positive_count", 0)
+    _fund_neg   = fundamental_result.get("negative_count", 0)
+    _fund_sentiment_available = fundamental_result.get("sentiment_available", False)
 
     if summary_list is not None:
         summary_list.append({
@@ -1507,6 +1549,9 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
             "exit_verdict_icon":  _exit_signal,
             "exit_verdict_line":  _exit_verdict_line,
             "fundamental_alert":  _fund_alert,
+            "fundamental_positive": _fund_pos,
+            "fundamental_negative": _fund_neg,
+            "fundamental_sentiment_available": _fund_sentiment_available,
         })
 
     # ── 报告头部 ──────────────────────────────────────────────────────
