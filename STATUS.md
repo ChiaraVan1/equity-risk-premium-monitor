@@ -1,7 +1,7 @@
 # STATUS.md — 跨 session 运行记忆
 
 > 每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。
-> 最后更新：2026-06-10
+> 最后更新：2026-07-02
 
 ---
 
@@ -10,8 +10,7 @@
 | 项目 | 状态 | 备注 |
 |-----|------|------|
 | GitHub Actions 每日自动跑 | 正常 | 最近一次 commit：`cd1f84d` Auto update ERP data |
-| 数据覆盖指数 | 21 个 | A股13个 + 美股2个 + 欧日2个 + 新兴1个 + 港股科技1个 + 稀土/养殖等2个 |
-| HSTECH | 改用 PSY | ERP 数据停止更新，改用自建 PS/PSY（月频） |
+| 数据覆盖指数 | 23 个 | A股15个（含有色金属000819、半导体材料设备950125） + 美股2个 + 欧日2个 + 新兴1个 + 港股科技1个 + 稀土/养殖等2个 |
 | ETF 执行质量模块 | 依赖 ETF_data_project Release | 从 GitHub Release `latest` tag 实时下载 `simple_etf_metrics.csv` |
 | 微信推送 | 正常 | 只推仪表盘 + 完整报告链接，完整 HTML 在 gh-pages 查看 |
 | HTML 报告 | 正常部署 | https://chiaravan1.github.io/equity-risk-premium-monitor/report.html |
@@ -107,6 +106,7 @@ bash ~/update_pe_trigger.sh
 
 | 日期 | 变更内容 |
 |-----|---------|
+| 2026-07-02 | Claude Cowork 新增2只指数：有色金属（000819→512400.SH）、半导体材料设备（950125→588710.SH）。同步更新 fetch_bond_yield_incremental.py / fetch_bond_yield.py 的 INDEX_CONFIG，erp_position.py 的 indices / HOLDING_CATEGORY / 基本面预警关键词，etf_metrics.py 的 ERP_TO_ETF；已手动触发 init_history.yml 回填历史 PE |
 | 2026-06-10 18:00 | 删除 `com.chiaravan.update-pe.plist`（`update_pe.py` 不存在，每日报错）；`gh auth login` 完成（ChiaraVan1）；`update_pe_trigger.sh` prompt 第二步改为 `gh variable set QQQ_PE_TODAY` 替代浏览器导航 GitHub settings（更稳定，不依赖 Chrome 登录状态） |
 | 2026-06-08 17:10 | 修复 update_pe_trigger.sh：改用 AppleScript 内部设置剪贴板 + `keystroke "v" using {command down}` 粘贴完整 prompt，解决 Cmd+V 无效问题 |
 | 2026-06-08 17:00 | launchd 触发时间改为 17:00（CST） |
