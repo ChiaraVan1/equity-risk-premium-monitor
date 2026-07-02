@@ -35,13 +35,10 @@ INDEX_CONFIG = [
     ("HSTECH", "恒生科技指数",   "CNY", "CN10Y", "manual"),
     ("000069", "消费80",      "CNY", "CN10Y", "csindex"),
     ("930781", "中证影视",    "CNY", "CN10Y", "csindex"),
-    ("000989", "全指可选",    "CNY", "CN10Y", "csindex"),
-    ("931139", "CS消费50",   "CNY", "CN10Y", "csindex"),
     ("399967", "中证军工",   "CNY", "CN10Y", "csindex"),
     ("931066", "军工龙头",   "CNY", "CN10Y", "csindex"),
     ("930598", "稀土产业",    "CNY", "CN10Y", "csindex"),
     ("930794", "中美互联网",    "CNY", "CN10Y", "csindex"),
-    ("931946", "畜牧养殖",    "CNY", "CN10Y", "csindex"),
     ("000819", "有色金属",       "CNY", "CN10Y", "csindex"),
     ("950125", "半导体材料设备", "CNY", "CN10Y", "csindex"),
 ]
