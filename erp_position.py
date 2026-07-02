@@ -591,13 +591,10 @@ def _fundamental_keywords() -> dict:
         "931071": ["人工智能", "AI", "大模型", "算力"],
         "000069": ["消费", "零售", "餐饮"],
         "930781": ["影视", "票房", "广电", "传媒"],
-        "000989": ["可选消费", "家电", "汽车消费", "消费"],
-        "931139": ["消费", "零售", "餐饮"],
         "HSTECH": ["恒生科技", "互联网", "港股科技", "反垄断"],
         "399967": ["军工", "国防", "军贸", "武器装备"],
         "931066": ["军工", "国防", "军贸", "武器装备"],
         "930794": ["中美互联网", "中概股", "互联网", "中美关系"],
-        "931946": ["猪价", "生猪", "养殖", "畜牧", "饲料"],
         "930598": ["稀土", "出口管制", "稀有金属"],
         "000819": ["有色金属", "铜价", "铝价", "锂", "稀有金属"],
         "950125": ["半导体", "芯片", "半导体设备", "半导体材料", "国产替代"],
@@ -1009,8 +1006,6 @@ HOLDING_CATEGORY = {
     "931071": False,
     "000069": True,
     "930781": False,
-    "000989": False,
-    "931139": False,
     "SPY":    True,
     "QQQ":    False,
     "EWQ":    False,
@@ -1021,7 +1016,6 @@ HOLDING_CATEGORY = {
     "399967": True,
     "931066": False,
     "930794": False,
-    "931946": False,
     "930598": True,
     "000819": True,
     "950125": True,
@@ -1053,12 +1047,11 @@ def generate_action_sentence(disc, divg, vol, zone_label):
 
 def build_holdings_exit_block(summary_list: list, output_format: str = "html") -> str:
     """
-    置顶区域：我的持仓 · 减仓/清仓信号一览。
-    仅展示 HOLDING_CATEGORY 中标记为持仓（True）的标的，
-    显示每个标的的减仓信号一句话结论（verdict_line）。
+    置顶区域：减仓 / 清仓信号一览。
+    展示全部关注标的的减仓信号一句话结论（verdict_line），
+    其中持仓（HOLDING_CATEGORY 标记为 True）的标的额外加 📌 标记。
     """
-    held = [r for r in summary_list if is_holding(r.get("code", ""))]
-    if not held:
+    if not summary_list:
         return ""
 
     # 触发信号的排在前面（非✅/🛡️），正常的排在后面
@@ -1067,20 +1060,22 @@ def build_holdings_exit_block(summary_list: list, output_format: str = "html") -
         priority = {"🚨": 0, "🔴": 1, "⚠️": 2, "🛡️": 3, "✅": 4, "─": 5}
         return priority.get(icon, 9)
 
-    held_sorted = sorted(held, key=_sort_key)
+    items_sorted = sorted(summary_list, key=_sort_key)
 
     if output_format == "markdown":
-        lines = ["\n**📌 我的持仓 · 减仓信号**\n"]
-        for r in held_sorted:
-            lines.append(f"- {r['name']}：{r.get('exit_verdict_line', '─')}")
+        lines = ["\n**⚠️ 减仓 / 清仓信号一览（📌=持仓）**\n"]
+        for r in items_sorted:
+            badge = "📌 " if is_holding(r.get("code", "")) else ""
+            lines.append(f"- {badge}{r['name']}：{r.get('exit_verdict_line', '─')}")
         lines.append("")
         return "\n".join(lines) + "\n---\n"
     else:
         rows_html = []
-        for r in held_sorted:
+        for r in items_sorted:
+            badge = "📌 " if is_holding(r.get("code", "")) else ""
             verdict = r.get("exit_verdict_line", "─")
             rows_html.append(
-                f'<tr><td class="col-name">📌 {r["name"]}</td>'
+                f'<tr><td class="col-name">{badge}{r["name"]}</td>'
                 f'<td class="col-action" colspan="5">{verdict}</td></tr>'
             )
         table_html = (
@@ -1089,7 +1084,7 @@ def build_holdings_exit_block(summary_list: list, output_format: str = "html") -
             + "\n</table>"
         )
         return (
-            '<h2>📌 我的持仓 · 减仓信号</h2>\n'
+            '<h2>⚠️ 减仓 / 清仓信号一览（📌=持仓）</h2>\n'
             + table_html
             + '\n<hr>'
         )
@@ -1648,8 +1643,6 @@ if __name__ == "__main__":
         ("931071", "人工智能"),
         ("000069", "消费80"),
         ("930781", "中证影视"),
-        ("000989", "全指可选"),
-        ("931139", "CS消费50"),
         ("SPY",    "S&P 500"),
         ("QQQ",    "Nasdaq 100"),
         ("EWQ",    "MSCI France"),
@@ -1660,7 +1653,6 @@ if __name__ == "__main__":
         ("399967", "中证军工"),
         ("931066", "军工龙头"),
         ("930794", "中美互联网"),
-        ("931946", "畜牧养殖"),
         ("930598", "稀土产业"),
         ("000819", "有色金属"),
         ("950125", "半导体材料设备"),
