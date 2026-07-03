@@ -1138,7 +1138,8 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 zone_label = r.get("erp_zone", "")
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
                 badge      = "📌 " if is_holding(r["code"]) else ""
-                pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
+                exit_sig_val = r.get("exit_signal", "─")
+                pos_structure = "预警" if exit_sig_val in ("⚠️", "🔴", "🚨") else f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
                 fund_icon  = _FUND_ICON.get(fund_alert, "─")
                 if r.get("fundamental_sentiment_available"):
                     fund_sentiment = f"({r.get('fundamental_positive',0)}正/{r.get('fundamental_negative',0)}负)"
@@ -1165,7 +1166,8 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 etf_display = etf_ticker.split(".")[0] if "." in str(etf_ticker) else str(etf_ticker)
                 total_pct     = r["total_pct"]
                 pos_cls       = pos_color_class(total_pct)
-                pos_structure = f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
+                exit_sig_val = r.get("exit_signal", "─")
+                pos_structure = "预警" if exit_sig_val in ("⚠️", "🔴", "🚨") else f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
                 disc       = r.get("etf_discount",      "─")
                 divg       = r.get("etf_divergence",    "─")
                 vol        = r.get("etf_vol",           "─")
@@ -1605,7 +1607,16 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     etf_block        = build_etf_metrics_block(code, etf_df)
     shiller_block    = build_shiller_block(code)
 
-    md = f"""{header_block}
+    if exit_summary["level"] > 0:
+        position_block = f"""
+---
+### 仓位建议
+
+{exit_summary['verdict_icon']} 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = {quantiles['P75']:.2%}（显著低估） / P90 = {quantiles['P90']:.2%}（极度低估）
+"""
+    else:
+        position_block = f"""
 ---
 ### 仓位建议
 
@@ -1614,7 +1625,9 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 **{t_msg}** ({t_pct}%)
 
 建议总仓位：**{total_pct}%**（泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%）
-{unified_block}{trend_block}{exit_block_final}{fundamental_block}{etf_block}{shiller_block}"""
+"""
+
+    md = f"""{header_block}{position_block}{unified_block}{trend_block}{exit_block_final}{fundamental_block}{etf_block}{shiller_block}"""
     print(md)
     return md
 
