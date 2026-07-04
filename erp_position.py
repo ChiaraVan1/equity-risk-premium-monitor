@@ -598,6 +598,7 @@ def _fundamental_keywords() -> dict:
         "930598": ["稀土", "出口管制", "稀有金属"],
         "000819": ["有色金属", "铜价", "铝价", "锂", "稀有金属"],
         "950125": ["半导体", "芯片", "半导体设备", "半导体材料", "国产替代"],
+        "399975": ["证券", "券商", "两融", "投行", "IPO"],
     }
 
 
@@ -1019,6 +1020,7 @@ HOLDING_CATEGORY = {
     "930598": True,
     "000819": True,
     "950125": True,
+    "399975": False,
 }
 
 
@@ -1043,51 +1045,6 @@ def generate_action_sentence(disc, divg, vol, zone_label):
     else:
         suffix = ""
     return prefix + mid + suffix
-
-
-def build_holdings_exit_block(summary_list: list, output_format: str = "html") -> str:
-    """
-    置顶区域：减仓 / 清仓信号一览。
-    展示全部关注标的的减仓信号一句话结论（verdict_line），
-    其中持仓（HOLDING_CATEGORY 标记为 True）的标的额外加 📌 标记。
-    """
-    if not summary_list:
-        return ""
-
-    # 触发信号的排在前面（非✅/🛡️），正常的排在后面
-    def _sort_key(r):
-        icon = r.get("exit_verdict_icon", "✅")
-        priority = {"🚨": 0, "🔴": 1, "⚠️": 2, "🛡️": 3, "✅": 4, "─": 5}
-        return priority.get(icon, 9)
-
-    items_sorted = sorted(summary_list, key=_sort_key)
-
-    if output_format == "markdown":
-        lines = ["\n**⚠️ 减仓 / 清仓信号一览（📌=持仓）**\n"]
-        for r in items_sorted:
-            badge = "📌 " if is_holding(r.get("code", "")) else ""
-            lines.append(f"- {badge}{r['name']}：{r.get('exit_verdict_line', '─')}")
-        lines.append("")
-        return "\n".join(lines) + "\n---\n"
-    else:
-        rows_html = []
-        for r in items_sorted:
-            badge = "📌 " if is_holding(r.get("code", "")) else ""
-            verdict = r.get("exit_verdict_line", "─")
-            rows_html.append(
-                f'<tr><td class="col-name">{badge}{r["name"]}</td>'
-                f'<td class="col-action" colspan="5">{verdict}</td></tr>'
-            )
-        table_html = (
-            '<table class="dashboard-table holdings-table">\n'
-            + "\n".join(rows_html)
-            + "\n</table>"
-        )
-        return (
-            '<h2>⚠️ 减仓 / 清仓信号一览（📌=持仓）</h2>\n'
-            + table_html
-            + '\n<hr>'
-        )
 
 
 def build_summary_block(summary_list: list, output_format: str = "html") -> str:
@@ -1145,9 +1102,18 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                     fund_sentiment = f"({r.get('fundamental_positive',0)}正/{r.get('fundamental_negative',0)}负)"
                 else:
                     fund_sentiment = ""
+                exit_level  = r.get("exit_level", 0)
+                exit_line   = r.get("exit_verdict_line", "─")
+                exit_detail = exit_line if exit_level and exit_level > 0 else exit_sig
+                if exit_level == 3:
+                    action_final = f"🚨 {exit_line}（覆盖建仓建议）"
+                elif exit_level in (1, 2):
+                    action_final = f"{action}｜⚠️ 冲突：{exit_line}"
+                else:
+                    action_final = action
                 lines.append(
                     f"\n{badge}{r['name']} · {r['total_pct']}%({pos_structure}) · "
-                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_sig} · 基本面{fund_icon}{fund_sentiment} · {action}"
+                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_detail} · 基本面{fund_icon}{fund_sentiment} · {action_final}"
                 )
         return "\n".join(lines) + "\n\n---\n"
 
@@ -1182,14 +1148,26 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                     fund_sentiment_html = f'<br><span class="col-sub">{r.get("fundamental_positive",0)}正/{r.get("fundamental_negative",0)}负</span>'
                 else:
                     fund_sentiment_html = ""
+                exit_level = r.get("exit_level", 0)
+                exit_line  = r.get("exit_verdict_line", "─")
+                if exit_level and exit_level > 0:
+                    exit_cell = f'仓{exit_sig}<br><span class="col-sub">{exit_line}</span>'
+                else:
+                    exit_cell = f'仓{exit_sig}'
+                if exit_level == 3:
+                    action_final = f'🚨 {exit_line}<br><span class="col-sub">已覆盖建仓建议</span>'
+                elif exit_level in (1, 2):
+                    action_final = f'{action}<br><span class="col-sub">⚠️ 冲突：{exit_line}</span>'
+                else:
+                    action_final = action
                 rows_html.append(
                     f'<tr>'
                     f'<td class="col-name">{badge}{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
                     f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
                     f'<td class="col-sig">量{divg}&nbsp;波{vol}&nbsp;折{disc}</td>'
-                    f'<td class="col-sig2">斜{slope_sig}&nbsp;仓{exit_sig}</td>'
+                    f'<td class="col-sig2">斜{slope_sig}&nbsp;{exit_cell}</td>'
                     f'<td class="col-fund">面{fund_icon}{fund_sentiment_html}</td>'
-                    f'<td class="col-action">{action}</td>'
+                    f'<td class="col-action">{action_final}</td>'
                     f'</tr>'
                 )
         table_html = (
@@ -1549,6 +1527,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
             "exit_signal":        _exit_signal,
             "exit_verdict_icon":  _exit_signal,
             "exit_verdict_line":  _exit_verdict_line,
+            "exit_level":         exit_summary["level"],
             "fundamental_alert":  _fund_alert,
             "fundamental_positive": _fund_pos,
             "fundamental_negative": _fund_neg,
@@ -1656,6 +1635,7 @@ if __name__ == "__main__":
         ("931071", "人工智能"),
         ("000069", "消费80"),
         ("930781", "中证影视"),
+        ("399975", "证券公司"),
         ("SPY",    "S&P 500"),
         ("QQQ",    "Nasdaq 100"),
         ("EWQ",    "MSCI France"),
@@ -1693,14 +1673,11 @@ if __name__ == "__main__":
 
     if report_list:
         date_str       = datetime.now().strftime("%Y-%m-%d")
-        holdings_html   = build_holdings_exit_block(summary_list, output_format="html")
-        holdings_wechat = build_holdings_exit_block(summary_list, output_format="markdown")
         summary_html   = build_summary_block(summary_list, output_format="html")
         summary_wechat = build_summary_block(summary_list, output_format="markdown")
 
         full_report = (
             "# ERP 策略每日监控报告\n"
-            + holdings_html
             + summary_html
             + LEGEND_BLOCK
             + "".join(report_list)
@@ -1715,6 +1692,6 @@ if __name__ == "__main__":
             print(f"✅ dry-run 模式，报告已写入 {preview_path}，不推送微信。")
         else:
             print("正在生成报告并准备推送...")
-            send_to_wechat(holdings_wechat + summary_wechat, date_str)
+            send_to_wechat(summary_wechat, date_str)
     else:
         print("❌ 未生成任何有效报告，请检查数据文件。")
