@@ -1059,6 +1059,10 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         if pct >= 40: return "pos-low"
         return "pos-min"
 
+    # 触发止损/清仓的标的单独置顶，跳出估值区间分类，避免被埋没在正常条目里
+    alerted   = [r for r in summary_list if r.get("exit_level", 0) > 0]
+    unalerted = [r for r in summary_list if r.get("exit_level", 0) == 0]
+
     zone_groups = [
         ("🟢 极度低估", lambda z: z.startswith("🟢 极度低估")),
         ("🟢 显著低估", lambda z: z.startswith("🟢 显著低估")),
@@ -1068,113 +1072,92 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
     ]
 
     header = f"## 📊 决策仪表盘 · {date_str}"
-    legend = (
-        "胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 🟢极高=已超P90\n\n"
-        "折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批\n\n"
-        "ERP斜率：🚨恐慌踩踏 🟢快速改善 ⚠️情绪过热 🟠快速恶化 🟡横盘\n\n"
-        f"减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强制全清({_DD_L3*100:.0f}%硬止损) 🛡️低估区降级\n\n"
-        "基本面：✅正常 ⚠️关注 🚨疑似暴雷 ℹ️不适用(宽基/国别指数) ─未获取（粗筛无命中/AI失败，不代表正常）\n\n"
-        "估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)\n\n"
-        "📌 = 我的持仓\n\n---"
-    )
+    legend = "胜率🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 折溢价💎大折 🟢折 🟡平 🟠溢 🔴大溢 · 📌=持仓\n\n---"
 
     if output_format == "markdown":
         lines = [header, "", legend, ""]
+
+        if alerted:
+            lines.append(f"\n**🚨 需要处理 ({len(alerted)})**")
+            for r in alerted:
+                badge      = "📌 " if is_holding(r["code"]) else ""
+                zone_short = r.get("erp_zone", "").split("(")[0].strip()
+                lines.append(
+                    f"\n🚨 {badge}{r['name']} · {zone_short} · {r['total_pct']}%\n"
+                    f"　{r.get('exit_verdict_line', '')}"
+                )
+
         for group_label, match_fn in zone_groups:
-            group_items = [r for r in summary_list if match_fn(r.get("erp_zone", ""))]
+            group_items = [r for r in unalerted if match_fn(r.get("erp_zone", ""))]
             if not group_items:
                 continue
-            lines.append(f"\n**{group_label}**")
+            lines.append(f"\n**{group_label} ({len(group_items)})**")
             for r in group_items:
-                disc       = r.get("etf_discount",      "─")
-                divg       = r.get("etf_divergence",    "─")
-                vol        = r.get("etf_vol",           "─")
-                slope_sig  = r.get("slope_signal",      "─")
-                exit_sig   = r.get("exit_signal",       "─")
-                fund_alert = r.get("fundamental_alert", "─")
-                zone_label = r.get("erp_zone", "")
-                action     = generate_action_sentence(disc, divg, vol, zone_label)
                 badge      = "📌 " if is_holding(r["code"]) else ""
-                exit_sig_val = r.get("exit_signal", "─")
-                pos_structure = "预警" if exit_sig_val in ("⚠️", "🔴", "🚨") else f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
-                fund_icon  = _FUND_ICON.get(fund_alert, "─")
-                if r.get("fundamental_sentiment_available"):
-                    fund_sentiment = f"({r.get('fundamental_positive',0)}正/{r.get('fundamental_negative',0)}负)"
-                else:
-                    fund_sentiment = ""
-                exit_level  = r.get("exit_level", 0)
-                exit_line   = r.get("exit_verdict_line", "─")
-                exit_detail = exit_line if exit_level and exit_level > 0 else exit_sig
-                if exit_level == 3:
-                    action_final = f"🚨 {exit_line}（覆盖建仓建议）"
-                elif exit_level in (1, 2):
-                    action_final = f"{action}｜⚠️ 冲突：{exit_line}"
-                else:
-                    action_final = action
+                zone_label = r.get("erp_zone", "")
+                disc = r.get("etf_discount", "─")
+                divg = r.get("etf_divergence", "─")
+                vol  = r.get("etf_vol", "─")
+                action = generate_action_sentence(disc, divg, vol, zone_label)
+
+                # 只有异常字段才展示，正常状态（✅/🟡/─）不重复列出，减少噪音
+                extras = []
+                if vol == "🔴":
+                    extras.append(f"波{vol}")
+                if disc in ("💎", "🔴"):
+                    extras.append(f"折{disc}")
+                if divg == "⚠️":
+                    extras.append(f"量{divg}")
+                extra_str = (" · " + " ".join(extras)) if extras else ""
+
                 lines.append(
-                    f"\n{badge}{r['name']} · {r['total_pct']}%({pos_structure}) · "
-                    f"量{divg} 波{vol} 折{disc} · 斜率{slope_sig} · 减仓{exit_detail} · 基本面{fund_icon}{fund_sentiment} · {action_final}"
+                    f"\n{badge}{r['name']} · {r['total_pct']}%"
+                    f"({r['b_pct']}+{r['v_pct']}+{r['t_pct']}){extra_str} · {action}"
                 )
         return "\n".join(lines) + "\n\n---\n"
 
     else:
         rows_html = []
+
+        if alerted:
+            rows_html.append('<tr><td colspan="4" class="section-header">🚨 需要处理</td></tr>')
+            for r in alerted:
+                code       = r.get("code", "")
+                badge      = "📌 " if is_holding(code) else ""
+                zone_short = r.get("erp_zone", "").split("(")[0].strip()
+                rows_html.append(
+                    f'<tr class="alert-row">'
+                    f'<td class="col-name">{badge}{r["name"]}</td>'
+                    f'<td class="col-pos">{r["total_pct"]}%</td>'
+                    f'<td colspan="2" class="col-action">🚨 {zone_short}｜{r.get("exit_verdict_line", "")}</td>'
+                    f'</tr>'
+                )
+
         for group_label, match_fn in zone_groups:
-            group_items = [r for r in summary_list if match_fn(r.get("erp_zone", ""))]
+            group_items = [r for r in unalerted if match_fn(r.get("erp_zone", ""))]
             if not group_items:
                 continue
-            rows_html.append(
-                f'<tr><td colspan="6" class="section-header">{group_label}</td></tr>'
-            )
+            rows_html.append(f'<tr><td colspan="4" class="section-header">{group_label}</td></tr>')
             for r in group_items:
-                code        = r.get("code", "")
-                etf_ticker  = ERP_TO_ETF.get(code, "─")
-                etf_display = etf_ticker.split(".")[0] if "." in str(etf_ticker) else str(etf_ticker)
-                total_pct     = r["total_pct"]
-                pos_cls       = pos_color_class(total_pct)
-                exit_sig_val = r.get("exit_signal", "─")
-                pos_structure = "预警" if exit_sig_val in ("⚠️", "🔴", "🚨") else f"{r['b_pct']}+{r['v_pct']}+{r['t_pct']}"
-                disc       = r.get("etf_discount",      "─")
-                divg       = r.get("etf_divergence",    "─")
-                vol        = r.get("etf_vol",           "─")
-                slope_sig  = r.get("slope_signal",      "─")
-                exit_sig   = r.get("exit_signal",       "─")
-                fund_alert = r.get("fundamental_alert", "─")
+                code       = r.get("code", "")
+                total_pct  = r["total_pct"]
+                pos_cls    = pos_color_class(total_pct)
+                disc       = r.get("etf_discount", "─")
+                divg       = r.get("etf_divergence", "─")
+                vol        = r.get("etf_vol", "─")
                 zone_label = r.get("erp_zone", "")
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
                 badge      = "📌 " if is_holding(code) else ""
-                fund_icon  = _FUND_ICON.get(fund_alert, "─")
-                if r.get("fundamental_sentiment_available"):
-                    fund_sentiment_html = f'<br><span class="col-sub">{r.get("fundamental_positive",0)}正/{r.get("fundamental_negative",0)}负</span>'
-                else:
-                    fund_sentiment_html = ""
-                exit_level = r.get("exit_level", 0)
-                exit_line  = r.get("exit_verdict_line", "─")
-                if exit_level and exit_level > 0:
-                    exit_cell = f'仓{exit_sig}<br><span class="col-sub">{exit_line}</span>'
-                else:
-                    exit_cell = f'仓{exit_sig}'
-                if exit_level == 3:
-                    action_final = f'🚨 {exit_line}<br><span class="col-sub">已覆盖建仓建议</span>'
-                elif exit_level in (1, 2):
-                    action_final = f'{action}<br><span class="col-sub">⚠️ 冲突：{exit_line}</span>'
-                else:
-                    action_final = action
                 rows_html.append(
                     f'<tr>'
-                    f'<td class="col-name">{badge}{r["name"]}<br><span class="col-etf">{etf_display}</span></td>'
-                    f'<td class="col-pos {pos_cls}">{total_pct}%<br><span class="col-sub">{pos_structure}</span></td>'
-                    f'<td class="col-sig">量{divg}&nbsp;波{vol}&nbsp;折{disc}</td>'
-                    f'<td class="col-sig2">斜{slope_sig}&nbsp;{exit_cell}</td>'
-                    f'<td class="col-fund">面{fund_icon}{fund_sentiment_html}</td>'
-                    f'<td class="col-action">{action_final}</td>'
+                    f'<td class="col-name">{badge}{r["name"]}</td>'
+                    f'<td class="col-pos {pos_cls}">{total_pct}%<br>'
+                    f'<span class="col-sub">{r["b_pct"]}+{r["v_pct"]}+{r["t_pct"]}</span></td>'
+                    f'<td class="col-sig">波{vol} 折{disc}</td>'
+                    f'<td class="col-action">{action}</td>'
                     f'</tr>'
                 )
-        table_html = (
-            '<table class="dashboard-table">\n'
-            + "\n".join(rows_html)
-            + "\n</table>"
-        )
+        table_html = '<table class="dashboard-table">\n' + "\n".join(rows_html) + "\n</table>"
         return f"{header}\n{legend}\n\n{table_html}\n\n---\n"
 
 
@@ -1292,15 +1275,12 @@ def markdown_to_html(md_text: str, date_str: str) -> str:
   .dashboard-table {{ width: 100%; border-collapse: collapse; }}
   .dashboard-table tr {{ border-bottom: 1px solid #21262d; }}
   .dashboard-table td {{ padding: 10px 8px; vertical-align: middle; border: none; }}
-  .holdings-table tr {{ border-bottom: 1px solid #21262d; }}
-  .holdings-table .col-name {{ width: 110px; font-weight: bold; }}
+  .alert-row {{ background: rgba(248, 81, 73, 0.08); }}
   .col-name   {{ width: 110px; font-weight: bold; }}
   .col-etf    {{ color: #8b949e; font-size: 11px; }}
   .col-pos    {{ width: 64px; text-align: center; font-size: 20px; font-weight: bold; }}
   .col-sub    {{ font-size: 10px; color: #8b949e; }}
-  .col-sig    {{ width: 120px; }}
-  .col-sig2   {{ width: 80px; }}
-  .col-fund   {{ width: 36px; text-align: center; }}
+  .col-sig    {{ width: 100px; }}
   .col-action {{ font-size: 12px; }}
   .pos-high   {{ color: #3fb950; }}
   .pos-mid    {{ color: #d29922; }}
