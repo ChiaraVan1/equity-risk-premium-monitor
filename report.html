@@ -32,15 +32,12 @@
   .dashboard-table { width: 100%; border-collapse: collapse; }
   .dashboard-table tr { border-bottom: 1px solid #21262d; }
   .dashboard-table td { padding: 10px 8px; vertical-align: middle; border: none; }
-  .holdings-table tr { border-bottom: 1px solid #21262d; }
-  .holdings-table .col-name { width: 110px; font-weight: bold; }
+  .alert-row { background: rgba(248, 81, 73, 0.08); }
   .col-name   { width: 110px; font-weight: bold; }
   .col-etf    { color: #8b949e; font-size: 11px; }
   .col-pos    { width: 64px; text-align: center; font-size: 20px; font-weight: bold; }
   .col-sub    { font-size: 10px; color: #8b949e; }
-  .col-sig    { width: 120px; }
-  .col-sig2   { width: 80px; }
-  .col-fund   { width: 36px; text-align: center; }
+  .col-sig    { width: 100px; }
   .col-action { font-size: 12px; }
   .pos-high   { color: #3fb950; }
   .pos-mid    { color: #d29922; }
@@ -59,49 +56,35 @@
 <h1>📊 ERP 策略监控报告 · 2026-07-05</h1>
 <h1>ERP 策略每日监控报告</h1>
 <h2>📊 决策仪表盘 · 2026-07-05</h2>
-<p>胜率/赔率：🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 赔率>1x为正 · 🟢极高=已超P90</p>
-<br>
-<p>折溢价：💎大折价 🟢折价 🟡平价 🟠溢价 🔴大溢价 · 量：✅无背离 ⚠️背离 · 波动：🟢低 🟠中高 🔴高位分批</p>
-<br>
-<p>ERP斜率：🚨恐慌踩踏 🟢快速改善 ⚠️情绪过热 🟠快速恶化 🟡横盘</p>
-<br>
-<p>减仓信号：✅正常 ⚠️减仓预警 🔴清仓预警 🚨强制全清(20%硬止损) 🛡️低估区降级</p>
-<br>
-<p>基本面：✅正常 ⚠️关注 🚨疑似暴雷 ℹ️不适用(宽基/国别指数) ─未获取（粗筛无命中/AI失败，不代表正常）</p>
-<br>
-<p>估值区间：🟢低估(≥P75) 🟡合理偏低(P50-P75) 🟠合理偏高(P25-P50) 🔴高估(P10-P25) 🚨危险泡沫(<P10)</p>
-<br>
-<p>📌 = 我的持仓</p>
+<p>胜率🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 折溢价💎大折 🟢折 🟡平 🟠溢 🔴大溢 · 📌=持仓</p>
 <br>
 <hr>
 <br>
 <table class="dashboard-table">
-<tr><td colspan="6" class="section-header">🟢 极度低估</td></tr>
-<tr><td class="col-name">📌 消费80<br><span class="col-etf">510150</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">预警</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓⚠️<br><span class="col-sub">⚠️ 减仓预警（低估区降级）— 回撤-16.1%，建议减至底仓，保留泡沫仓30%</span></td><td class="col-fund">面─</td><td class="col-action">分批建仓<br><span class="col-sub">⚠️ 冲突：⚠️ 减仓预警（低估区降级）— 回撤-16.1%，建议减至底仓，保留泡沫仓30%</span></td></tr>
-<tr><td class="col-name">📌 中证医疗<br><span class="col-etf">512170</span></td><td class="col-pos pos-high">100%<br><span class="col-sub">预警</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓⚠️<br><span class="col-sub">⚠️ 减仓预警（低估区降级）— 回撤-19.0%，建议减至底仓，保留泡沫仓30%</span></td><td class="col-fund">面✅<br><span class="col-sub">2正/0负</span></td><td class="col-action">建仓，注意分批<br><span class="col-sub">⚠️ 冲突：⚠️ 减仓预警（低估区降级）— 回撤-19.0%，建议减至底仓，保留泡沫仓30%</span></td></tr>
-<tr><td class="col-name">📌 中证军工<br><span class="col-etf">512660</span></td><td class="col-pos pos-high">90%<br><span class="col-sub">预警</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨<br><span class="col-sub">🚨 强制全清止损 — 回撤-22.7%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</span></td><td class="col-fund">面─</td><td class="col-action">🚨 🚨 强制全清止损 — 回撤-22.7%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）<br><span class="col-sub">已覆盖建仓建议</span></td></tr>
-<tr><td class="col-name">证券公司<br><span class="col-etf">512880</span></td><td class="col-pos pos-high">90%<br><span class="col-sub">30+40+20</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">等量能确认，分批建仓</td></tr>
-<tr><td colspan="6" class="section-header">🟢 显著低估</td></tr>
-<tr><td class="col-name">📌 恒生科技指数<br><span class="col-etf">513180</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">预警</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🚨&nbsp;仓🚨<br><span class="col-sub">🚨 强制全清止损 — 回撤-27.0%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</span></td><td class="col-fund">面✅<br><span class="col-sub">1正/0负</span></td><td class="col-action">🚨 🚨 强制全清止损 — 回撤-27.0%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）<br><span class="col-sub">已覆盖建仓建议</span></td></tr>
-<tr><td class="col-name">中证红利<br><span class="col-etf">515180</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟢&nbsp;仓🛡️</td><td class="col-fund">面─</td><td class="col-action">分批建仓</td></tr>
-<tr><td class="col-name">📌 有色金属<br><span class="col-etf">512400</span></td><td class="col-pos pos-high">80%<br><span class="col-sub">预警</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨<br><span class="col-sub">🚨 强制全清止损 — 回撤-27.1%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</span></td><td class="col-fund">面✅<br><span class="col-sub">1正/0负</span></td><td class="col-action">🚨 🚨 强制全清止损 — 回撤-27.1%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）<br><span class="col-sub">已覆盖建仓建议</span></td></tr>
-<tr><td colspan="6" class="section-header">🟡 合理偏低</td></tr>
-<tr><td class="col-name">📌 稀土产业<br><span class="col-etf">516150</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量⚠️&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">等量能确认，建仓，注意分批</td></tr>
-<tr><td class="col-name">中证影视<br><span class="col-etf">516620</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">预警</span></td><td class="col-sig">量⚠️&nbsp;波🟢&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨<br><span class="col-sub">🚨 强制全清止损 — 回撤-40.6%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</span></td><td class="col-fund">面─</td><td class="col-action">🚨 🚨 强制全清止损 — 回撤-40.6%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）<br><span class="col-sub">已覆盖建仓建议</span></td></tr>
-<tr><td class="col-name">中美互联网<br><span class="col-etf">None</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓─</td><td class="col-fund">面─</td><td class="col-action">一次建仓</td></tr>
-<tr><td class="col-name">MSCI Emerging<br><span class="col-etf">None</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓─</td><td class="col-fund">面ℹ️</td><td class="col-action">一次建仓</td></tr>
-<tr><td class="col-name">人工智能<br><span class="col-etf">515980</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面✅<br><span class="col-sub">6正/0负</span></td><td class="col-action">等量能确认，分批建仓</td></tr>
-<tr><td class="col-name">军工龙头<br><span class="col-etf">512710</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">预警</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折🟡</td><td class="col-sig2">斜🟡&nbsp;仓🚨<br><span class="col-sub">🚨 强制全清止损 — 回撤-29.3%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</span></td><td class="col-fund">面─</td><td class="col-action">🚨 🚨 强制全清止损 — 回撤-29.3%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）<br><span class="col-sub">已覆盖建仓建议</span></td></tr>
-<tr><td class="col-name">📌 沪深300<br><span class="col-etf">510300</span></td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面ℹ️</td><td class="col-action">分批建仓</td></tr>
-<tr><td colspan="6" class="section-header">🟠 合理区间</td></tr>
-<tr><td class="col-name">📌 科创50<br><span class="col-etf">588000</span></td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟢</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面ℹ️</td><td class="col-action">等量能确认，分批建仓，折价窗口开着</td></tr>
-<tr><td colspan="6" class="section-header">🔴 高估/规避</td></tr>
-<tr><td class="col-name">📌 S&P 500<br><span class="col-etf">513500</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量✅&nbsp;波🟠&nbsp;折💎</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面ℹ️</td><td class="col-action">规避，不建仓</td></tr>
-<tr><td class="col-name">MSCI France<br><span class="col-etf">513080</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量⚠️&nbsp;波🟠&nbsp;折🟢</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面ℹ️</td><td class="col-action">规避，不建仓</td></tr>
-<tr><td class="col-name">MSCI Germany<br><span class="col-etf">None</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量─&nbsp;波─&nbsp;折─</td><td class="col-sig2">斜🟡&nbsp;仓─</td><td class="col-fund">面ℹ️</td><td class="col-action">规避，不建仓</td></tr>
-<tr><td class="col-name">Nasdaq 100<br><span class="col-etf">159696</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折💎</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面ℹ️</td><td class="col-action">规避，不建仓</td></tr>
-<tr><td class="col-name">MSCI Japan<br><span class="col-etf">513880</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量✅&nbsp;波🔴&nbsp;折💎</td><td class="col-sig2">斜🟠&nbsp;仓✅</td><td class="col-fund">面ℹ️</td><td class="col-action">规避，不建仓</td></tr>
-<tr><td class="col-name">📌 半导体材料设备<br><span class="col-etf">588710</span></td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">量⚠️&nbsp;波🔴&nbsp;折🟢</td><td class="col-sig2">斜🟡&nbsp;仓✅</td><td class="col-fund">面─</td><td class="col-action">规避，不建仓</td></tr>
+<tr><td colspan="4" class="section-header">🚨 需要处理</td></tr>
+<tr class="alert-row"><td class="col-name">📌 消费80</td><td class="col-pos">100%</td><td colspan="2" class="col-action">🚨 🟢 极度低估｜⚠️ 减仓预警（低估区降级）— 回撤-16.1%，建议减至底仓，保留泡沫仓30%</td></tr>
+<tr class="alert-row"><td class="col-name">📌 中证医疗</td><td class="col-pos">100%</td><td colspan="2" class="col-action">🚨 🟢 极度低估｜⚠️ 减仓预警（低估区降级）— 回撤-19.0%，建议减至底仓，保留泡沫仓30%</td></tr>
+<tr class="alert-row"><td class="col-name">📌 中证军工</td><td class="col-pos">90%</td><td colspan="2" class="col-action">🚨 🟢 极度低估｜🚨 强制全清止损 — 回撤-22.7%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</td></tr>
+<tr class="alert-row"><td class="col-name">📌 恒生科技指数</td><td class="col-pos">80%</td><td colspan="2" class="col-action">🚨 🟢 显著低估｜🚨 强制全清止损 — 回撤-27.0%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</td></tr>
+<tr class="alert-row"><td class="col-name">📌 有色金属</td><td class="col-pos">80%</td><td colspan="2" class="col-action">🚨 🟢 显著低估｜🚨 强制全清止损 — 回撤-27.1%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</td></tr>
+<tr class="alert-row"><td class="col-name">中证影视</td><td class="col-pos">75%</td><td colspan="2" class="col-action">🚨 🟡 合理偏低｜🚨 强制全清止损 — 回撤-40.6%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</td></tr>
+<tr class="alert-row"><td class="col-name">军工龙头</td><td class="col-pos">75%</td><td colspan="2" class="col-action">🚨 🟡 合理偏低｜🚨 强制全清止损 — 回撤-29.3%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</td></tr>
+<tr><td colspan="4" class="section-header">🟢 极度低估</td></tr>
+<tr><td class="col-name">证券公司</td><td class="col-pos pos-high">90%<br><span class="col-sub">30+40+20</span></td><td class="col-sig">波🔴 折🟡</td><td class="col-action">等量能确认，分批建仓</td></tr>
+<tr><td colspan="4" class="section-header">🟢 显著低估</td></tr>
+<tr><td class="col-name">中证红利</td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">波🔴 折🟡</td><td class="col-action">分批建仓</td></tr>
+<tr><td colspan="4" class="section-header">🟡 合理偏低</td></tr>
+<tr><td class="col-name">📌 稀土产业</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波🟠 折🟡</td><td class="col-action">等量能确认，建仓，注意分批</td></tr>
+<tr><td class="col-name">人工智能</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波🔴 折🟡</td><td class="col-action">等量能确认，分批建仓</td></tr>
+<tr><td class="col-name">📌 沪深300</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波🔴 折🟡</td><td class="col-action">分批建仓</td></tr>
+<tr><td colspan="4" class="section-header">🟠 合理区间</td></tr>
+<tr><td class="col-name">📌 科创50</td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">波🔴 折🟢</td><td class="col-action">等量能确认，分批建仓，折价窗口开着</td></tr>
+<tr><td colspan="4" class="section-header">🔴 高估/规避</td></tr>
+<tr><td class="col-name">📌 S&P 500</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波🟠 折💎</td><td class="col-action">规避，不建仓</td></tr>
+<tr><td class="col-name">MSCI France</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波🟠 折🟢</td><td class="col-action">规避，不建仓</td></tr>
+<tr><td class="col-name">Nasdaq 100</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波🔴 折─</td><td class="col-action">规避，不建仓</td></tr>
+<tr><td class="col-name">MSCI Japan</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波🔴 折💎</td><td class="col-action">规避，不建仓</td></tr>
+<tr><td class="col-name">📌 半导体材料设备</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波🔴 折🟢</td><td class="col-action">规避，不建仓</td></tr>
 </table>
 <br>
 <hr>
@@ -210,8 +193,8 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：⚪ 平价 0.000%（1年50% / 3年50%分位）— 折价处于历史中低位 → 平价，无额外成本，可下单</p>
-<p>- 趋势：5日+0.000% / 10日+0.000% → 折溢价近期稳定</p>
+<p>- 当前：🟠 轻微溢价 0.111%（1年98% / 3年96%分位）— 历史罕见高溢价，等待 → 小幅溢价，可接受，建议挂单而非市价</p>
+<p>- 趋势：5日+0.229% / 10日+0.398% → 溢价扩大 → 买入成本上升，等折价窗口</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
@@ -548,22 +531,7 @@
 <br>
 <blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
 <br>
-<hr>
-<h3>基本面暴雷预警（东方财富快讯本地粗筛 + AI 二次过滤判断，需人工确认）</h3>
-<br>
-<blockquote>🔍 数据源：东方财富全球财经快讯（akshare，免key）+ AI 相关性过滤 + AI 判断。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
-<br>
-<p>✅ <strong>正常</strong>（置信度：高）</p>
-<br>
-<p>近期无重大基本面异常。</p>
-<br>
-<p>📊 当日相关新闻：🟢正面 2 条 · 🔴负面 0 条 · ⚪中性 0 条（共2条）</p>
-<br>
-<p><strong>摘要：</strong> 近期创新药板块出现反弹行情，医药生物板块领涨，主力资金流入医药；无重大财务造假、政策打压或系统性风险事件，中证医疗基本面整体稳定。</p>
-<br>
-<p><strong>参考来源：</strong></p>
-<p>  - 东方财富-创新药大反转研判</p>
-<p>  - 东方财富-资金流向分析</p>
+<blockquote>⚠️ 基本面预警：发生异常（Expecting ',' delimiter: line 1 column 159 (char 158)），跳过。本次结果为「未知」，不代表基本面正常。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（512170.SH）</h3>
@@ -689,15 +657,14 @@
 <br>
 <p>近期无重大基本面异常。</p>
 <br>
-<p>📊 当日相关新闻：🟢正面 6 条 · 🔴负面 0 条 · ⚪中性 2 条（共8条）</p>
+<p>📊 当日相关新闻：🟢正面 6 条 · 🔴负面 0 条 · ⚪中性 1 条（共7条）</p>
 <br>
-<p><strong>摘要：</strong> 近期AI相关新闻整体偏正面，鸿海/富士康AI需求强劲、光纤等产业链业绩大增，机构持续看好AI主线，无重大财务造假、监管打压或系统性风险信号。</p>
+<p><strong>摘要：</strong> 近期AI相关新闻整体积极，鸿海/富士康AI需求强劲、销售额大幅增长，瑞银看好AI基础设施股，券商推荐半导体/AI主线，无重大负面基本面事件。</p>
 <br>
 <p><strong>参考来源：</strong></p>
-<p>  - 东方财富财经新闻</p>
-<p>  - 瑞银研报</p>
+<p>  - 东方财富网</p>
+<p>  - 瑞银报告</p>
 <p>  - 中国银河证券研报</p>
-<p>  - 中信证券研报</p>
 <br>
 <hr>
 <h3>ETF 执行质量（515980.SH）</h3>
@@ -1044,7 +1011,22 @@
 <br>
 <blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
 <br>
-<blockquote>⚠️ 基本面预警：AI相关性过滤步骤发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过本次判断。结果为「未知」，不代表基本面正常。</blockquote>
+<hr>
+<h3>基本面暴雷预警（东方财富快讯本地粗筛 + AI 二次过滤判断，需人工确认）</h3>
+<br>
+<blockquote>🔍 数据源：东方财富全球财经快讯（akshare，免key）+ AI 相关性过滤 + AI 判断。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
+<br>
+<p>✅ <strong>正常</strong>（置信度：高）</p>
+<br>
+<p>近期无重大基本面异常。</p>
+<br>
+<p>📊 当日相关新闻：🟢正面 0 条 · 🔴负面 0 条 · ⚪中性 2 条（共2条）</p>
+<br>
+<p><strong>摘要：</strong> 近期新闻主要为券商策略研判及市场风格分歧讨论，无涉及证券行业重大财务造假、监管打压、退市风险或系统性风险等负面事件，基本面整体正常。</p>
+<br>
+<p><strong>参考来源：</strong></p>
+<p>  - 东方财富财经</p>
+<p>  - 中信证券研报</p>
 <br>
 <hr>
 <h3>ETF 执行质量（512880.SH）</h3>
@@ -1312,8 +1294,8 @@
 <p><strong>A · 今天怎么下单（折溢价）</strong></p>
 <blockquote>折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。</blockquote>
 <br>
-<p>- 当前：🟢 折价 -8.971%（1年5% / 3年2%分位）— 历史少见低折价（买入成本极优） → 折价买入，执行成本占优，可直接下单</p>
-<p>- 趋势：5日-0.043% / 10日-0.933% → 折溢价近期稳定</p>
+<p>- 当前：⚪ 平价 0.000%（1年50% / 3年50%分位）— 折价处于历史中低位 → 平价，无额外成本，可下单</p>
+<p>- 趋势：5日+0.000% / 10日+0.000% → 折溢价近期稳定</p>
 <br>
 <p><strong>B · 这波量是否真实（资金流）</strong></p>
 <blockquote>价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。</blockquote>
@@ -1786,21 +1768,7 @@
 <br>
 <blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
 <br>
-<hr>
-<h3>基本面暴雷预警（东方财富快讯本地粗筛 + AI 二次过滤判断，需人工确认）</h3>
-<br>
-<blockquote>🔍 数据源：东方财富全球财经快讯（akshare，免key）+ AI 相关性过滤 + AI 判断。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
-<br>
-<p>✅ <strong>正常</strong>（置信度：高）</p>
-<br>
-<p>近期无重大基本面异常。</p>
-<br>
-<p>📊 当日相关新闻：🟢正面 1 条 · 🔴负面 0 条 · ⚪中性 0 条（共1条）</p>
-<br>
-<p><strong>摘要：</strong> 恒生科技指数本周强劲反弹，创年内最大单周涨幅5.72%，腾讯、美团等权重股集体上涨，市场情绪回暖，无重大基本面负面事件。</p>
-<br>
-<p><strong>参考来源：</strong></p>
-<p>  - 东方财富网</p>
+<blockquote>⚠️ 基本面预警：API返回错误（HTTP 429，已重试3次），跳过。本次结果为「未知」，不代表基本面正常。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（513180.SH）</h3>
@@ -1915,7 +1883,7 @@
 <br>
 <blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
 <br>
-<blockquote>⚠️ 基本面预警：API返回错误（HTTP 429，已重试3次），跳过。本次结果为「未知」，不代表基本面正常。</blockquote>
+<blockquote>ℹ️ 基本面预警：本地关键词粗筛命中的新闻经AI判断均与该标的无关，本次无可用新闻进行基本面判断。结果为「未知」，不代表基本面正常。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（512660.SH）</h3>
@@ -2030,7 +1998,7 @@
 <br>
 <blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
 <br>
-<blockquote>⚠️ 基本面预警：AI相关性过滤步骤发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过本次判断。结果为「未知」，不代表基本面正常。</blockquote>
+<blockquote>ℹ️ 基本面预警：本地关键词粗筛命中的新闻经AI判断均与该标的无关，本次无可用新闻进行基本面判断。结果为「未知」，不代表基本面正常。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（512710.SH）</h3>
@@ -2330,21 +2298,7 @@
 <br>
 <blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
 <br>
-<hr>
-<h3>基本面暴雷预警（东方财富快讯本地粗筛 + AI 二次过滤判断，需人工确认）</h3>
-<br>
-<blockquote>🔍 数据源：东方财富全球财经快讯（akshare，免key）+ AI 相关性过滤 + AI 判断。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></blockquote>
-<br>
-<p>✅ <strong>正常</strong>（置信度：高）</p>
-<br>
-<p>近期无重大基本面异常。</p>
-<br>
-<p>📊 当日相关新闻：🟢正面 1 条 · 🔴负面 0 条 · ⚪中性 0 条（共1条）</p>
-<br>
-<p><strong>摘要：</strong> 美国国防部启动3亿美元锂采购计划，采购电池级碳酸锂补充国家战略储备，利好锂等有色金属需求，无重大负面基本面事件。</p>
-<br>
-<p><strong>参考来源：</strong></p>
-<p>  - 美国国防部后勤局招标公告</p>
+<blockquote>⚠️ 基本面预警：API返回错误（HTTP 429，已重试3次），跳过。本次结果为「未知」，不代表基本面正常。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（512400.SH）</h3>
@@ -2461,7 +2415,7 @@
 <br>
 <blockquote>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</blockquote>
 <br>
-<blockquote>⚠️ 基本面预警：API返回错误（HTTP 429，已重试3次），跳过。本次结果为「未知」，不代表基本面正常。</blockquote>
+<blockquote>⚠️ 基本面预警：AI相关性过滤步骤发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过本次判断。结果为「未知」，不代表基本面正常。</blockquote>
 <br>
 <hr>
 <h3>ETF 执行质量（588710.SH）</h3>
