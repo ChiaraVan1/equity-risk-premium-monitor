@@ -9,6 +9,7 @@ import requests
 import akshare as ak
 
 from etf_metrics import load_etf_metrics, build_etf_metrics_block, ERP_TO_ETF
+from popularity_signal import build_popularity_block
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1487,6 +1488,9 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     if exit_summary["qqq_drop_note"]:
         _exit_verdict_line = _exit_verdict_line + f"；{exit_summary['qqq_drop_note']}"
 
+    # ── 热榜人气确认信号（辅助确认，非独立交易依据）──────────────────
+    popularity_block = build_popularity_block(code, erp_percentile)
+
     # ── 基本面预警 ────────────────────────────────────────────────────
     fundamental_result, fundamental_block = build_fundamental_alert_block(code, name)
     _fund_alert = fundamental_result.get("alert_level", "─")
@@ -1589,7 +1593,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 建议总仓位：**{total_pct}%**（泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%）
 """
 
-    md = f"""{header_block}{position_block}{unified_block}{trend_block}{exit_block_final}{fundamental_block}{etf_block}{shiller_block}"""
+    md = f"""{header_block}{position_block}{unified_block}{trend_block}{exit_block_final}{popularity_block}{fundamental_block}{etf_block}{shiller_block}"""
     print(md)
     return md
 
