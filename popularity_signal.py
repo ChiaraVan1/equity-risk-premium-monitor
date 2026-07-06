@@ -2,7 +2,7 @@
 """
 雪球热榜人气信号模块
 =====================================================
-核心规则（已与用户确认）：
+核心规则：
 
   热榜排名上升 + 该行业 ERP 处于极度低估区(P75分位以上) → 加仓确认
   热榜排名上升 + 该行业 ERP 处于高估区(P25分位以下)     → 减仓/规避确认
@@ -15,11 +15,19 @@
 
 import json
 import csv
+import io
 from pathlib import Path
 from collections import defaultdict
 
+import requests
+
 INDUSTRY_MAP_PATH = Path(__file__).parent / "industry_map.json"
-MASTER_CSV_PATH   = Path("xueqiu_data/xueqiu_hot_master.csv")
+
+# xueqiu_hot 仓库里 master.csv 的 raw 地址。跨仓库读取，不依赖本地文件系统。
+MASTER_CSV_URL = (
+    "https://raw.githubusercontent.com/ChiaraVan1/xueqiu_hot/main/"
+    "xueqiu_data/xueqiu_hot_master.csv"
+)
 
 # 排名趋势判断所需的最近天数
 TREND_LOOKBACK_DAYS = 3
@@ -32,12 +40,23 @@ def load_industry_map() -> dict:
     return {k: v for k, v in raw.items() if not k.startswith("_")}
 
 
-def load_hot_rows(master_csv_path: Path = MASTER_CSV_PATH) -> list[dict]:
-    """读取热榜历史 master.csv，缺失文件时返回空列表（调用方需自行处理降级展示）。"""
-    if not master_csv_path.exists():
+def load_hot_rows(master_csv_url: str = MASTER_CSV_URL, timeout: int = 15) -> list[dict]:
+    """
+    直接从 xueqiu_hot 仓库的 raw.githubusercontent.com 地址拉取 master.csv 并解析。
+    请求失败（网络问题/文件不存在/仓库改了路径）时返回空列表，
+    调用方（compute_popularity_confirmation）已对空数据做了"数据不足"降级处理，
+    不会因此中断整个报告生成流程。
+    """
+    try:
+        resp = requests.get(master_csv_url, timeout=timeout)
+        resp.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️ 拉取热榜数据失败（{master_csv_url}）：{e}")
         return []
-    with open(master_csv_path, encoding="utf-8-sig") as f:
-        return list(csv.DictReader(f))
+
+    # utf-8-sig 处理可能存在的 BOM 头，与抓取脚本写入时的编码一致
+    text = resp.content.decode("utf-8-sig")
+    return list(csv.DictReader(io.StringIO(text)))
 
 
 def _rows_by_etf_code(rows: list[dict], industry_map: dict) -> dict:
