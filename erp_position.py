@@ -1086,9 +1086,11 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
             for r in alerted:
                 badge      = "📌 " if is_holding(r["code"]) else ""
                 zone_short = r.get("erp_zone", "").split("(")[0].strip()
+                pop_icon   = r.get("popularity_icon", "─")
+                pop_str    = f" · 人气{pop_icon}" if pop_icon in ("🟢", "🔴") else ""
                 lines.append(
                     f"\n🚨 {badge}{r['name']} · {zone_short} · {r['total_pct']}%\n"
-                    f"　{r.get('exit_verdict_line', '')}"
+                    f"　{r.get('exit_verdict_line', '')}{pop_str}"
                 )
 
         for group_label, match_fn in zone_groups:
@@ -1132,11 +1134,13 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 code       = r.get("code", "")
                 badge      = "📌 " if is_holding(code) else ""
                 zone_short = r.get("erp_zone", "").split("(")[0].strip()
+                pop_icon   = r.get("popularity_icon", "─")
+                pop_str    = f"｜人气{pop_icon}" if pop_icon in ("🟢", "🔴") else ""
                 rows_html.append(
                     f'<tr class="alert-row">'
                     f'<td class="col-name">{badge}{r["name"]}</td>'
                     f'<td class="col-pos">{r["total_pct"]}%</td>'
-                    f'<td colspan="2" class="col-action">🚨 {zone_short}｜{r.get("exit_verdict_line", "")}</td>'
+                    f'<td colspan="2" class="col-action">🚨 {zone_short}｜{r.get("exit_verdict_line", "")}{pop_str}</td>'
                     f'</tr>'
                 )
 
