@@ -2,7 +2,7 @@
 """
 雪球热榜人气信号模块
 =====================================================
-核心规则：
+核心规则（已与用户确认）：
 
   热榜排名上升 + 该行业 ERP 处于极度低估区(P75分位以上) → 加仓确认
   热榜排名上升 + 该行业 ERP 处于高估区(P25分位以下)     → 减仓/规避确认
@@ -33,20 +33,35 @@ MASTER_CSV_URL = (
 TREND_LOOKBACK_DAYS = 3
 
 
+_industry_map_cache = None
+_hot_rows_cache = {"rows": None, "url": None}
+
+
 def load_industry_map() -> dict:
-    """加载 行业标签 -> ETF代码 映射表，跳过 _comment 字段。"""
+    """加载 行业标签 -> ETF代码 映射表，跳过 _comment 字段。进程内缓存一次即可。"""
+    global _industry_map_cache
+    if _industry_map_cache is not None:
+        return _industry_map_cache
     with open(INDUSTRY_MAP_PATH, encoding="utf-8") as f:
         raw = json.load(f)
-    return {k: v for k, v in raw.items() if not k.startswith("_")}
+    _industry_map_cache = {k: v for k, v in raw.items() if not k.startswith("_")}
+    return _industry_map_cache
 
 
-def load_hot_rows(master_csv_url: str = MASTER_CSV_URL, timeout: int = 15) -> list[dict]:
+def load_hot_rows(master_csv_url: str = MASTER_CSV_URL, timeout: int = 15,
+                   use_cache: bool = True) -> list[dict]:
     """
     直接从 xueqiu_hot 仓库的 raw.githubusercontent.com 地址拉取 master.csv 并解析。
     请求失败（网络问题/文件不存在/仓库改了路径）时返回空列表，
     调用方（compute_popularity_confirmation）已对空数据做了"数据不足"降级处理，
     不会因此中断整个报告生成流程。
+
+    use_cache=True 时，同一进程内（比如一次跑21个标的的报告）只请求一次网络，
+    避免对同一份 master.csv 发起21次重复请求。
     """
+    if use_cache and _hot_rows_cache["rows"] is not None and _hot_rows_cache["url"] == master_csv_url:
+        return _hot_rows_cache["rows"]
+
     try:
         resp = requests.get(master_csv_url, timeout=timeout)
         resp.raise_for_status()
@@ -56,7 +71,13 @@ def load_hot_rows(master_csv_url: str = MASTER_CSV_URL, timeout: int = 15) -> li
 
     # utf-8-sig 处理可能存在的 BOM 头，与抓取脚本写入时的编码一致
     text = resp.content.decode("utf-8-sig")
-    return list(csv.DictReader(io.StringIO(text)))
+    rows = list(csv.DictReader(io.StringIO(text)))
+
+    if use_cache:
+        _hot_rows_cache["rows"] = rows
+        _hot_rows_cache["url"] = master_csv_url
+
+    return rows
 
 
 def _rows_by_etf_code(rows: list[dict], industry_map: dict) -> dict:
@@ -217,12 +238,17 @@ def compute_popularity_confirmation(etf_code: str, erp_percentile: float,
 
 def build_popularity_block(etf_code: str, erp_percentile: float,
                             rows: list[dict] = None,
-                            industry_map: dict = None) -> str:
+                            industry_map: dict = None,
+                            precomputed: dict = None) -> str:
     """
     生成可直接插入报告的 Markdown 区块。
     与 build_exit_signal_block 等函数风格保持一致，供 analyze_and_suggest 调用。
+
+    precomputed: 如果调用方（如仪表盘）已经算过一次 compute_popularity_confirmation，
+                 可以直接传入结果，避免重复拉取热榜数据、重复计算。
     """
-    result = compute_popularity_confirmation(etf_code, erp_percentile, rows, industry_map)
+    result = precomputed if precomputed is not None else \
+        compute_popularity_confirmation(etf_code, erp_percentile, rows, industry_map)
 
     return f"""
 ---
