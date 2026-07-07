@@ -9,7 +9,7 @@ import requests
 import akshare as ak
 
 from etf_metrics import load_etf_metrics, build_etf_metrics_block, ERP_TO_ETF
-from popularity_signal import build_popularity_block
+from popularity_signal import build_popularity_block, compute_popularity_confirmation
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -1075,7 +1075,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
     header = f"## 📊 决策仪表盘 · {date_str}"
     legend = (
         "胜率🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 折溢价💎大折 🟢折 🟡平 🟠溢 🔴大溢 · "
-        "波🔴高位 · 量⚠️背离 · 📌=持仓\n\n---"
+        "波🔴高位 · 量⚠️背离 · 人气🟢加仓确认 🔴减仓确认（热榜排名上升+ERP分位共振） · 📌=持仓\n\n---"
     )
 
     if output_format == "markdown":
@@ -1112,6 +1112,9 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                     extras.append(f"折{disc}")
                 if divg == "⚠️":
                     extras.append(f"量{divg}")
+                pop_icon = r.get("popularity_icon", "─")
+                if pop_icon in ("🟢", "🔴"):
+                    extras.append(f"人气{pop_icon}")
                 extra_str = (" · " + " ".join(extras)) if extras else ""
 
                 lines.append(
@@ -1152,12 +1155,14 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 zone_label = r.get("erp_zone", "")
                 action     = generate_action_sentence(disc, divg, vol, zone_label)
                 badge      = "📌 " if is_holding(code) else ""
+                pop_icon   = r.get("popularity_icon", "─")
+                pop_str    = f" 人气{pop_icon}" if pop_icon in ("🟢", "🔴") else ""
                 rows_html.append(
                     f'<tr>'
                     f'<td class="col-name">{badge}{r["name"]}</td>'
                     f'<td class="col-pos {pos_cls}">{total_pct}%<br>'
                     f'<span class="col-sub">{r["b_pct"]}+{r["v_pct"]}+{r["t_pct"]}</span></td>'
-                    f'<td class="col-sig">波{vol} 折{disc}</td>'
+                    f'<td class="col-sig">波{vol} 折{disc}{pop_str}</td>'
                     f'<td class="col-action">{action}</td>'
                     f'</tr>'
                 )
@@ -1489,7 +1494,9 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
         _exit_verdict_line = _exit_verdict_line + f"；{exit_summary['qqq_drop_note']}"
 
     # ── 热榜人气确认信号（辅助确认，非独立交易依据）──────────────────
-    popularity_block = build_popularity_block(code, erp_percentile)
+    # 只算一次，详情区块和仪表盘置顶区共用，避免重复拉取热榜数据
+    popularity_result = compute_popularity_confirmation(code, erp_percentile)
+    popularity_block   = build_popularity_block(code, erp_percentile, precomputed=popularity_result)
 
     # ── 基本面预警 ────────────────────────────────────────────────────
     fundamental_result, fundamental_block = build_fundamental_alert_block(code, name)
@@ -1519,6 +1526,8 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
             "fundamental_positive": _fund_pos,
             "fundamental_negative": _fund_neg,
             "fundamental_sentiment_available": _fund_sentiment_available,
+            "popularity_icon":   popularity_result.get("icon", "─"),
+            "popularity_signal": popularity_result.get("signal", "数据不足"),
         })
 
     # ── 报告头部 ──────────────────────────────────────────────────────
