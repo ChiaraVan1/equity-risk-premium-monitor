@@ -24,6 +24,7 @@ INDEX_CONFIG = [
     ("000300", "沪深300",        "CNY", "CN10Y", "csindex"),
     ("000688", "科创50",         "CNY", "CN10Y", "csindex"),
     ("000922", "中证红利",       "CNY", "CN10Y", "csindex"),
+    ("000015", "上证红利",       "CNY", "CN10Y", "csindex"),
     ("399989", "中证医疗",       "CNY", "CN10Y", "csindex"),
     ("931071", "人工智能",       "CNY", "CN10Y", "csindex"),
     ("SPY",    "S&P 500",       "USD", "US10Y", "worldpe"),
