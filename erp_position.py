@@ -1663,6 +1663,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
         _freshness_metric_name = "PE"
         _freshness = check_metric_freshness(df.set_index('Date')['PE'])
     _freshness_note = build_freshness_note(_freshness, _freshness_metric_name)
+    _freshness_line = ("\n> " + _freshness_note) if _freshness_note else ""
     _stale_flag = "⚠️" if _freshness["is_stale"] else "─"
 
     # ── 仓位建议 ──────────────────────────────────────────────────────
@@ -1824,14 +1825,14 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
 | P25 | {quantiles["P25"]:.2%} | 进入高估 |
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
-{("\n> " + _freshness_note) if _freshness_note else ""}
+{_freshness_line}
 """
         else:
             header_block = f"""
 ---
 # ═══ {name} ({code}) ═══
 > 数据源：PS / PSY（营收口径），ERP 数据已停止更新不再展示。　{current_date}
-{("\n> " + _freshness_note) if _freshness_note else ""}
+{_freshness_line}
 """
     else:
         header_block = f"""
@@ -1850,7 +1851,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 | P50 | {quantiles["P50"]:.2%} | 价值中枢 |
 | P25 | {quantiles["P25"]:.2%} | 进入高估 |
 | P10 | {quantiles["P10"]:.2%} | 极度高估 |
-{("\n> " + _freshness_note) if _freshness_note else ""}
+{_freshness_line}
 """
 
     unified_block    = build_unified_valuation_block(df, code, val_series=erp_series, win_rate=_win, odds_ratio=_odds)
