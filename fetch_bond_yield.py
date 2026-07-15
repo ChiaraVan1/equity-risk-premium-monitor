@@ -336,6 +336,11 @@ def main():
         print(f"   ❌ 恒生科技 PE CSV读取失败: {e}")
 
     for code, name, currency, bond_code, pe_source in INDEX_CONFIG:
+        file_path = f"./data/erp_{code}.csv"
+        if os.path.exists(file_path):
+            print(f"\n   [{code}] {name} — 已有历史数据，跳过（避免覆盖增量脚本积累的真实数据；"
+                  f"如需强制重建请先手动删除 {file_path}）")
+            continue
         print(f"\n   [{code}] {name}")
         if bond_code not in bonds:
             print(f"      ⚠️ 国债 {bond_code} 未获取，跳过")
