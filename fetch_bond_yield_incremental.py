@@ -267,21 +267,32 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
     new_bond_df = new_bond_df.copy()
     new_bond_df['Date'] = pd.to_datetime(new_bond_df['Date'])
 
-    new_data = pd.merge(new_bond_df, new_pe_df[['Date', 'PE']], on='Date', how='outer').sort_values('Date')
-    new_data['IndexCode'] = code
-    new_data['IndexName'] = name
-    new_data['Currency'] = currency
-    new_data['BondCode'] = bond_code
-
     if os.path.exists(file_path):
         old_data = pd.read_csv(file_path)
         old_data['Date'] = pd.to_datetime(old_data['Date'])
-        combined = pd.concat([old_data, new_data], ignore_index=True)
-        combined = combined.drop_duplicates(subset=['Date'], keep='last').sort_values('Date')
+        old_data = old_data.set_index('Date')
         action = "增量更新"
     else:
-        combined = new_data
+        old_data = pd.DataFrame(
+            columns=['Bond_Yield_10Y', 'PE', 'IndexCode', 'IndexName', 'Currency', 'BondCode']
+        )
+        old_data.index = pd.DatetimeIndex([], name='Date')
         action = "全新创建"
+
+    # ★ 修复：国债和PE分别按各自日期只更新对应列，不再整行替换
+    # ——避免国债收益率某天被数据源修订时，误将该天已抓到的PE冲成NaN。
+    bond_s = new_bond_df.set_index('Date')['Bond_Yield_10Y']
+    pe_s = new_pe_df.set_index('Date')['PE']
+
+    all_dates = old_data.index.union(bond_s.index).union(pe_s.index)
+    combined = old_data.reindex(all_dates).sort_index()
+    combined.loc[bond_s.index, 'Bond_Yield_10Y'] = bond_s.values
+    combined.loc[pe_s.index, 'PE'] = pe_s.values
+
+    combined['IndexCode'] = code
+    combined['IndexName'] = name
+    combined['Currency'] = currency
+    combined['BondCode'] = bond_code
 
     combined['PE'] = combined['PE'].ffill()
 
@@ -290,6 +301,7 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
 
     combined['ERP'] = (1 / combined['PE']) - combined['Bond_Yield_10Y']
 
+    combined = combined.reset_index()
     combined.to_csv(file_path, index=False, encoding='utf-8-sig')
     valid_now = combined['ERP'].notna().sum()
     print(f"   ✅ {name} {action}！总记录: {len(combined)} 天，有效ERP: {valid_now} 天")
