@@ -89,6 +89,8 @@
 | `etf_price.csv`（仓库根目录，非 `data/` 下） | `simple_etf_metrics.py` 每日生成 | ETF 日收盘价序列，供减仓信号模块使用 |
 | `docs/report.html` | `erp_position.py` 每日生成 | 完整报告，部署到 GitHub Pages |
 
+> ⚠️ `data/erp_HSTECH.csv` 为历史遗留文件：HSTECH 实际估值口径已切换为 PS/PSY（见 `data/ps_HSTECH.csv`），该文件不再被任何脚本读取或写入消费，仅作历史备用保留，不影响任何报告输出或仓位决策。
+
 ---
 
 ## 核心计算逻辑
