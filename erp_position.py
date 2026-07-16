@@ -1272,8 +1272,11 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         return "pos-min"
 
     # 触发止损/止盈的标的单独置顶，跳出估值区间分类，避免被埋没在正常条目里
+    # 注意：exit_level/profit_level 为 -1 表示"无ETF价格数据，无法判断"，
+    # 不是"确认无信号"（0）。unalerted 必须用 <= 0 而非 == 0，否则 -1 的标的
+    # 既进不了 alerted（不满足 >0）也进不了 unalerted（不满足 ==0），会从仪表盘彻底消失。
     alerted   = [r for r in summary_list if r.get("exit_level", 0) > 0 or r.get("profit_level", 0) > 0]
-    unalerted = [r for r in summary_list if r.get("exit_level", 0) == 0 and r.get("profit_level", 0) == 0]
+    unalerted = [r for r in summary_list if r.get("exit_level", 0) <= 0 and r.get("profit_level", 0) <= 0]
     stale_list = [r for r in summary_list if r.get("stale_flag") == "⚠️"]
 
     zone_groups = [
