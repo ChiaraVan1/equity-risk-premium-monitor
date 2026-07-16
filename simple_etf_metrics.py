@@ -374,12 +374,25 @@ def _load_previous_snapshot(path='./data/simple_etf_metrics.csv'):
 
 def _apply_freshness_check(df: pd.DataFrame, old_df: pd.DataFrame | None) -> pd.DataFrame:
     """对比上一次快照，给每个ETF标记 stale_flag / stale_note，同时把最新streak写回
-    _{col}_streak 列（随文件一起提交，下次运行时接着累加）。"""
+    _{col}_streak 列（随文件一起提交，下次运行时接着累加）。
+
+    ★ 只在 trade_date 真的推进到新交易日时才累加/清零 streak；同一交易日内
+    重复手动跑（测试、临时加标的等）不会推进 streak，避免把"重复运行次数"
+    误当成"连续未变化天数"，产生假预警。
+    """
     df = df.set_index('ts_code')
     stale_flags, stale_notes = [], []
 
     for ts_code, row in df.iterrows():
         note_parts = []
+        cur_trade_date = row.get('trade_date')
+        prev_trade_date = None
+        if old_df is not None and ts_code in old_df.index and 'trade_date' in old_df.columns:
+            prev_trade_date = old_df.loc[ts_code, 'trade_date']
+        is_new_trading_day = pd.notna(cur_trade_date) and (
+            pd.isna(prev_trade_date) or cur_trade_date != prev_trade_date
+        )
+
         for col in _FRESHNESS_COLS:
             streak_col = f"_{col}_streak"
             prev_streak = 0
@@ -392,7 +405,11 @@ def _apply_freshness_check(df: pd.DataFrame, old_df: pd.DataFrame | None) -> pd.
                     prev_val = old_df.loc[ts_code, col]
 
             cur_val = row.get(col)
-            if pd.notna(cur_val) and pd.notna(prev_val) and abs(float(cur_val) - float(prev_val)) < 1e-9:
+
+            if not is_new_trading_day:
+                # 同一交易日内的重复运行：streak原样保留，不重复计数
+                streak = prev_streak
+            elif pd.notna(cur_val) and pd.notna(prev_val) and abs(float(cur_val) - float(prev_val)) < 1e-9:
                 streak = prev_streak + 1
             else:
                 streak = 0
