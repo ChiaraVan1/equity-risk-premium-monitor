@@ -56,14 +56,14 @@ def load_etf_metrics() -> pd.DataFrame | None:
     if _metrics_cache:
         return _metrics_cache.get("df")
 
-    local_path = "./simple_etf_metrics.csv"
+    local_path = "./data/simple_etf_metrics.csv"
     try:
         df = pd.read_csv(local_path, index_col="ts_code")
         print(f"✅ 从本地加载 ETF 指标：{local_path}（{len(df)} 条）")
         _metrics_cache["df"] = df
         return df
     except FileNotFoundError:
-        print("⚠️ 未找到 simple_etf_metrics.csv，ETF 执行质量模块将跳过，不影响主报告。")
+        print("⚠️ 未找到 data/simple_etf_metrics.csv，ETF 执行质量模块将跳过，不影响主报告。")
     except Exception as e:
         print(f"⚠️ ETF 指标加载失败：{e}，ETF 执行质量模块将跳过，不影响主报告。")
     _metrics_cache["df"] = None

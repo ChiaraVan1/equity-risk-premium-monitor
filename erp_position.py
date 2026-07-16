@@ -297,7 +297,7 @@ def compute_erp_slope_signal(erp_series: pd.Series) -> dict:
 #  减仓信号模块
 # ══════════════════════════════════════════════════════════════════════
 
-ETF_PRICE_PATH = "./etf_price.csv"
+ETF_PRICE_PATH = "./data/etf_price.csv"
 _ETF_PRICE_CACHE = {}
 
 

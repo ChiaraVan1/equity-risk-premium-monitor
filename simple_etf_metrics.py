@@ -357,6 +357,62 @@ def _process_single_etf(args):
     return m, price_s
 
 
+# ── 数据新鲜度校验 ────────────────────────────────────────────────────────────
+# 逐日快照（非时间序列），无法像 erp_*.csv 那样直接看"最近N行是否相同"，
+# 改为对比"这次生成的值"和"上一次已提交到 data/ 的值"，用一个隐藏的 _streak 列
+# 持久化"连续未变化次数"，跨天累加。达到阈值才标记预警，避免偶发的真实持平被误报。
+FRESHNESS_STALE_THRESHOLD = 3
+_FRESHNESS_COLS = ['latest_discount_rate', 'turnover_quantile', 'annualized_volatility', 'tracking_error']
+
+
+def _load_previous_snapshot(path='./data/simple_etf_metrics.csv'):
+    try:
+        return pd.read_csv(path, index_col='ts_code')
+    except Exception:
+        return None
+
+
+def _apply_freshness_check(df: pd.DataFrame, old_df: pd.DataFrame | None) -> pd.DataFrame:
+    """对比上一次快照，给每个ETF标记 stale_flag / stale_note，同时把最新streak写回
+    _{col}_streak 列（随文件一起提交，下次运行时接着累加）。"""
+    df = df.set_index('ts_code')
+    stale_flags, stale_notes = [], []
+
+    for ts_code, row in df.iterrows():
+        note_parts = []
+        for col in _FRESHNESS_COLS:
+            streak_col = f"_{col}_streak"
+            prev_streak = 0
+            prev_val = np.nan
+            if old_df is not None and ts_code in old_df.index:
+                if streak_col in old_df.columns:
+                    v = old_df.loc[ts_code, streak_col]
+                    prev_streak = 0 if pd.isna(v) else int(v)
+                if col in old_df.columns:
+                    prev_val = old_df.loc[ts_code, col]
+
+            cur_val = row.get(col)
+            if pd.notna(cur_val) and pd.notna(prev_val) and abs(float(cur_val) - float(prev_val)) < 1e-9:
+                streak = prev_streak + 1
+            else:
+                streak = 0
+            df.loc[ts_code, streak_col] = streak
+
+            if streak >= FRESHNESS_STALE_THRESHOLD:
+                note_parts.append(f"{col} 已连续 {streak} 次未变化")
+
+        if note_parts:
+            stale_flags.append(True)
+            stale_notes.append("；".join(note_parts))
+        else:
+            stale_flags.append(False)
+            stale_notes.append("")
+
+    df['stale_flag'] = stale_flags
+    df['stale_note'] = stale_notes
+    return df.reset_index()
+
+
 # ── 主入口 ────────────────────────────────────────────────────────────────────
 
 def get_etf_metrics():
@@ -381,8 +437,8 @@ def get_etf_metrics():
 
     if price_frames:
         price_df = pd.concat(price_frames, axis=1).sort_index()
-        price_df.to_csv('etf_price.csv', encoding='utf-8-sig')
-        print("✅ ETF价格序列已保存到 etf_price.csv")
+        price_df.to_csv('./data/etf_price.csv', encoding='utf-8-sig')
+        print("✅ ETF价格序列已保存到 data/etf_price.csv")
 
     return pd.DataFrame(results)
 
@@ -405,5 +461,14 @@ if __name__ == '__main__':
             'excess_return_mean', 'tracking_error', 'ma_trend_slope']
     print(df[cols].to_string(index=False))
 
-    df.set_index('ts_code').to_csv('simple_etf_metrics.csv', encoding='utf-8-sig')
-    print("\n✅ 已保存到 simple_etf_metrics.csv")
+    old_df = _load_previous_snapshot()
+    df = _apply_freshness_check(df, old_df)
+
+    stale_rows = df[df['stale_flag']]
+    if len(stale_rows) > 0:
+        print(f"\n⚠️ 数据新鲜度预警：{len(stale_rows)} 个ETF指标连续{FRESHNESS_STALE_THRESHOLD}次以上未变化，请检查数据源：")
+        for _, r in stale_rows.iterrows():
+            print(f"   {r['erp_code']} ({r['ts_code']}): {r['stale_note']}")
+
+    df.set_index('ts_code').to_csv('./data/simple_etf_metrics.csv', encoding='utf-8-sig')
+    print("\n✅ 已保存到 data/simple_etf_metrics.csv")
