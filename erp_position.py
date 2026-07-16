@@ -1745,20 +1745,29 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     # ── 斜率信号 ──────────────────────────────────────────────────────
     slope_info = compute_erp_slope_signal(erp_series)
 
-    # ── 减仓信号 ──────────────────────────────────────────────────────
+    # ── 减仓 / 止盈信号（仅对已持仓标的计算，未持仓无仓位可减/止盈）─────
     erp_percentile = (erp_series < current_erp).mean()
-    exit_summary    = compute_exit_signal_summary(code, erp_percentile)
-    exit_block      = build_exit_signal_block(code, erp_percentile)
-    _exit_signal       = exit_summary["verdict_icon"]
-    _exit_verdict_line = exit_summary["verdict_line"]
-    if exit_summary["qqq_drop_note"]:
-        _exit_verdict_line = _exit_verdict_line + f"；{exit_summary['qqq_drop_note']}"
+    if is_holding(code):
+        exit_summary    = compute_exit_signal_summary(code, erp_percentile)
+        exit_block      = build_exit_signal_block(code, erp_percentile)
+        _exit_signal       = exit_summary["verdict_icon"]
+        _exit_verdict_line = exit_summary["verdict_line"]
+        if exit_summary["qqq_drop_note"]:
+            _exit_verdict_line = _exit_verdict_line + f"；{exit_summary['qqq_drop_note']}"
 
-    # ── 止盈信号（镜像减仓信号）───────────────────────────────────────
-    profit_summary = compute_profit_signal_summary(code, erp_percentile)
-    profit_block   = build_profit_signal_block(code, erp_percentile)
-    _profit_signal       = profit_summary["verdict_icon"]
-    _profit_verdict_line = profit_summary["verdict_line"]
+        profit_summary = compute_profit_signal_summary(code, erp_percentile)
+        profit_block   = build_profit_signal_block(code, erp_percentile)
+        _profit_signal       = profit_summary["verdict_icon"]
+        _profit_verdict_line = profit_summary["verdict_line"]
+    else:
+        exit_summary        = {"level": 0, "verdict_icon": "─", "verdict_line": ""}
+        exit_block           = ""
+        _exit_signal          = "─"
+        _exit_verdict_line    = ""
+        profit_summary       = {"level": 0, "verdict_icon": "─", "verdict_line": ""}
+        profit_block          = ""
+        _profit_signal         = "─"
+        _profit_verdict_line   = ""
 
     # ── 热榜人气确认信号（辅助确认，非独立交易依据）──────────────────
     # 只算一次，详情区块和仪表盘置顶区共用，避免重复拉取热榜数据
