@@ -1224,12 +1224,12 @@ HOLDING_CATEGORY = {
     "EWG":    False,
     "EWJ":    False,
     "EEM":    False,
-    "HSTECH": True,
-    "399967": True,
+    "HSTECH": False,
+    "399967": False,
     "931066": False,
     "930794": False,
-    "930598": True,
-    "000819": False,   # 有色金属，不再持仓
+    "930598": False,
+    "000819": True,   # 有色金属
     "950125": False,   # 半导体材料设备，不再持仓
     "399975": False,
     "931637": False,
