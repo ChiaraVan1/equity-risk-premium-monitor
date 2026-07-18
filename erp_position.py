@@ -1305,12 +1305,21 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         if pct >= 40: return "pos-low"
         return "pos-min"
 
-    # 触发止损/止盈的标的单独置顶，跳出估值区间分类，避免被埋没在正常条目里
+    # 触发止损/止盈的标的单独置顶，跳出估值区间分类，避免被埋没在正常条目里。
     # 注意：exit_level/profit_level 为 -1 表示"无ETF价格数据，无法判断"，
     # 不是"确认无信号"（0）。unalerted 必须用 <= 0 而非 == 0，否则 -1 的标的
     # 既进不了 alerted（不满足 >0）也进不了 unalerted（不满足 ==0），会从仪表盘彻底消失。
-    alerted   = [r for r in summary_list if r.get("exit_level", 0) > 0 or r.get("profit_level", 0) > 0]
-    unalerted = [r for r in summary_list if r.get("exit_level", 0) <= 0 and r.get("profit_level", 0) <= 0]
+    #
+    # 未持仓标的即使 exit_level>0（回撤触线），也不算"需要处理"——没有仓位可减，
+    # 不该和真正需要操作的持仓标的混在一起置顶。它们仍会出现在下方正常估值分类里，
+    # 只是多带一行🔎观察提示（见下方 zone_groups 渲染逻辑）。
+    def _is_actionable(r):
+        exit_hit   = r.get("exit_level", 0) > 0 and is_holding(r.get("code", ""))
+        profit_hit = r.get("profit_level", 0) > 0
+        return exit_hit or profit_hit
+
+    alerted   = [r for r in summary_list if _is_actionable(r)]
+    unalerted = [r for r in summary_list if not _is_actionable(r)]
     stale_list = [r for r in summary_list if r.get("stale_flag") == "⚠️"]
 
     zone_groups = [
@@ -1382,6 +1391,12 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                     f"\n{badge}{r['name']} · {r['total_pct']}%"
                     f"({r['b_pct']}+{r['v_pct']}+{r['t_pct']}){extra_str} · {action}"
                 )
+                # 未持仓但回撤已触线：不进"需要处理"置顶区，但在这里补一行观察提示，
+                # 避免信息彻底消失（对应compute_exit_signal_summary里holding=False的verdict）。
+                if r.get("exit_level", 0) > 0 and not is_holding(r.get("code", "")):
+                    obs_line = r.get("exit_verdict_line", "")
+                    if obs_line:
+                        lines.append(f"　{obs_line}")
         return "\n".join(lines) + "\n\n---\n"
 
     else:
@@ -1443,6 +1458,15 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                     f'<td class="col-action">{action}</td>'
                     f'</tr>'
                 )
+                # 未持仓但回撤已触线：不进"需要处理"置顶区，紧跟一行观察提示
+                if r.get("exit_level", 0) > 0 and not is_holding(code):
+                    obs_line = r.get("exit_verdict_line", "")
+                    if obs_line:
+                        rows_html.append(
+                            f'<tr><td></td>'
+                            f'<td colspan="3" class="col-action" style="color:#8b949e;">{obs_line}</td>'
+                            f'</tr>'
+                        )
         table_html = '<table class="dashboard-table">\n' + "\n".join(rows_html) + "\n</table>"
         return f"{header}\n{legend}\n\n{table_html}\n\n---\n"
 
