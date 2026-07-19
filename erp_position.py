@@ -1861,6 +1861,11 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     erp_percentile = (erp_series < current_erp).mean()
     _holding = is_holding(code)
 
+    # ── 120天区间回撤/反弹（与止损模块共用同一份价格数据）─────────────
+    _range_info = compute_range_drawdown_rebound(code)
+    _range_dd       = _range_info["dd_high_to_low"] if _range_info else float("nan")
+    _range_rebound  = _range_info["rebound_from_low"] if _range_info else float("nan")
+
     exit_summary    = compute_exit_signal_summary(code, erp_percentile, holding=_holding)
     exit_block      = build_exit_signal_block(code, erp_percentile, holding=_holding)
     _exit_signal       = exit_summary["verdict_icon"]
@@ -1901,6 +1906,8 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
             "b_pct": b_pct, "v_pct": v_pct, "t_pct": t_pct,
             "win_rate": _win,
             "odds": _odds,
+            "range_dd": _range_dd,
+            "range_rebound": _range_rebound,
             "etf_signal":         _etf_signal,
             "etf_discount":       _etf_discount_signal,
             "etf_divergence":     _etf_divergence_signal,
@@ -2093,3 +2100,4 @@ if __name__ == "__main__":
             send_to_wechat(summary_wechat, date_str)
     else:
         print("❌ 未生成任何有效报告，请检查数据文件。")
+
