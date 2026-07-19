@@ -1293,6 +1293,17 @@ def generate_action_sentence(disc, divg, vol, zone_label):
     return prefix + mid + suffix
 
 
+def _format_win_odds(r: dict) -> str:
+    """把 win_rate/odds 格式化为纯数字展示，如 '胜78%·赔1.85x' 或 '胜92%·赔∞'。
+    odds_ratio=None 表示已跌破P10、亏损空间趋近于0（理论无穷大），用符号∞而非文字。
+    win_rate为NaN（样本不足/计算失败）时返回占位符─。"""
+    w, o = r.get("win_rate"), r.get("odds")
+    if w is None or w != w:
+        return "─"
+    odds_str = "∞" if o is None else f"{o:.2f}x"
+    return f"胜{w:.0%}·赔{odds_str}"
+
+
 def build_summary_block(summary_list: list, output_format: str = "html") -> str:
     if not summary_list:
         return ""
@@ -1387,9 +1398,11 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                     extras.append(f"人气{pop_icon}")
                 extra_str = (" · " + " ".join(extras)) if extras else ""
 
+                wo_str = _format_win_odds(r)
+
                 lines.append(
                     f"\n{badge}{r['name']} · {r['total_pct']}%"
-                    f"({r['b_pct']}+{r['v_pct']}+{r['t_pct']}){extra_str} · {action}"
+                    f"({r['b_pct']}+{r['v_pct']}+{r['t_pct']}){extra_str} · {wo_str} · {action}"
                 )
                 # 未持仓但回撤已触线：不进"需要处理"置顶区，但在这里补一行观察提示，
                 # 避免信息彻底消失（对应compute_exit_signal_summary里holding=False的verdict）。
@@ -1449,13 +1462,14 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 badge      = "📌 " if is_holding(code) else ""
                 pop_icon   = r.get("popularity_icon", "─")
                 pop_str    = f" 人气{pop_icon}" if pop_icon in ("🟢", "🔴") else ""
+                wo_str     = _format_win_odds(r)
                 rows_html.append(
                     f'<tr>'
                     f'<td class="col-name">{badge}{r["name"]}</td>'
                     f'<td class="col-pos {pos_cls}">{total_pct}%<br>'
                     f'<span class="col-sub">{r["b_pct"]}+{r["v_pct"]}+{r["t_pct"]}</span></td>'
                     f'<td class="col-sig">波{vol} 折{disc}{pop_str}</td>'
-                    f'<td class="col-action">{action}</td>'
+                    f'<td class="col-action">{wo_str} · {action}</td>'
                     f'</tr>'
                 )
                 # 未持仓但回撤已触线：不进"需要处理"置顶区，紧跟一行观察提示
@@ -2044,3 +2058,4 @@ if __name__ == "__main__":
             send_to_wechat(summary_wechat, date_str)
     else:
         print("❌ 未生成任何有效报告，请检查数据文件。")
+
