@@ -1268,6 +1268,29 @@ HOLDING_CATEGORY = {
 }
 
 
+def compute_range_drawdown_rebound(erp_code: str, lookback: int = 120) -> dict:
+    """120天窗口内：高→低回撤 + 低→现在反弹。与止损模块的_load_etf_price_series共用同一份价格数据，
+    不额外拉取。窗口内高低点不要求时间先后顺序（用户只关心区间极值，不关心谁先谁后），
+    返回None表示无价格数据或样本不足。"""
+    price_s = _load_etf_price_series(erp_code)
+    if price_s is None or len(price_s) < 5:
+        return None
+
+    window = price_s.iloc[-min(lookback, len(price_s)):]
+    high = window.max()
+    low  = window.min()
+    cur  = price_s.iloc[-1]
+
+    dd_high_to_low   = (low - high) / high if high != 0 else float("nan")
+    rebound_from_low = (cur - low) / low if low != 0 else float("nan")
+
+    return {
+        "high": high, "low": low, "cur": cur,
+        "dd_high_to_low": dd_high_to_low,
+        "rebound_from_low": rebound_from_low,
+    }
+
+
 def is_holding(code: str) -> bool:
     """是否实际持仓（仅用于仪表盘📌徽章展示）。"""
     return bool(HOLDING_CATEGORY.get(code, False))
@@ -1302,6 +1325,16 @@ def _format_win_odds(r: dict) -> str:
         return "─"
     odds_str = "∞" if o is None else f"{o:.2f}x"
     return f"胜{w:.0%}·赔{odds_str}"
+
+
+def _format_range(r: dict) -> str:
+    """把120天区间回撤/反弹格式化为纯数字展示，如 '回撤-18.2%·反弹+9.4%'。
+    无价格数据时返回占位符─。"""
+    dd = r.get("range_dd")
+    rb = r.get("range_rebound")
+    if dd is None or dd != dd or rb is None or rb != rb:
+        return "─"
+    return f"回撤{dd:+.1%}·反弹{rb:+.1%}"
 
 
 def build_summary_block(summary_list: list, output_format: str = "html") -> str:
@@ -1399,10 +1432,11 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 extra_str = (" · " + " ".join(extras)) if extras else ""
 
                 wo_str = _format_win_odds(r)
+                range_str = _format_range(r)
 
                 lines.append(
                     f"\n{badge}{r['name']} · {r['total_pct']}%"
-                    f"({r['b_pct']}+{r['v_pct']}+{r['t_pct']}){extra_str} · {wo_str} · {action}"
+                    f"({r['b_pct']}+{r['v_pct']}+{r['t_pct']}){extra_str} · {wo_str} · {range_str} · {action}"
                 )
                 # 未持仓但回撤已触线：不进"需要处理"置顶区，但在这里补一行观察提示，
                 # 避免信息彻底消失（对应compute_exit_signal_summary里holding=False的verdict）。
@@ -1463,13 +1497,14 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 pop_icon   = r.get("popularity_icon", "─")
                 pop_str    = f" 人气{pop_icon}" if pop_icon in ("🟢", "🔴") else ""
                 wo_str     = _format_win_odds(r)
+                range_str  = _format_range(r)
                 rows_html.append(
                     f'<tr>'
                     f'<td class="col-name">{badge}{r["name"]}</td>'
                     f'<td class="col-pos {pos_cls}">{total_pct}%<br>'
                     f'<span class="col-sub">{r["b_pct"]}+{r["v_pct"]}+{r["t_pct"]}</span></td>'
                     f'<td class="col-sig">波{vol} 折{disc}{pop_str}</td>'
-                    f'<td class="col-action">{wo_str} · {action}</td>'
+                    f'<td class="col-action">{wo_str} · {range_str} · {action}</td>'
                     f'</tr>'
                 )
                 # 未持仓但回撤已触线：不进"需要处理"置顶区，紧跟一行观察提示
@@ -2058,4 +2093,3 @@ if __name__ == "__main__":
             send_to_wechat(summary_wechat, date_str)
     else:
         print("❌ 未生成任何有效报告，请检查数据文件。")
-
