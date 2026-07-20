@@ -396,9 +396,8 @@ def compute_exit_signal_summary(erp_code: str, current_erp_percentile: float, ho
         icon_map = {1: "🔎", 2: "🔎", 3: "🔎"}
         verdict_icon = icon_map[max_level]
         verdict_line = (
-            f"{verdict_icon} 观察（未持仓）— 回撤{dd_pct:.1f}%已达到"
-            f"{'L3硬止损' if max_level == 3 else ('L2' if max_level == 2 else 'L1')}"
-            f"阈值，仅供参考，无需操作；若后续建仓需重新评估"
+            f"{verdict_icon} 未持仓观察 — 回撤{dd_pct:.1f}%达"
+            f"{'L3' if max_level == 3 else ('L2' if max_level == 2 else 'L1')}，无需操作"
         )
     elif max_level == 1:
         if in_undervalued:
@@ -1260,8 +1259,8 @@ HOLDING_CATEGORY = {
     "399967": False,
     "931066": False,
     "930794": False,
-    "930598": False,  # 稀土，已清仓
-    "000819": False,  # 有色金属，已清仓
+    "930598": False,
+    "000819": False,   # 有色金属
     "950125": False,   # 半导体材料设备，不再持仓
     "399975": False,
     "931637": False,
@@ -2100,4 +2099,3 @@ if __name__ == "__main__":
             send_to_wechat(summary_wechat, date_str)
     else:
         print("❌ 未生成任何有效报告，请检查数据文件。")
-
