@@ -1242,7 +1242,7 @@ def build_trend_block(df, erp_series, code, quantiles):
 # 及生成「我的持仓·减仓信号」置顶区域。不再承载分类文字。
 HOLDING_CATEGORY = {
     "000300": True,
-    "000688": True,
+    "000688": False,
     "000922": False,
     "000015": False,
     "399989": True,
