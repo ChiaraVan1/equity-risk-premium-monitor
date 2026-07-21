@@ -1268,16 +1268,19 @@ HOLDING_CATEGORY = {
 
 
 def compute_range_drawdown_rebound(erp_code: str, lookback: int = 120) -> dict:
-    """120天窗口内：高→低回撤 + 低→现在反弹。与止损模块的_load_etf_price_series共用同一份价格数据，
-    不额外拉取。窗口内高低点不要求时间先后顺序（用户只关心区间极值，不关心谁先谁后），
+    """120天窗口内：峰值→峰值之后的谷值回撤 + 谷值→现在反弹。与止损模块的_load_etf_price_series共用同一份价格数据，
+    不额外拉取。谷值必须发生在峰值之后（严格按时间先后顺序），否则不构成真正的"回撤"——
+    如果谷值早于峰值，那衡量的是涨幅而非回撤，方向会反。
     返回None表示无价格数据或样本不足。"""
     price_s = _load_etf_price_series(erp_code)
     if price_s is None or len(price_s) < 5:
         return None
 
     window = price_s.iloc[-min(lookback, len(price_s)):]
-    high = window.max()
-    low  = window.min()
+    peak_pos = window.values.argmax()
+    high = window.iloc[peak_pos]
+    post_peak = window.iloc[peak_pos:]
+    low  = post_peak.min()
     cur  = price_s.iloc[-1]
 
     dd_high_to_low   = (low - high) / high if high != 0 else float("nan")
