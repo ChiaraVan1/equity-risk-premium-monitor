@@ -1270,6 +1270,8 @@ HOLDING_CATEGORY = {
     "931637": False,
     "399986": False,
     "930633": False,
+    "000989": False,
+    "931139": False,
 }
 
 
