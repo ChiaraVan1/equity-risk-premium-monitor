@@ -190,6 +190,7 @@ def check_metric_freshness(value_series: pd.Series, stale_points: int = FRESHNES
     返回：{is_stale, unchanged_count, last_value, last_date, first_unchanged_date}
     """
     s = value_series.dropna()
+    s = s[s.index.dayofweek < 5]   # 过滤周末，避免周末ffill重复值触发假警报
     if len(s) == 0:
         return {"is_stale": False, "unchanged_count": 0, "last_value": None,
                 "last_date": None, "first_unchanged_date": None}
