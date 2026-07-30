@@ -1,11 +1,14 @@
-import pandas as pd
+i"930598": "低估-资源",
+mport pandas as pd
 import numpy as np
 import os
 import time
 from datetime import datetime
 import requests
 import akshare as ak
+930598
 
+    "980032": "新能-电池",
 from etf_metrics import load_etf_metrics, build_etf_metrics_block, ERP_TO_ETF
 from popularity_signal import build_popularity_block, compute_popularity_confirmation
 
