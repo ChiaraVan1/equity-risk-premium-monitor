@@ -16,7 +16,18 @@ pe_band.py —— 极简 PE-Band 图（价格 vs 历史PE分位轨道）
 
 import sys
 import pandas as pd
+import matplotlib
 import matplotlib.pyplot as plt
+
+# 中文字体：CI环境（Ubuntu）默认没装中文字体，会显示成方框。
+# 依次尝试几个常见的中文字体名，找不到就退回默认（英文正常显示，标签会缺字，
+# 但配合 workflow 里 apt 安装的 fonts-wqy-zenhei 一般能命中 WenQuanYi Zen Hei）。
+for _font in ["WenQuanYi Zen Hei", "Noto Sans CJK SC", "Microsoft YaHei", "SimHei", "PingFang SC"]:
+    if _font in {f.name for f in matplotlib.font_manager.fontManager.ttflist}:
+        matplotlib.rcParams["font.sans-serif"] = [_font]
+        break
+matplotlib.rcParams["axes.unicode_minus"] = False
+
 
 def main(code):
     pe_df = pd.read_csv(f"./data/erp_{code}.csv", parse_dates=["Date"])[["Date", "PE"]].dropna()
