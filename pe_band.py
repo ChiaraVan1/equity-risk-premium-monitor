@@ -29,6 +29,38 @@ for _font in ["WenQuanYi Zen Hei", "Noto Sans CJK SC", "Microsoft YaHei", "SimHe
         break
 matplotlib.rcParams["axes.unicode_minus"] = False
 
+# 代码 -> 中文名（跟 README「标的一览」保持一致，找不到就直接显示代码）
+CODE_NAME = {
+    "000300": "沪深300",
+    "000688": "科创50",
+    "000922": "中证红利",
+    "000015": "上证红利",
+    "399989": "中证医疗",
+    "931071": "人工智能",
+    "000069": "消费80",
+    "930781": "中证影视",
+    "399975": "证券公司",
+    "399967": "中证军工",
+    "931066": "军工龙头",
+    "930598": "稀土产业",
+    "930794": "中美互联网",
+    "000819": "有色金属",
+    "950125": "半导体材料设备",
+    "SPY": "S&P 500",
+    "QQQ": "Nasdaq 100",
+    "EWQ": "MSCI France",
+    "EWG": "MSCI Germany",
+    "EWJ": "MSCI Japan",
+    "EEM": "MSCI Emerging",
+    "HSTECH": "恒生科技",
+    "931637": "港股通互联网",
+}
+
+
+def display_name(code):
+    name = CODE_NAME.get(code)
+    return f"{code} {name}" if name else code
+
 
 def discover_codes():
     """扫描 data/erp_{code}.csv，和 etf_price.csv 列名取交集"""
@@ -67,7 +99,7 @@ def draw_subplot(ax, code, df, q):
     for label in q:
         ax.plot(df["Date"], df[label], linewidth=1, label=f"{label} {q[label]:.1f}x")
     ax.plot(df["Date"], df["Price"], color="crimson", linewidth=1.3, label="实际价格/点位")
-    ax.set_title(f"{code} PE-Band", fontsize=10)
+    ax.set_title(f"{display_name(code)} PE-Band", fontsize=10)
     ax.legend(loc="upper left", fontsize=7)
     ax.grid(alpha=0.3)
 
@@ -112,7 +144,7 @@ def main_all():
     os.makedirs("./docs", exist_ok=True)
     out_path = "./docs/pe_band_all.png"
     fig.savefig(out_path, dpi=150)
-    print(f"✅ 已保存 {out_path}（共 {n} 个标的：{', '.join(c for c, _, _ in rows)}）")
+    print(f"✅ 已保存 {out_path}（共 {n} 个标的：{', '.join(display_name(c) for c, _, _ in rows)}）")
 
 
 if __name__ == "__main__":
