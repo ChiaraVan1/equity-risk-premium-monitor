@@ -1134,8 +1134,47 @@ def build_unified_valuation_block(df, code, val_series=None, win_rate=None, odds
     return block
 
 
-def build_trend_block(df, erp_series, code, quantiles):
-    """近10月趋势表格+斜率信号。内部月度polyfit（10月周期）和compute_erp_slope_signal
+def _erp_monthly_trend_ai_prompt(name, code, monthly_rows, quantiles):
+    monthly_str = "\n".join(f"{d}: PE={pe:.1f}x, ERP={erp:.2%}" for d, pe, erp in monthly_rows)
+    return f"""你是量化策略分析师，基于"{name}({code})"近10个月月末ERP数据写一句趋势解读。
+
+{monthly_str}
+
+历史分位：P90={quantiles['P90']:.2%} P75={quantiles['P75']:.2%} P50={quantiles['P50']:.2%} P25={quantiles['P25']:.2%} P10={quantiles['P10']:.2%}
+
+要求：
+1. 概括近10个月整体走势，优先反映最近1-2个月的实际变化，不要被更早月份的趋势主导。
+2. ≤30字，不输出免责声明。
+3. 严格输出以下JSON，不要输出其他内容：
+{{"trend_summary": "≤30字", "direction": "走高"|"走低"|"震荡"}}"""
+
+
+def build_monthly_trend_ai_block(name, code, monthly_rows, quantiles):
+    import json
+    try:
+        payload = {
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 150,
+            "messages": [{"role": "user", "content": _erp_monthly_trend_ai_prompt(name, code, monthly_rows, quantiles)}]
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
+            "anthropic-version": "2023-06-01",
+        }
+        resp = _call_anthropic_with_retry(payload, headers)
+        data = resp.json()
+        text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
+        raw = "\n".join(text_blocks).strip().replace("```json", "").replace("```", "").strip()
+        result = json.loads(raw)
+        icon = {"走高": "🟢", "走低": "🔴", "震荡": "🟡"}.get(result.get("direction", ""), "🟡")
+        return f"趋势方向：{icon} **{result.get('trend_summary','')}**", True
+    except Exception:
+        return None, False
+
+
+def build_trend_block(df, name, erp_series, code, quantiles):
+    """近10月趋势（月度部分为AI解读，失败时规则法兜底）+斜率信号。内部月度AI/polyfit（10月周期）和compute_erp_slope_signal
     （20日周期）是两个不同时间尺度的独立指标，非重复计算，不合并。"""
     if code == "HSTECH":
         ps_df = load_ps_data()
@@ -1177,57 +1216,29 @@ def build_trend_block(df, erp_series, code, quantiles):
     month_end = valid.groupby('YM').last().reset_index(drop=True)
     recent = month_end.tail(10).copy()
 
-    x = np.arange(len(recent))
-    slope = np.polyfit(x, recent['ERP'].values, 1)[0]
+    monthly_rows = [(row['Date'].strftime("%Y-%m"), row['PE'], row['ERP']) for _, row in recent.iterrows()]
 
-    if slope > 0.0005:
-        trend_icon = "持续走高"
-    elif slope < -0.0005:
-        trend_icon = "持续走低"
-    else:
-        trend_icon = "基本横盘"
+    monthly_line, _ai_ok = build_monthly_trend_ai_block(name, code, monthly_rows, quantiles)
 
-    delta = recent['ERP'].iloc[-1] - recent['ERP'].iloc[0]
-    delta_str = f"+{delta:.2%}" if delta >= 0 else f"{delta:.2%}"
-
-    rows = []
-    prev_erp = None
-    for _, row in recent.iterrows():
-        erp_val = row['ERP']
-        pe_val  = row['PE']
-
-        if erp_val >= quantiles["P75"]:
-            zone_icon = "🟢"
-        elif erp_val >= quantiles["P50"]:
-            zone_icon = "🟡"
-        elif erp_val >= quantiles["P25"]:
-            zone_icon = "🟠"
+    if not _ai_ok:
+        x = np.arange(len(recent))
+        slope = np.polyfit(x, recent['ERP'].values, 1)[0]
+        if slope > 0.0005:
+            trend_icon = "持续走高"
+        elif slope < -0.0005:
+            trend_icon = "持续走低"
         else:
-            zone_icon = "🔴"
-
-        if prev_erp is not None:
-            diff = erp_val - prev_erp
-            arrow = f"▲{diff:.2%}" if diff > 0 else (f"▼{abs(diff):.2%}" if diff < 0 else "─")
-        else:
-            arrow = "─"
-        prev_erp = erp_val
-
-        date_str = row['Date'].strftime("%Y-%m")
-        pe_str   = f"{pe_val:.1f}x" if pd.notna(pe_val) else "N/A"
-        rows.append(f"| {date_str} | {pe_str} | **{erp_val:.2%}** {zone_icon} | {arrow} |")
-
-    rows_md = "\n".join(rows)
+            trend_icon = "基本横盘"
+        delta = recent['ERP'].iloc[-1] - recent['ERP'].iloc[0]
+        delta_str = f"+{delta:.2%}" if delta >= 0 else f"{delta:.2%}"
+        monthly_line = f"趋势方向：**{trend_icon}**，区间变化：**{delta_str}**"
 
     return f"""
 ---
 ### 近10月 ERP 趋势
 
-> 趋势方向：**{trend_icon}**，区间变化：**{delta_str}**
+> {monthly_line}
 > 📐 近20日斜率信号：{slope_info['signal_icon']} **{slope_info['signal']}** — {slope_info['desc']}
-
-| 月份 | PE | ERP | 环比变化 |
-|:-----|---:|----:|:---------|
-{rows_md}
 """
 
 
@@ -1986,7 +1997,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 """
 
     unified_block    = build_unified_valuation_block(df, code, val_series=erp_series, win_rate=_win, odds_ratio=_odds)
-    trend_block      = build_trend_block(df, erp_series, code, quantiles)
+    trend_block      = build_trend_block(df, name, erp_series, code, quantiles)
     exit_block_final = exit_block
     etf_block        = build_etf_metrics_block(code, etf_df)
     shiller_block    = build_shiller_block(code)
