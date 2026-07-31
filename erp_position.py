@@ -1197,7 +1197,8 @@ def build_monthly_trend_ai_block(name, code, monthly_rows, quantiles):
     try:
         payload = {
             "model": "deepseek-v4-pro",
-            "max_tokens": 150,
+            "max_tokens": 300,
+            "enable_thinking": False,
             "messages": [{"role": "user", "content": _erp_monthly_trend_ai_prompt(name, code, monthly_rows, quantiles)}]
         }
         headers = {
@@ -1210,7 +1211,8 @@ def build_monthly_trend_ai_block(name, code, monthly_rows, quantiles):
         result = json.loads(raw)
         icon = {"走高": "🟢", "走低": "🔴", "震荡": "🟡"}.get(result.get("direction", ""), "🟡")
         return f"趋势方向：{icon} **{result.get('trend_summary','')}**", True
-    except Exception:
+    except Exception as e:
+        print(f"⚠️ AI趋势解读失败（已降级到规则法）：{type(e).__name__}: {e}")
         return None, False
 
 
