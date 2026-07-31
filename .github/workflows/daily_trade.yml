@@ -41,6 +41,7 @@ jobs:
         env:
           SCT_KEY: ${{ secrets.SCT_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ALIYUN_API_KEY: ${{ secrets.ALIYUN_API_KEY }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: python erp_position.py
@@ -58,6 +59,7 @@ jobs:
           git config --global user.email "action@github.com"
           git add data/
           git commit -m "Auto update ERP data [skip ci]" || exit 0
+          git pull --rebase origin main
           git push
       # 9. 部署 HTML 报告到 gh-pages 分支
       - name: Deploy HTML report to gh-pages
