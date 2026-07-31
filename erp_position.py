@@ -735,6 +735,49 @@ def _call_anthropic_with_retry(payload, headers):
 
     raise last_exc
 
+_DASHSCOPE_API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+
+
+def _call_dashscope_with_retry(payload, headers):
+    """
+    调用阿里云百炼(DashScope, OpenAI兼容模式)接口，复用与Anthropic调用相同的限流退避策略。
+    """
+    elapsed = time.time() - _last_api_call_ts["t"]
+    if elapsed < _API_CALL_MIN_INTERVAL:
+        time.sleep(_API_CALL_MIN_INTERVAL - elapsed)
+
+    last_exc = None
+    for attempt in range(_API_MAX_RETRIES):
+        try:
+            resp = requests.post(_DASHSCOPE_API_URL, json=payload, headers=headers, timeout=60)
+            _last_api_call_ts["t"] = time.time()
+
+            if resp.status_code == 429:
+                wait = _API_RETRY_BASE_DELAY * (2 ** attempt)
+                retry_after = resp.headers.get("retry-after")
+                if retry_after:
+                    try:
+                        wait = max(wait, float(retry_after))
+                    except ValueError:
+                        pass
+                if attempt < _API_MAX_RETRIES - 1:
+                    time.sleep(wait)
+                    continue
+                resp.raise_for_status()
+
+            resp.raise_for_status()
+            return resp
+
+        except requests.exceptions.HTTPError as e:
+            last_exc = e
+            if e.response is not None and e.response.status_code == 429 and attempt < _API_MAX_RETRIES - 1:
+                continue
+            raise
+        except requests.exceptions.RequestException as e:
+            last_exc = e
+            raise
+
+    raise last_exc
 
 _SKIP_FUNDAMENTAL_CODES = {
     "000300",  # 沪深300 - 宽基
@@ -1153,19 +1196,17 @@ def build_monthly_trend_ai_block(name, code, monthly_rows, quantiles):
     import json
     try:
         payload = {
-            "model": "claude-sonnet-4-6",
+            "model": "deepseek-v4-pro",
             "max_tokens": 150,
             "messages": [{"role": "user", "content": _erp_monthly_trend_ai_prompt(name, code, monthly_rows, quantiles)}]
         }
         headers = {
             "Content-Type": "application/json",
-            "x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
-            "anthropic-version": "2023-06-01",
+            "Authorization": f"Bearer {os.getenv('ALIYUN_API_KEY', '')}",
         }
-        resp = _call_anthropic_with_retry(payload, headers)
+        resp = _call_dashscope_with_retry(payload, headers)
         data = resp.json()
-        text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
-        raw = "\n".join(text_blocks).strip().replace("```json", "").replace("```", "").strip()
+        raw = data["choices"][0]["message"]["content"].strip().replace("```json", "").replace("```", "").strip()
         result = json.loads(raw)
         icon = {"走高": "🟢", "走低": "🔴", "震荡": "🟡"}.get(result.get("direction", ""), "🟡")
         return f"趋势方向：{icon} **{result.get('trend_summary','')}**", True
