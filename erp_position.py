@@ -1757,6 +1757,88 @@ def send_to_wechat(summary_md: str, date_str: str):
 #  主分析函数
 # ══════════════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════════════
+#  ETF 执行质量 —— AI 直接解读（替代规则版数字堆砌，只给结论）
+# ══════════════════════════════════════════════════════════════════════
+
+def build_etf_ai_interpretation(code: str, name: str, etf_df) -> str:
+    """
+    把 etf_metrics 里的原始指标喂给大模型，直接输出一段结论性解读，
+    不再展示 A/B/C 分项和大量原始数字。AI调用失败时优雅降级到规则版
+    build_etf_metrics_block()，保证报告不缺失这部分内容。
+    """
+    if etf_df is None:
+        return ""
+
+    ts_code = ERP_TO_ETF.get(code)
+    if ts_code is None:
+        return ""
+
+    if ts_code not in etf_df.index:
+        return f"\n> ⚠️ ETF {ts_code} 不在今日指标文件中，跳过执行质量分析。\n"
+
+    row = etf_df.loc[ts_code]
+
+    def safe(col, default=float("nan")):
+        v = row.get(col, default)
+        return default if pd.isna(v) else v
+
+    metrics = {
+        "折溢价率":       safe("latest_discount_rate", 0.0),
+        "折价1年分位":    safe("discount_quantile_1y", 0.5),
+        "折价5日变化":    safe("change_5d_discount", 0.0),
+        "换手率分位":     safe("turnover_quantile", 0.5),
+        "换手加速度":     safe("turnover_acceleration", float("nan")),
+        "价量是否背离":   bool(safe("is_price_turnover_divergence", False)),
+        "年化波动率":     safe("annualized_volatility", 0.0),
+        "波动率1年分位":  safe("volatility_quantile_1y", 0.5),
+        "最大回撤":       safe("max_drawdown", 0.0),
+        "回撤1年分位":    safe("max_drawdown_quantile_1y", 0.5),
+        "超额收益日均值": safe("excess_return_mean", 0.0),
+        "跟踪误差":       safe("tracking_error", 0.0),
+    }
+    metrics_str = "\n".join(f"- {k}: {v}" for k, v in metrics.items())
+
+    prompt = f"""你是一名ETF交易执行顾问。以下是「{name}（{ts_code}）」这只ETF的今日执行质量原始指标（内部单位，折溢价率/收益率为小数，分位数0-1）：
+
+{metrics_str}
+
+请只给出一段结论性文字（3-5句话，不用列表、不用小标题、不堆砌原始数字），直接回答三个问题：
+1. 今天怎么下单（折溢价是否划算，市价/限价/等一等）
+2. 现在建仓要不要分批、量能是否支撑当前走势
+3. 这只ETF长期跟踪质量如何，是否值得继续持有或该考虑换仓
+
+直接给结论，语气像给自己看的交易笔记，不要输出任何多余的开场白或标题。"""
+
+    try:
+        payload = {
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 400,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        headers = {
+            "Content-Type":      "application/json",
+            "x-api-key":         os.getenv("ANTHROPIC_API_KEY", ""),
+            "anthropic-version": "2023-06-01",
+        }
+        resp = _call_anthropic_with_retry(payload, headers)
+        data = resp.json()
+        text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
+        conclusion = "\n".join(text_blocks).strip()
+        if not conclusion:
+            raise ValueError("空响应")
+    except Exception as e:
+        fallback = build_etf_metrics_block(code, etf_df)
+        return fallback + f"\n> ⚠️ AI解读暂不可用（{e}），以上为规则版数据展示。\n"
+
+    return f"""
+---
+### ETF 执行质量（{ts_code}）· AI 解读
+
+{conclusion}
+"""
+
+
 def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     """单个标的主分析函数：读数据→算仓位建议→串联各信号模块→汇总summary_list→拼接报告。
     超200行，未来可考虑拆成_compute_all_signals()+_build_report_markdown()。"""
@@ -2042,7 +2124,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     unified_block    = build_unified_valuation_block(df, code, val_series=erp_series, win_rate=_win, odds_ratio=_odds)
     trend_block      = build_trend_block(df, name, erp_series, code, quantiles)
     exit_block_final = exit_block
-    etf_block        = build_etf_metrics_block(code, etf_df)
+    etf_block        = build_etf_ai_interpretation(code, name, etf_df)
     shiller_block    = build_shiller_block(code)
 
     if exit_summary["level"] > 0:
