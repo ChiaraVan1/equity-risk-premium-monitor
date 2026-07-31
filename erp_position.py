@@ -1108,20 +1108,12 @@ def build_unified_valuation_block(df, code, val_series=None, win_rate=None, odds
         rating = "🟢 已进入极度低估区，极佳买点"
     elif odds_ratio == 0.0:
         rating = "🚨 已进入极度高估区，规避"
-    elif win_rate >= 0.75 and odds_ratio >= 1.5:
-        rating = "🟢 高胜率 + 高赔率，极佳买点"
-    elif win_rate >= 0.75 and odds_ratio >= 1.0:
-        rating = "🟢 胜率尚可 + 赔率合理，较好买点"
+    elif win_rate >= 0.60 and odds_ratio >= 2.0:
+        rating = "🟢 极佳机会 — 胜率>60% + 赔率>2"
     elif win_rate >= 0.50 and odds_ratio >= 1.0:
-        rating = "🟡 胜率中等 + 赔率一般，可参与"
-    elif win_rate >= 0.50 and odds_ratio >= 0.8:
-        rating = "🟡 胜率赔率均衡，中性"
-    elif win_rate < 0.25 and odds_ratio < 0.5:
-        rating = "🚨 低胜率 + 低赔率，双杀，规避"
-    elif win_rate < 0.25:
-        rating = "🔴 低胜率，谨慎"
+        rating = "🟡 可参与 — 胜率≥50% + 赔率≥1"
     else:
-        rating = "🟠 中性偏弱"
+        rating = "🔴 不参与 — 胜率或赔率不达标"
 
     block = f"""
 ---
