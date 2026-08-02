@@ -156,9 +156,28 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     # 加载价格序列
     price_series = load_etf_price_series(code)
 
+    # 【2026-08-02 恢复】PE/PSY 数据新鲜度校验——check_metric_freshness()/
+    # build_freshness_note() 之前只在 import 列表里，从没被实际调用过，导致
+    # 「🕓 数据新鲜度预警」这个仪表盘板块形同虚设（stale_flag 永远是默认值，
+    # 永远不会触发）。这个校验专门抓"抓取失败被前值填充掩盖"或"QQQ/HSTECH
+    # 手动填值忘记更新"这类问题——数值本身没报错，但连续多个更新点纹丝不动。
+    ps_data = prepared_data.get("ps_data")
+    if code == "HSTECH":
+        freshness_metric_name = "PS"
+        if ps_data is not None and "ps" in ps_data.columns:
+            freshness = check_metric_freshness(ps_data["ps"])
+        else:
+            freshness = {"is_stale": False, "unchanged_count": 0, "last_value": None,
+                         "last_date": None, "first_unchanged_date": None}
+    else:
+        freshness_metric_name = "PE"
+        freshness = check_metric_freshness(df.set_index('Date')['PE'])
+    freshness_note = build_freshness_note(freshness, freshness_metric_name)
+    stale_flag = "⚠️" if freshness["is_stale"] else "─"
+
     # 生成各类分析块
     holding = is_holding(code)
-    header_block = f"## {name}（{code}）\n"
+    header_block = f"## {name}（{code}）\n{freshness_note}"
 
     shiller_block = build_shiller_block(code, (
         prepared_data.get("shiller_grouped"),
@@ -231,6 +250,8 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
             "premium_icon": markers["premium_icon"],
             "divergence_flag": markers["divergence_flag"],
             "action_sentence": action_sentence,
+            "stale_flag": stale_flag,
+            "stale_note": freshness_note,
         })
 
     return md
