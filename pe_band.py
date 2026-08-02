@@ -21,6 +21,7 @@ import re
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
+from config_loader import CODE_NAME
 
 # 中文字体：CI环境（Ubuntu）默认没装中文字体，会显示成方框。
 for _font in ["WenQuanYi Zen Hei", "Noto Sans CJK SC", "Microsoft YaHei", "SimHei", "PingFang SC"]:
@@ -28,33 +29,6 @@ for _font in ["WenQuanYi Zen Hei", "Noto Sans CJK SC", "Microsoft YaHei", "SimHe
         matplotlib.rcParams["font.sans-serif"] = [_font]
         break
 matplotlib.rcParams["axes.unicode_minus"] = False
-
-# 代码 -> 中文名（跟 README「标的一览」保持一致，找不到就直接显示代码）
-CODE_NAME = {
-    "000300": "沪深300",
-    "000688": "科创50",
-    "000922": "中证红利",
-    "000015": "上证红利",
-    "399989": "中证医疗",
-    "931071": "人工智能",
-    "000069": "消费80",
-    "930781": "中证影视",
-    "399975": "证券公司",
-    "399967": "中证军工",
-    "931066": "军工龙头",
-    "930598": "稀土产业",
-    "930794": "中美互联网",
-    "000819": "有色金属",
-    "950125": "半导体材料设备",
-    "SPY": "S&P 500",
-    "QQQ": "Nasdaq 100",
-    "EWQ": "MSCI France",
-    "EWG": "MSCI Germany",
-    "EWJ": "MSCI Japan",
-    "EEM": "MSCI Emerging",
-    "HSTECH": "恒生科技",
-    "931637": "港股通互联网",
-}
 
 
 def display_name(code):
