@@ -10,14 +10,45 @@ import pandas as pd
 from config_loader import HOLDING_CATEGORY, INDICES_LIST
 from prepare_all_data import prepare_all_data, load_etf_price_series
 from analysis.valuation import build_shiller_block, build_unified_valuation_block, calc_odds, is_holding
-from analysis.risk import compute_exit_signal_summary, build_exit_signal_block, compute_profit_signal_summary, build_profit_signal_block
+from analysis.risk import (compute_exit_signal_summary, build_exit_signal_block,
+                            compute_profit_signal_summary, build_profit_signal_block,
+                            compute_range_drawdown_rebound)
 from analysis.trend import compute_erp_slope_signal, build_trend_block, build_monthly_trend_ai_block
 from analysis.sentiment import build_sentiment_block
-from analysis.utils import check_metric_freshness, build_freshness_note, generate_action_sentence, _format_win_odds, _format_range
+from analysis.utils import (check_metric_freshness, build_freshness_note, generate_action_sentence,
+                             _format_win_odds, _format_range, safe_action_markers)
 from report.markdown import build_summary_block, build_etf_ai_interpretation, save_html_report, send_to_wechat, LEGEND_BLOCK
 from dividend_yield import build_dividend_yield_block
 from popularity_signal import build_popularity_block, compute_popularity_confirmation
 from analysis.etf_quality import build_etf_quality_block
+
+
+def compute_position_sizing(current_erp, quantiles):
+    """三仓拆分：泡沫底仓 / 价值主力 / 投机奇兵，规则见 README「仓位框架」。"""
+    p25, p50, p75, p90 = quantiles['P25'], quantiles['P50'], quantiles['P75'], quantiles['P90']
+    p95 = quantiles.get('P95', p90)
+
+    bubble = 30 if current_erp >= p25 else 5
+
+    if current_erp >= p75:
+        value = 40
+    elif current_erp >= p50:
+        value = 35
+    elif current_erp >= p25:
+        value = 10
+    else:
+        value = 0
+
+    if current_erp >= p95:
+        spec = 30
+    elif current_erp >= p90:
+        spec = 20
+    elif current_erp >= p50:
+        spec = 10
+    else:
+        spec = 5
+
+    return bubble, value, spec
 
 
 def analyze_and_suggest(code, name, prepared_data, summary_list=None):
@@ -40,6 +71,7 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         'P50': erp_series.quantile(0.50),
         'P75': erp_series.quantile(0.75),
         'P90': erp_series.quantile(0.90),
+        'P95': erp_series.quantile(0.95),
     }
 
     # 计算胜率、赔率
@@ -56,7 +88,7 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     elif current_erp >= quantiles['P25']:
         erp_zone = "🟠 合理区间"
     else:
-        erp_zone = "🚨 危险泡沫"
+        erp_zone = "🔴 高估/规避"
 
     # 加载价格序列
     price_series = load_etf_price_series(code)
@@ -75,20 +107,35 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
 
     trend_block = build_trend_block(df, name, erp_series, code, quantiles)
 
+    exit_summary = compute_exit_signal_summary(code, win_rate, price_series, holding)
     exit_block = build_exit_signal_block(code, win_rate, price_series, holding)
 
     profit_block = build_profit_signal_block(code, win_rate)
+
+    range_stats = compute_range_drawdown_rebound(code, price_series, lookback=120) or {}
 
     popularity_block = build_sentiment_block(code, name, code, win_rate, prepared_data.get("news_df"))
 
     dividend_block = build_dividend_yield_block(code)
 
-    etf_block = build_etf_ai_interpretation(code, name, prepared_data.get("etf_df"))
+    etf_df = prepared_data.get("etf_df")
+    etf_block = build_etf_ai_interpretation(code, name, etf_df)
 
     md = f"""{header_block}{unified_block}{trend_block}{exit_block}{profit_block}{popularity_block}{dividend_block}{etf_block}{shiller_block}"""
 
     # 汇总信息用于仪表盘
     if summary_list is not None:
+        bubble, value, spec = compute_position_sizing(current_erp, quantiles)
+        total_pct = bubble + value + spec
+        markers = safe_action_markers(etf_df)
+
+        action_sentence = generate_action_sentence(
+            {"premium": markers["premium_val"]},
+            {"divergence": markers["divergence_flag"]},
+            {"high": markers["vol_flag"]},
+            erp_zone,
+        )
+
         summary_list.append({
             "code": code,
             "name": name,
@@ -97,6 +144,16 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
             "win_rate": win_rate,
             "odds_ratio": odds_ratio,
             "win_odds_str": _format_win_odds({"win_rate": win_rate, "odds_ratio": odds_ratio}),
+            "holding": holding,
+            "position": {"bubble": bubble, "value": value, "spec": spec, "total": total_pct},
+            "exit_level": exit_summary.get("level", 0),
+            "exit_icon": exit_summary.get("verdict_icon", "─"),
+            "exit_message": exit_summary.get("message", ""),
+            "range_str": _format_range(range_stats) if range_stats else "─",
+            "vol_icon": markers["vol_icon"],
+            "premium_icon": markers["premium_icon"],
+            "divergence_flag": markers["divergence_flag"],
+            "action_sentence": action_sentence,
         })
 
     return md
