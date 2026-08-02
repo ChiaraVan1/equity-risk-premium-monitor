@@ -2,10 +2,7 @@ pandas
 akshare
 requests
 yfinance
-<<<<<<< HEAD
 scipy
 markdown2
 openpyxl
 numpy
-=======
->>>>>>> e1b472e19c7e1779136686670cd00d09f94e70fe
