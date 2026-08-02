@@ -18,7 +18,7 @@ import os
 import requests
 from datetime import datetime
 import markdown2
-from dividend_yield_analysis import build_dividend_yield_block
+from analysis.dividend_yield_analysis import build_dividend_yield_block
 
 LEGEND_BLOCK = """
 ---
