@@ -57,7 +57,7 @@ FUNDAMENTAL_KEYWORDS = {
 ERP_TO_ETF = {idx["code"]: idx.get("etf_code") for idx in ALL_INDICES}
 
 # ══════════════════════════════════════════════════════════════════════
-# fetch_bond_yield.py / fetch_bond_yield_incremental.py 用
+# fetch/fetch_bond_yield.py / fetch/fetch_bond_yield_incremental.py 用
 # ══════════════════════════════════════════════════════════════════════
 # INDEX_CONFIG: (code, name, currency, bond_code, pe_source)
 BOND_YIELD_CONFIG = [
@@ -72,7 +72,7 @@ BOND_YIELD_CONFIG = [
 ]
 
 # ══════════════════════════════════════════════════════════════════════
-# fetch_ps.py 用 - HSTECH 成分股
+# fetch/fetch_ps.py 用 - HSTECH 成分股
 # ══════════════════════════════════════════════════════════════════════
 def get_hstech_components():
     """获取恒生科技指数的成分股列表"""
@@ -84,7 +84,7 @@ def get_hstech_components():
 HSTECH_TICKERS = get_hstech_components()
 
 # ══════════════════════════════════════════════════════════════════════
-# simple_etf_metrics.py 用
+# fetch/simple_etf_metrics.py 用
 # ══════════════════════════════════════════════════════════════════════
 # ETF_LIST: (code, etf_code)
 ETF_LIST = [
