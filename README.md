@@ -38,32 +38,34 @@
 ## 整体执行流程
 
 ```
+配置层（全局，被所有模块读取）
+├─ config.json          → 指数/ETF/债券代码等原始配置
+└─ config_loader.py      → 解析 config.json，导出 ALL_INDICES / BOND_YIELD_CONFIG /
+                           HOLDING_CATEGORY / INDICES_LIST / HSTECH_TICKERS 等
+                           （避免各脚本重复维护配置）
+        ↓ 被下方所有脚本 import
+
 数据生产层
-├─ simple_etf_metrics.py → data/simple_etf_metrics.csv
-├─ fetch_bond_yield_incremental.py → data/erp_*.csv
-├─ fetch_ps.py → data/ps_HSTECH.csv
-└─ dividend_yield.py → data/dividend_yield.csv
-
+├─ simple_etf_metrics.py           → data/simple_etf_metrics.csv
+├─ fetch_bond_yield.py             → data/erp_*.csv（全量/首次抓取，读 config_loader.BOND_YIELD_CONFIG）
+├─ fetch_bond_yield_incremental.py → data/erp_*.csv（日常增量更新，同上配置）
+├─ fetch_ps.py                     → data/ps_HSTECH.csv
+├─ dividend_yield.py                → data/dividend_yield.csv
+└─ popularity_signal.py             → 雪球热榜人气信号
+                                      （依赖 industry_map.json 做行业映射）
         ↓ 汇聚
-
-prepare_all_data.py（聚合所有 CSV）
-
+prepare_all_data.py（聚合所有 CSV，读取 config_loader 配置）
         ↓ 传递
-
 分析层（analysis/）
 ├─ valuation.py
 ├─ risk.py
 ├─ trend.py
-└─ sentiment.py
+├─ sentiment.py
 └─ etf_quality.py
-
         ↓ 生成
-
 报告层（report/）
 └─ markdown.py → HTML
-
         ↓ 调度
-
 erp_position.py（主入口）
 ```
 
