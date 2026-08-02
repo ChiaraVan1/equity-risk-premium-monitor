@@ -3,13 +3,8 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import time
+from config_loader import HSTECH_TICKERS
 
-tickers_hk = ["0700.HK","9988.HK","3690.HK","9618.HK","1810.HK",
-              "9999.HK","2382.HK","0981.HK","9626.HK","0020.HK",
-              "1024.HK","0268.HK","2015.HK","9868.HK","9888.HK",
-              "0241.HK","0285.HK","2518.HK","0522.HK","0780.HK",
-              "0909.HK","2013.HK","9961.HK","6690.HK",
-              "0799.HK","2359.HK","0669.HK","1347.HK","0763.HK"]
 
 def get_quarterly_revenue(code):
     """
@@ -65,7 +60,7 @@ def get_hist_mktcap(ticker):
 all_mktcap = {}
 all_ttm_rev = {}
 
-for t in tickers_hk:
+for t in HSTECH_TICKERS:
     code = t.replace(".HK","").zfill(5)
     try:
         # 营收
@@ -93,7 +88,7 @@ ps_series = []
 for d in date_range:
     total_mc = 0
     total_rev = 0
-    for t in tickers_hk:
+    for t in HSTECH_TICKERS:
         # 市值：取当日或最近一个交易日
         if t in all_mktcap:
             mc_s = all_mktcap[t]
