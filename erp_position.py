@@ -13,6 +13,9 @@ from analysis.valuation import build_shiller_block, build_unified_valuation_bloc
 from analysis.risk import (compute_exit_signal_summary, build_exit_signal_block,
                             compute_profit_signal_summary, build_profit_signal_block,
                             compute_range_drawdown_rebound)
+# 注：compute_profit_signal_summary 之前已在导入列表里，但主流程从未实际调用它，
+# 导致止盈信号完全没有进入仪表盘的「🚨 需要处理」判定——只有详情页里的
+# build_profit_signal_block() 在用。下面 analyze_and_suggest() 里补上调用。
 from analysis.trend import compute_erp_slope_signal, build_trend_block
 from analysis.sentiment import build_sentiment_block
 from analysis.utils import (check_metric_freshness, build_freshness_note, generate_action_sentence,
@@ -63,7 +66,13 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     df['Date'] = pd.to_datetime(df['Date'])
     df = df.sort_values('Date')
 
-    erp_series = df.set_index('Date')['ERP']
+    # 【2026-08-02 修复】.dropna() 之前缺失：早期历史（如000300数据里2005年那段
+    # PE数据源尚未覆盖）留下大量空值行，(erp_series < current_erp).mean() 的分母
+    # 会把这些空值行也算进去，导致胜率/历史分位被系统性拉低。
+    # quantile() 本身会自动跳过NaN所以P10/P25/P50/P75/P90不受影响，只有这里的
+    # 布尔均值计算受影响——这也是为什么此前"胜率"和"ERP历史分位"两个数字一起错，
+    # 但估值分档阈值本身是对的。
+    erp_series = df.set_index('Date')['ERP'].dropna()
     current_erp = erp_series.iloc[-1]
     quantiles = {
         'P10': erp_series.quantile(0.10),
@@ -110,7 +119,8 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     exit_summary = compute_exit_signal_summary(code, win_rate, price_series, holding)
     exit_block = build_exit_signal_block(code, win_rate, price_series, holding)
 
-    profit_block = build_profit_signal_block(code, win_rate)
+    profit_summary = compute_profit_signal_summary(code, win_rate, price_series)
+    profit_block = build_profit_signal_block(code, win_rate, price_series)
 
     range_stats = compute_range_drawdown_rebound(code, price_series, lookback=120) or {}
 
@@ -129,10 +139,13 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         total_pct = bubble + value + spec
         markers = safe_action_markers(etf_df)
 
+        # 【2026-08-02 修复】generate_action_sentence() 已恢复为接收图标字符串的原版实现
+        # （分批建仓/一次建仓/规避不建仓这套文案），不再是数值字典。
+        divergence_icon = "⚠️" if markers["divergence_flag"] else "─"
         action_sentence = generate_action_sentence(
-            {"premium": markers["premium_val"]},
-            {"divergence": markers["divergence_flag"]},
-            {"high": markers["vol_flag"]},
+            markers["premium_icon"],
+            divergence_icon,
+            markers["vol_icon"],
             erp_zone,
         )
 
@@ -149,6 +162,10 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
             "exit_level": exit_summary.get("level", 0),
             "exit_icon": exit_summary.get("verdict_icon", "─"),
             "exit_message": exit_summary.get("message", ""),
+            # 【新增】止盈信号此前只出现在详情页，从未进入仪表盘「🚨 需要处理」判定。
+            "profit_level": profit_summary.get("level", 0),
+            "profit_icon": profit_summary.get("verdict_icon", "─"),
+            "profit_message": profit_summary.get("message", ""),
             "range_str": _format_range(range_stats) if range_stats else "─",
             "vol_icon": markers["vol_icon"],
             "premium_icon": markers["premium_icon"],
