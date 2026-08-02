@@ -1,14 +1,6 @@
 """
 analysis/risk.py
 风险分析模块：止损信号、止盈信号、回撤反弹统计
-
-【2026-08-02 恢复说明】
-本文件在此前一次"拆分重构"中被严重简化（阈值判断、ERP分位降级/升级逻辑、
-QQQ单日急跌信号、详细文案全部丢失）。现在从重构前的原始 erp_position.py
-（2160行版本，commit e1b472e）里完整取回对应逻辑，只做了一处架构适配：
-旧版函数内部自己调用 _load_etf_price_series(code) 读取价格；新版改为由
-调用方（erp_position.py）统一加载一次 price_series 后作为参数传入，避免
-重复读CSV。除此之外，判断条件、分级规则、文案全部与旧版一致。
 """
 import pandas as pd
 import numpy as np
