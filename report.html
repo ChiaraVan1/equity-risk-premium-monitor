@@ -13,63 +13,71 @@ th { background-color: #3498db; color: white; }
 tr:nth-child(even) { background-color: #f9f9f9; }
 code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 .emoji { font-size: 1.2em; }
+.section-header { background-color: #eaf2fb; font-weight: bold; }
+.alert-row { background-color: #fff5f5; }
+.pos-high { color: #2e7d32; font-weight: bold; }
+.pos-mid { color: #558b2f; }
+.pos-low { color: #ef6c00; }
+.pos-min { color: #c62828; }
+.col-sub { font-size: 0.85em; color: #888; }
 </style>
 </head>
 <body>
 <h1>📊 ERP 策略每日监控报告</h1>
 <p><strong>生成时间：</strong> 2026-08-02</p>
-<h3>📊 决策仪表盘</h3>
+<h2>📊 决策仪表盘 · 2026-08-02</h2>
 
-<h4>🟢 极度低估</h4>
+<p>胜率🟢≥75% 🟡50-75% 🟠25-50% 🔴&lt;25% · 折溢价💎大折 🟢折 🟡平 🟠溢 🔴大溢 · 波🔴高位 · 量⚠️背离 · 🚨止损 💰止盈 🔎未持仓观察 · 🕓数据未更新 · 📌=持仓</p>
 
-<ul>
-<li>中证医疗 · 90%(30+40+20) · 胜49%·赔∞ · 回撤-19.6% · 反弹13.4%</li>
-<li>消费80 · 100%(30+40+30) · 胜70%·赔∞ · 回撤-19.6% · 反弹11.7%</li>
-<li>证券公司 · 90%(30+40+20) · 胜51%·赔∞ · 回撤-16.4% · 反弹10.6%</li>
-<li>恒生科技指数 · 90%(30+40+20) · 胜28%·赔∞ · 回撤-27.9% · 反弹12.4%</li>
-<li>中证军工 · 100%(30+40+30) · 胜58%·赔∞ · 回撤-33.6% · 反弹3.6%</li>
-</ul>
+<hr />
 
-<h4>🟢 显著低估</h4>
+<table class="dashboard-table">
+<tr><td colspan="4" class="section-header">🚨 需要处理</td></tr>
+<tr class="alert-row"><td class="col-name">📌 有色金属</td><td class="col-pos">80%</td><td colspan="2" class="col-action">🚨 🟢 显著低估｜🚨 强制全清止损 — 回撤-28.3%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</td></tr>
+<tr><td colspan="4" class="section-header">🟢 极度低估</td></tr>
+<tr><td class="col-name">📌 中证医疗</td><td class="col-pos pos-high">90%<br><span class="col-sub">30+40+20</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜92%·赔∞ · 回撤-19.6%·反弹+13.4% · 一次建仓</td></tr>
+<tr><td class="col-name">📌 消费80</td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜98%·赔∞ · 回撤-19.6%·反弹+11.7% · 一次建仓</td></tr>
+<tr><td class="col-name">证券公司</td><td class="col-pos pos-high">90%<br><span class="col-sub">30+40+20</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜93%·赔∞ · 回撤-16.4%·反弹+10.6% · 一次建仓</td></tr>
+<tr><td class="col-name">恒生科技指数</td><td class="col-pos pos-high">90%<br><span class="col-sub">30+40+20</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜94%·赔∞ · 回撤-27.9%·反弹+12.4% · 一次建仓</td></tr>
+<tr><td class="col-name">中证军工</td><td class="col-pos pos-high">100%<br><span class="col-sub">30+40+30</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜100%·赔∞ · 回撤-33.6%·反弹+3.6% · 一次建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-31.2%达L3，无需操作</td></tr>
+<tr><td colspan="4" class="section-header">🟢 显著低估</td></tr>
+<tr><td class="col-name">稀土产业</td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜85%·赔21.54x · 回撤-32.9%·反弹+5.6% · 一次建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-29.2%达L3，无需操作</td></tr>
+<tr><td class="col-name">中证旅游</td><td class="col-pos pos-high">80%<br><span class="col-sub">30+40+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜81%·赔3.35x · 回撤-36.4%·反弹+8.8% · 一次建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-30.8%达L3，无需操作</td></tr>
+<tr><td colspan="4" class="section-header">🟡 合理偏低</td></tr>
+<tr><td class="col-name">📌 沪深300</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜56%·赔1.87x · 回撤-9.9%·反弹+1.4% · 一次建仓</td></tr>
+<tr><td class="col-name">中证红利</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜58%·赔1.05x · 回撤-14.4%·反弹+12.1% · 一次建仓</td></tr>
+<tr><td class="col-name">人工智能</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜71%·赔1.52x · 回撤-27.4%·反弹+6.3% · 一次建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-22.8%达L3，无需操作</td></tr>
+<tr><td class="col-name">中证影视</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜71%·赔2.83x · 回撤-45.2%·反弹+9.5% · 一次建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-40.0%达L3，无需操作</td></tr>
+<tr><td class="col-name">MSCI Emerging</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜65%·赔1.19x · 回撤-12.6%·反弹+3.0% · 一次建仓</td></tr>
+<tr><td class="col-name">军工龙头</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜70%·赔2.61x · 回撤-36.7%·反弹+3.4% · 一次建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-34.5%达L3，无需操作</td></tr>
+<tr><td class="col-name">中美互联网</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜70%·赔1.42x · ─ · 一次建仓</td></tr>
+<tr><td class="col-name">港股通互联网</td><td class="col-pos pos-mid">75%<br><span class="col-sub">30+35+10</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜60%·赔1.21x · 回撤-43.0%·反弹+20.6% · 一次建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-31.3%达L3，无需操作</td></tr>
+<tr><td colspan="4" class="section-header">🟠 合理区间</td></tr>
+<tr><td class="col-name">科创50</td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜41%·赔0.98x · 回撤-28.8%·反弹+3.5% · 一次建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-26.3%达L3，无需操作</td></tr>
+<tr><td class="col-name">上证红利</td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜45%·赔0.46x · 回撤-13.8%·反弹+13.3% · 一次建仓</td></tr>
+<tr><td class="col-name">半导体材料设备</td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜35%·赔0.19x · 回撤-35.7%·反弹+2.6% · 一次建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-34.0%达L3，无需操作</td></tr>
+<tr><td class="col-name">中证银行</td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜44%·赔0.39x · 回撤-0.5%·反弹+0.0% · 一次建仓</td></tr>
+<tr><td class="col-name">畜牧养殖</td><td class="col-pos pos-low">45%<br><span class="col-sub">30+10+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜32%·赔0.23x · 回撤-23.8%·反弹+12.5% · 一次建仓</td></tr>
+<tr><td colspan="4" class="section-header">🔴 高估/规避</td></tr>
+<tr><td class="col-name">📌 S&P 500</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜8%·赔0.00x · 回撤-5.6%·反弹+1.3% · 规避，不建仓</td></tr>
+<tr><td class="col-name">Nasdaq 100</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜14%·赔0.03x · 回撤-13.0%·反弹+3.4% · 规避，不建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-10.0%达L1，无需操作</td></tr>
+<tr><td class="col-name">MSCI France</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜2%·赔0.00x · 回撤-20.3%·反弹+9.4% · 规避，不建仓</td></tr>
+<tr><td class="col-name">MSCI Germany</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜5%·赔0.00x · 回撤-19.5%·反弹+12.4% · 规避，不建仓</td></tr>
+<tr><td class="col-name">MSCI Japan</td><td class="col-pos pos-min">10%<br><span class="col-sub">5+0+5</span></td><td class="col-sig">波─ 折─</td><td class="col-action">胜2%·赔0.00x · 回撤-19.6%·反弹+4.1% · 规避，不建仓</td></tr>
+<tr><td></td><td colspan="3" class="col-action" style="color:#8b949e;">🔎 未持仓观察 — 回撤-16.3%达L2，无需操作</td></tr>
+</table>
 
-<ul>
-<li>稀土产业 · 80%(30+40+10) · 胜48%·赔21.54x · 回撤-32.9% · 反弹5.6%</li>
-<li>有色金属 · 80%(30+40+10) · 胜54%·赔3.94x · 回撤-34.9% · 反弹10.3%</li>
-<li>中证旅游 · 80%(30+40+10) · 胜45%·赔3.35x · 回撤-36.4% · 反弹8.8%</li>
-</ul>
-
-<h4>🟡 合理偏低</h4>
-
-<ul>
-<li>沪深300 · 75%(30+35+10) · 胜40%·赔1.87x · 回撤-9.9% · 反弹1.4%</li>
-<li>中证红利 · 75%(30+35+10) · 胜41%·赔1.05x · 回撤-14.4% · 反弹12.1%</li>
-<li>人工智能 · 75%(30+35+10) · 胜27%·赔1.52x · 回撤-27.4% · 反弹6.3%</li>
-<li>中证影视 · 75%(30+35+10) · 胜37%·赔2.83x · 回撤-45.2% · 反弹9.5%</li>
-<li>MSCI Emerging · 75%(30+35+10) · 胜49%·赔1.19x · 回撤-12.6% · 反弹3.0%</li>
-<li>军工龙头 · 75%(30+35+10) · 胜29%·赔2.61x · 回撤-36.7% · 反弹3.4%</li>
-<li>中美互联网 · 75%(30+35+10) · 胜36%·赔1.42x</li>
-<li>港股通互联网 · 75%(30+35+10) · 胜17%·赔1.21x · 回撤-43.0% · 反弹20.6%</li>
-</ul>
-
-<h4>🟠 合理区间</h4>
-
-<ul>
-<li>科创50 · 45%(30+10+5) · 胜12%·赔0.98x · 回撤-28.8% · 反弹3.5%</li>
-<li>上证红利 · 45%(30+10+5) · 胜32%·赔0.46x · 回撤-13.8% · 反弹13.3%</li>
-<li>半导体材料设备 · 45%(30+10+5) · 胜3%·赔0.19x · 回撤-35.7% · 反弹2.6%</li>
-<li>中证银行 · 45%(30+10+5) · 胜23%·赔0.39x · 回撤-0.5% · 反弹0.0%</li>
-<li>畜牧养殖 · 45%(30+10+5) · 胜4%·赔0.23x · 回撤-23.8% · 反弹12.5%</li>
-</ul>
-
-<h4>🔴 高估/规避</h4>
-
-<ul>
-<li>S&amp;P 500 · 10%(5+0+5) · 胜6%·赔─ · 回撤-5.6% · 反弹1.3%</li>
-<li>Nasdaq 100 · 10%(5+0+5) · 胜14%·赔0.03x · 回撤-13.0% · 反弹3.4%</li>
-<li>MSCI France · 10%(5+0+5) · 胜2%·赔─ · 回撤-20.3% · 反弹9.4%</li>
-<li>MSCI Germany · 10%(5+0+5) · 胜5%·赔─ · 回撤-19.5% · 反弹12.4%</li>
-<li>MSCI Japan · 10%(5+0+5) · 胜2%·赔─ · 回撤-19.6% · 反弹4.1%</li>
-</ul>
+<hr />
 
 <hr />
 
@@ -101,7 +109,11 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 </tr>
 <tr>
   <td style="text-align:left;">🚨</td>
-  <td style="text-align:left;">极端风险</td>
+  <td style="text-align:left;">极端风险 / 强制止损</td>
+</tr>
+<tr>
+  <td style="text-align:left;">💰</td>
+  <td style="text-align:left;">止盈提示</td>
 </tr>
 <tr>
   <td style="text-align:left;">✅</td>
@@ -113,14 +125,20 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 </tr>
 <tr>
   <td style="text-align:left;">🔎</td>
-  <td style="text-align:left;">观察提示（未持仓）</td>
+  <td style="text-align:left;">观察提示（未持仓，仅供参考不建议操作）</td>
 </tr>
 <tr>
   <td style="text-align:left;">📌</td>
   <td style="text-align:left;">自选持仓</td>
 </tr>
+<tr>
+  <td style="text-align:left;">🕓</td>
+  <td style="text-align:left;">数据新鲜度预警（连续多个更新点未变化）</td>
+</tr>
 </tbody>
 </table>
+
+<p>胜率🟢≥75% 🟡50-75% 🟠25-50% 🔴&lt;25% · 折溢价💎大折 🟢折 🟡平 🟠溢 🔴大溢 · 波🔴高位 · 量⚠️背离</p>
 
 <h3>仓位拆分</h3>
 
@@ -133,36 +151,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟡 合理偏低</strong></p>
+<p><strong>泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定</strong> (30%)
+<strong>价值仓: 估值修复中，建议持有 30%-40% 主力仓位</strong> (35%)
+<strong>投机仓: 震荡区间，维持 10% 灵活部做T</strong> (10%)</p>
+
+<p>建议总仓位：<strong>75%</strong>（泡沫底仓 30% + 价值主力 35% + 投机奇兵 10%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>5.25%</strong>，历史分位 = <strong>56%</strong> 🟡 合理偏低</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">5.25%</td>
-  <td style="text-align:right;"><strong>40%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">4.91%</td>
+  <td style="text-align:left;">3782条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>40%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>56%</strong></td>
+  <td style="text-align:left;">历史上 56% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>1.87x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 2.26% / 亏损空间 1.21%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">14.4x</td>
+  <td style="text-align:left;">历史均值 12.8x，最高 20.4x，最低 8.6x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟡 可参与 — 胜率≥50% + 赔率≥1</strong></p>
 
 <table>
 <thead>
@@ -200,15 +239,113 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🔴 <strong>ERP先扬后抑，近两月高位回落至中位水平</strong>
+  <p>趋势方向：🟢 <strong>ERP近两月触底回升，站上中位数，配置性价比改善。</strong>
   📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.11%（斜率 0.005%/日）（历史分位 P59）— 估值无明显趋势，保持既有仓位。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位40%），考虑止盈</p>
+<blockquote>
+  <p>ERP区间：<strong>低估区（56%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">4.653</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">5.091</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-8.6%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">4.750</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">4.858</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">4.763</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（56%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">4.653</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">4.750</td>
+  <td style="text-align:left;">乖离 -2.0%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">4.858</td>
+  <td style="text-align:left;">乖离 -4.2%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -222,6 +359,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。</p>
+</blockquote>
 
 <hr />
 
@@ -294,36 +435,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟠 合理区间</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 0.32%（显著低估） / P90 = 1.05%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>-0.43%</strong>，历史分位 = <strong>41%</strong> 🟠 合理区间</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">-0.43%</td>
-  <td style="text-align:right;"><strong>12%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">-0.29%</td>
+  <td style="text-align:left;">1524条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>12%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>41%</strong></td>
+  <td style="text-align:left;">历史上 41% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.98x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 1.45% / 亏损空间 1.48%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">77.9x</td>
+  <td style="text-align:left;">历史均值 53.4x，最高 105.4x，最低 23.4x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🔴 不参与 — 胜率或赔率不达标</strong></p>
 
 <table>
 <thead>
@@ -361,15 +520,119 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP在6月急跌至-0.78%后7月快速回升至-0.43%，整体呈低位震荡。</strong>
+  <p>趋势方向：🟡 <strong>ERP在6月急跌至-0.78%后7月快速回升，但仍处负值区间。</strong>
   📐 近20日斜率信号：🟢 <strong>估值快速改善</strong> — 近20日ERP持续走高 0.25%（斜率 0.014%/日）（历史分位 P84）— 估值快速修复，买入窗口正在打开。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位12%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>高估区（41%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-26.3%达L3，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.728</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">2.344</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-26.3%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.968</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.935</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.710</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -26.3%（≥10%）且跌破MA20=1.968，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -26.3%（≥15%）且跌破MA60=1.935，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -26.3%（≥20%），已达硬止损阈值，但未持仓，仅供观察，无需操作；若后续建仓需重新评估</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（41%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.728</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.968</td>
+  <td style="text-align:left;">乖离 -12.2%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.935</td>
+  <td style="text-align:left;">乖离 -10.7%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -383,6 +646,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。</p>
+</blockquote>
 
 <hr />
 
@@ -455,36 +722,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟡 合理偏低</strong></p>
+<p><strong>泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定</strong> (30%)
+<strong>价值仓: 估值修复中，建议持有 30%-40% 主力仓位</strong> (35%)
+<strong>投机仓: 震荡区间，维持 10% 灵活部做T</strong> (10%)</p>
+
+<p>建议总仓位：<strong>75%</strong>（泡沫底仓 30% + 价值主力 35% + 投机奇兵 10%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>9.95%</strong>，历史分位 = <strong>58%</strong> 🟡 合理偏低</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">9.95%</td>
-  <td style="text-align:right;"><strong>41%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">9.44%</td>
+  <td style="text-align:left;">3782条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>41%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>58%</strong></td>
+  <td style="text-align:left;">历史上 58% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>1.05x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 3.98% / 亏损空间 3.78%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">8.6x</td>
+  <td style="text-align:left;">历史均值 8.3x，最高 14.0x，最低 5.3x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟡 可参与 — 胜率≥50% + 赔率≥1</strong></p>
 
 <table>
 <thead>
@@ -522,15 +810,117 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP在6月冲高至11.53%后回落至9.95%，近期呈高位震荡。</strong>
+  <p>趋势方向：🔴 <strong>ERP近两月从11.53%高位快速回落至9.95%，风险溢价收敛。</strong>
   📐 近20日斜率信号：⚠️ <strong>情绪过热</strong> — 近20日ERP急速坠落 -1.39%（斜率 -0.071%/日）（历史分位 P2）— 市场情绪快速升温，估值泡沫化加速，警戒高位。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位41%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（58%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.432</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">1.491</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-4.0%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.373</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.383</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.411</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（58%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.432</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.373</td>
+  <td style="text-align:left;">乖离 +4.3%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.383</td>
+  <td style="text-align:left;">乖离 +3.5%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -544,6 +934,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：本地关键词粗筛未命中任何近期快讯，本次跳过 AI 判断。结果为「未知」，请人工核实，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -616,36 +1010,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟠 合理区间</strong></p>
+<p><strong>泡沫仓: 尚未达到远期目标价，底仓持有不动</strong> (30%)
+<strong>价值仓: 回到合理估值区间，开始减持主力仓位</strong> (10%)
+<strong>投机仓: 溢价区基本只卖不买，缩减至 5% 观察</strong> (5%)</p>
+
+<p>建议总仓位：<strong>45%</strong>（泡沫底仓 30% + 价值主力 10% + 投机奇兵 5%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>9.73%</strong>，历史分位 = <strong>45%</strong> 🟠 合理区间</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">9.73%</td>
-  <td style="text-align:right;"><strong>32%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">10.55%</td>
+  <td style="text-align:left;">3782条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>32%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>45%</strong></td>
+  <td style="text-align:left;">历史上 45% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.46x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 2.59% / 亏损空间 5.69%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">8.7x</td>
+  <td style="text-align:left;">历史均值 7.6x，最高 17.6x，最低 4.8x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🔴 不参与 — 胜率或赔率不达标</strong></p>
 
 <table>
 <thead>
@@ -683,15 +1098,117 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🔴 <strong>ERP从6月11.36%高位回落至7月9.73%，风险溢价显著走低。</strong>
+  <p>趋势方向：🔴 <strong>ERP近期高位回落至9.73%，但仍处历史中位数附近。</strong>
   📐 近20日斜率信号：⚠️ <strong>情绪过热</strong> — 近20日ERP急速坠落 -1.50%（斜率 -0.076%/日）（历史分位 P2）— 市场情绪快速升温，估值泡沫化加速，警戒高位。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位32%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>高估区（45%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">3.304</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">3.381</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-2.3%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">3.176</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">3.178</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">3.213</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（45%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">3.304</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">3.176</td>
+  <td style="text-align:left;">乖离 +4.0%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">3.178</td>
+  <td style="text-align:left;">乖离 +3.9%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -705,6 +1222,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：本地关键词粗筛未命中任何近期快讯，本次跳过 AI 判断。结果为「未知」，请人工核实，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -777,36 +1298,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟢 极度低估</strong></p>
+<p><strong>泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定</strong> (30%)
+<strong>价值仓: 足够便宜的价格，40% 核心主力必须在场</strong> (40%)
+<strong>投机仓: 极低估区，保持 20% 仓位积极做T降本</strong> (20%)</p>
+
+<p>建议总仓位：<strong>90%</strong>（泡沫底仓 30% + 价值主力 40% + 投机奇兵 20%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>1.90%</strong>，历史分位 = <strong>92%</strong> 🟢 极度低估</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">1.90%</td>
-  <td style="text-align:right;"><strong>49%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">-0.19%</td>
+  <td style="text-align:left;">2811条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>49%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>92%</strong></td>
+  <td style="text-align:left;">历史上 92% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
-  <td style="text-align:right;"><strong>∞</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
+  <td style="text-align:right;"><strong>极高（已超P90极度低估区）</strong></td>
+  <td style="text-align:left;">盈利空间 3.77% / 亏损空间 -0.15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">27.6x</td>
+  <td style="text-align:left;">历史均值 43.7x，最高 119.5x，最低 21.6x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 已进入极度低估区，极佳买点</strong></p>
 
 <table>
 <thead>
@@ -844,15 +1386,113 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🔴 <strong>近两月ERP自2.19%高位回落至1.90%，呈修复走低态势。</strong>
+  <p>趋势方向：🔴 <strong>ERP自5月高点2.19%连续回落至1.90%，呈走低态势。</strong>
   📐 近20日斜率信号：🟠 <strong>估值快速恶化</strong> — 近20日ERP持续走低 -0.13%（斜率 -0.010%/日）（历史分位 P25）— 估值向贵的方向漂移，需提高警惕。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位49%），考虑止盈</p>
+<blockquote>
+  <p>ERP区间：<strong>低估区（92%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.330</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">0.362</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-8.8%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.320</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.314</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.327</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（92%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.330</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.320</td>
+  <td style="text-align:left;">乖离 +3.0%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.314</td>
+  <td style="text-align:left;">乖离 +5.1%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -866,6 +1506,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>无信号</strong></p>
 
 <p>热榜排名未见持续上升（3日内最好排名 4→9），关注度未提升，暂不构成加仓/减仓确认。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：AI相关性过滤步骤发生异常（Expecting value: line 1 column 1 (char 0)），跳过本次判断。结果为「未知」，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -938,36 +1582,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟡 合理偏低</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 0.34%（显著低估） / P90 = 0.93%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>0.21%</strong>，历史分位 = <strong>71%</strong> 🟡 合理偏低</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">0.21%</td>
-  <td style="text-align:right;"><strong>27%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">-0.08%</td>
+  <td style="text-align:left;">1938条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>27%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>71%</strong></td>
+  <td style="text-align:left;">历史上 71% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>1.52x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 1.10% / 亏损空间 0.73%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">52.0x</td>
+  <td style="text-align:left;">历史均值 41.4x，最高 68.9x，最低 25.6x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟡 可参与 — 胜率≥50% + 赔率≥1</strong></p>
 
 <table>
 <thead>
@@ -1005,15 +1667,119 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟢 <strong>ERP 7月转正至0.21%，脱离负值区间，估值压力缓解。</strong>
+  <p>趋势方向：🟢 <strong>ERP六月转负后七月反弹至0.21%，突破中位。</strong>
   📐 近20日斜率信号：🟢 <strong>估值快速改善</strong> — 近20日ERP持续走高 0.30%（斜率 0.016%/日）（历史分位 P87）— 估值快速修复，买入窗口正在打开。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位27%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（71%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-22.8%达L3，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.008</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">1.306</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-22.8%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.120</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.146</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.036</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -22.8%（≥10%）且跌破MA20=1.120，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -22.8%（≥15%）且跌破MA60=1.146，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -22.8%（≥20%），已达硬止损阈值，但未持仓，仅供观察，无需操作；若后续建仓需重新评估</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（71%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.008</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.120</td>
+  <td style="text-align:left;">乖离 -10.0%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.146</td>
+  <td style="text-align:left;">乖离 -12.1%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -1026,7 +1792,30 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <p>─ <strong>无信号</strong></p>
 
-<p>热榜排名持续上升，但当前ERP处于历史27%分位（合理区间），估值位置不够极端，不构成加仓或减仓确认。</p>
+<p>热榜排名持续上升，但当前ERP处于历史71%分位（合理区间），估值位置不够极端，不构成加仓或减仓确认。</p>
+
+<hr />
+
+<h3>基本面暴雷预警（东方财富快讯本地粗筛 + AI 二次过滤判断，需人工确认）</h3>
+
+<blockquote>
+  <p>🔍 数据源：东方财富全球财经快讯（akshare，免key）+ AI 相关性过滤 + AI 判断。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></p>
+</blockquote>
+
+<p>✅ <strong>正常</strong>（置信度：高）</p>
+
+<p>近期无重大基本面异常。</p>
+
+<p>📊 当日相关新闻：🟢正面 3 条 · 🔴负面 1 条 · ⚪中性 1 条（共5条）</p>
+
+<p><strong>摘要：</strong> AI存储芯片需求结构改善、国产大模型全球领先、算力需求旺盛均为正面信号；机构提示AI板块短期大波段上涨需时间、7月回撤后有修正空间，属阶段性谨慎，无重大基本面负面事件。</p>
+
+<p><strong>参考来源：</strong>
+  - 央视财经
+  - 申万宏源
+  - 广发策略
+  - OpenRouter
+  - 银河证券</p>
 
 <hr />
 
@@ -1099,36 +1888,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟢 极度低估</strong></p>
+<p><strong>泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定</strong> (30%)
+<strong>价值仓: 足够便宜的价格，40% 核心主力必须在场</strong> (40%)
+<strong>投机仓: 触发极端惯性下跌，30% 预备队全额出击</strong> (30%)</p>
+
+<p>建议总仓位：<strong>100%</strong>（泡沫底仓 30% + 价值主力 40% + 投机奇兵 30%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>3.30%</strong>，历史分位 = <strong>98%</strong> 🟢 极度低估</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">3.30%</td>
-  <td style="text-align:right;"><strong>70%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">1.29%</td>
+  <td style="text-align:left;">3782条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>70%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>98%</strong></td>
+  <td style="text-align:left;">历史上 98% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
-  <td style="text-align:right;"><strong>∞</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
+  <td style="text-align:right;"><strong>极高（已超P90极度低估区）</strong></td>
+  <td style="text-align:left;">盈利空间 3.57% / 亏损空间 -0.66%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">19.9x</td>
+  <td style="text-align:left;">历史均值 24.6x，最高 58.9x，最低 14.9x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 已进入极度低估区，极佳买点</strong></p>
 
 <table>
 <thead>
@@ -1166,8 +1976,112 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP近两月从3.76%回落至3.30%，但整体仍处历史高位。</strong>
+  <p>趋势方向：🟡 <strong>ERP近10个月持续走高，6月升至3.76%后7月小幅回落至3.30%。</strong>
   📐 近20日斜率信号：🟠 <strong>估值快速恶化</strong> — 近20日ERP持续走低 -0.29%（斜率 -0.017%/日）（历史分位 P16）— 估值向贵的方向漂移，需提高警惕。</p>
+</blockquote>
+
+<hr />
+
+<h3>减仓 / 清仓信号</h3>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（98%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.505</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">0.562</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-10.1%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.488</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.483</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.506</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（98%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.505</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.488</td>
+  <td style="text-align:left;">乖离 +3.5%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.483</td>
+  <td style="text-align:left;">乖离 +4.5%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
 </blockquote>
 
 <hr />
@@ -1182,6 +2096,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：本地关键词粗筛命中的新闻经AI判断均与该标的无关，本次无可用新闻进行基本面判断。结果为「未知」，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -1254,36 +2172,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟡 合理偏低</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 0.63%（显著低估） / P90 = 1.15%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>0.54%</strong>，历史分位 = <strong>71%</strong> 🟡 合理偏低</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">0.54%</td>
-  <td style="text-align:right;"><strong>37%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">-0.03%</td>
+  <td style="text-align:left;">2642条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>37%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>71%</strong></td>
+  <td style="text-align:left;">历史上 71% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>2.83x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 1.71% / 亏损空间 0.61%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">44.4x</td>
+  <td style="text-align:left;">历史均值 39.7x，最高 101.2x，最低 18.4x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 极佳机会 — 胜率&gt;60% + 赔率&gt;2</strong></p>
 
 <table>
 <thead>
@@ -1321,15 +2257,118 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP近两月回落至0.54%，仍高于历史中位数，估值风险缓释。</strong>
+  <p>趋势方向：🟡 <strong>ERP近两月从0.60%回落至0.54%，但估值仍偏高，整体区间震荡。</strong>
   📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 -0.00%（斜率 0.003%/日）（历史分位 P42）— 估值无明显趋势，保持既有仓位。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位37%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（71%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-40.0%达L3，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.838</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">1.397</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-40.0%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.809</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.879</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.980</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -40.0%（≥15%）且跌破MA60=0.879，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -40.0%（≥20%），已达硬止损阈值，但未持仓，仅供观察，无需操作；若后续建仓需重新评估</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（71%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.838</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.809</td>
+  <td style="text-align:left;">乖离 +3.5%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.879</td>
+  <td style="text-align:left;">乖离 -4.7%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -1343,6 +2382,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：AI相关性过滤步骤发生异常（429 Client Error: Unknown Status for url: https://api.qnaigc.com/v1/messages），跳过本次判断。结果为「未知」，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -1415,36 +2458,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟢 极度低估</strong></p>
+<p><strong>泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定</strong> (30%)
+<strong>价值仓: 足够便宜的价格，40% 核心主力必须在场</strong> (40%)
+<strong>投机仓: 极低估区，保持 20% 仓位积极做T降本</strong> (20%)</p>
+
+<p>建议总仓位：<strong>90%</strong>（泡沫底仓 30% + 价值主力 40% + 投机奇兵 20%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>4.79%</strong>，历史分位 = <strong>93%</strong> 🟢 极度低估</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">4.79%</td>
-  <td style="text-align:right;"><strong>51%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">2.09%</td>
+  <td style="text-align:left;">2811条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>51%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>93%</strong></td>
+  <td style="text-align:left;">历史上 93% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
-  <td style="text-align:right;"><strong>∞</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
+  <td style="text-align:right;"><strong>极高（已超P90极度低估区）</strong></td>
+  <td style="text-align:left;">盈利空间 4.77% / 亏损空间 -0.18%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">15.4x</td>
+  <td style="text-align:left;">历史均值 21.8x，最高 45.4x，最低 10.4x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 已进入极度低估区，极佳买点</strong></p>
 
 <table>
 <thead>
@@ -1482,8 +2546,116 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP维持历史高位，近两月震荡于4.6%-5.2%区间</strong>
+  <p>趋势方向：🟢 <strong>ERP持续运行于历史高位，近两月回升至4.79%</strong>
   📐 近20日斜率信号：🟢 <strong>估值快速改善</strong> — 近20日ERP持续走高 0.32%（斜率 0.013%/日）（历史分位 P77）— 估值快速修复，买入窗口正在打开。</p>
+</blockquote>
+
+<hr />
+
+<h3>减仓 / 清仓信号</h3>
+
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（93%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.107</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">1.197</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-7.5%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.113</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.084</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.094</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（93%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.107</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.113</td>
+  <td style="text-align:left;">乖离 -0.6%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.084</td>
+  <td style="text-align:left;">乖离 +2.1%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
 </blockquote>
 
 <hr />
@@ -1498,6 +2670,26 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<hr />
+
+<h3>基本面暴雷预警（东方财富快讯本地粗筛 + AI 二次过滤判断，需人工确认）</h3>
+
+<blockquote>
+  <p>🔍 数据源：东方财富全球财经快讯（akshare，免key）+ AI 相关性过滤 + AI 判断。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></p>
+</blockquote>
+
+<p>✅ <strong>正常</strong>（置信度：高）</p>
+
+<p>近期无重大基本面异常。</p>
+
+<p>📊 当日相关新闻：🟢正面 2 条 · 🔴负面 0 条 · ⚪中性 1 条（共3条）</p>
+
+<p><strong>摘要：</strong> 近期证券行业新闻整体偏正面：中信证券看好A股8月修复并建议增配非银，国金证券积极回购彰显信心，无重大财务造假、监管打压或系统性风险信号。</p>
+
+<p><strong>参考来源：</strong>
+  - 中信证券研报
+  - 国金证券公告</p>
 
 <hr />
 
@@ -1570,36 +2762,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🚨 危险泡沫</strong></p>
+<p><strong>泡沫仓: 触发极致远期溢价，考虑收割最后的筹码</strong> (5%)
+<strong>价值仓: 估值已高，价值段位应已全部离场</strong> (0%)
+<strong>投机仓: 溢价区基本只卖不买，缩减至 5% 观察</strong> (5%)</p>
+
+<p>建议总仓位：<strong>10%</strong>（泡沫底仓 5% + 价值主力 0% + 投机奇兵 5%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>-0.77%</strong>，历史分位 = <strong>8%</strong> 🚨 危险泡沫</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">-0.77%</td>
-  <td style="text-align:right;"><strong>6%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">1.57%</td>
+  <td style="text-align:left;">5522条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>6%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>8%</strong></td>
+  <td style="text-align:left;">历史上 8% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.00x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 -0.08% / 亏损空间 4.29%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">26.9x</td>
+  <td style="text-align:left;">历史均值 22.7x，最高 123.7x，最低 5.3x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🚨 已进入极度高估区，规避</strong></p>
 
 <table>
 <thead>
@@ -1637,15 +2850,113 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP持续处于负值极低分位，近两月在-0.7%附近低位震荡</strong>
+  <p>趋势方向：<strong>基本横盘</strong>，区间变化：<strong>-0.30%</strong>
   📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.04%（斜率 0.002%/日）（历史分位 P60）— 估值无明显趋势，保持既有仓位。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位6%），考虑止盈</p>
+<blockquote>
+  <p>ERP区间：<strong>高估区（8%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">2.509</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">2.625</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-4.4%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">2.519</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">2.519</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">2.422</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>高估区（8%分位，触发动作升级）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">2.509</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">2.519</td>
+  <td style="text-align:left;">乖离 -0.4%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">2.519</td>
+  <td style="text-align:left;">乖离 -0.4%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -1659,6 +2970,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。</p>
+</blockquote>
 
 <hr />
 
@@ -1806,36 +3121,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🚨 危险泡沫</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 3.05%（显著低估） / P90 = 4.54%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>-1.15%</strong>，历史分位 = <strong>14%</strong> 🔴 严重高估</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">-1.15%</td>
-  <td style="text-align:right;"><strong>14%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">1.51%</td>
+  <td style="text-align:left;">5227条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
   <td style="text-align:right;"><strong>14%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;">历史上 14% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.03x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 0.16% / 亏损空间 5.69%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">30.0x</td>
+  <td style="text-align:left;">历史均值 24.6x，最高 38.6x，最低 12.4x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🔴 不参与 — 胜率或赔率不达标</strong></p>
 
 <table>
 <thead>
@@ -1873,15 +3206,117 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>近两月ERP稳定于-1.15%，仍处历史极低分位，风险溢价持续承压。</strong>
+  <p>趋势方向：🟡 <strong>ERP近期修复至-1.15%，脱离极值但仍深度负值。</strong>
   📐 近20日斜率信号：🟢 <strong>估值快速改善</strong> — 近20日ERP持续走高 0.19%（斜率 0.009%/日）（历史分位 P74）— 估值快速修复，买入窗口正在打开。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位14%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>高估区（14%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-10.0%达L1，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.944</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">2.160</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-10.0%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.968</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.995</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.834</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -10.0%（≥10%）且跌破MA20=1.968，但未持仓，仅供观察，无需操作</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>高估区（14%分位，触发动作升级）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.944</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.968</td>
+  <td style="text-align:left;">乖离 -1.2%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.995</td>
+  <td style="text-align:left;">乖离 -2.6%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -1895,6 +3330,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。</p>
+</blockquote>
 
 <hr />
 
@@ -1971,36 +3410,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🚨 危险泡沫</strong></p>
+<p><strong>泡沫仓: 触发极致远期溢价，考虑收割最后的筹码</strong> (5%)
+<strong>价值仓: 估值已高，价值段位应已全部离场</strong> (0%)
+<strong>投机仓: 溢价区基本只卖不买，缩减至 5% 观察</strong> (5%)</p>
+
+<p>建议总仓位：<strong>10%</strong>（泡沫底仓 5% + 价值主力 0% + 投机奇兵 5%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>1.46%</strong>，历史分位 = <strong>2%</strong> 🚨 危险泡沫</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">1.46%</td>
-  <td style="text-align:right;"><strong>2%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">7.35%</td>
+  <td style="text-align:left;">1951条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
   <td style="text-align:right;"><strong>2%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;">历史上 2% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.00x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 -0.91% / 亏损空间 11.38%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">19.2x</td>
+  <td style="text-align:left;">历史均值 10.9x，最高 81.0x，最低 3.5x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🚨 已进入极度高估区，规避</strong></p>
 
 <table>
 <thead>
@@ -2038,15 +3498,117 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP近两月在1.46%极低位徘徊，风险偏好仍处高位</strong>
+  <p>趋势方向：🟡 <strong>ERP近两月低位震荡于1.5%附近，较年中明显走低。</strong>
   📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 -0.17%（斜率 -0.005%/日）（历史分位 P51）— 估值无明显趋势，保持既有仓位。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位2%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>高估区（2%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.777</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">2.039</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-12.8%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.746</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.746</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.768</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>高估区（2%分位，触发动作升级）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.777</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.746</td>
+  <td style="text-align:left;">乖离 +1.7%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.746</td>
+  <td style="text-align:left;">乖离 +1.8%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -2060,6 +3622,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。</p>
+</blockquote>
 
 <hr />
 
@@ -2136,36 +3702,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🚨 危险泡沫</strong></p>
+<p><strong>泡沫仓: 触发极致远期溢价，考虑收割最后的筹码</strong> (5%)
+<strong>价值仓: 估值已高，价值段位应已全部离场</strong> (0%)
+<strong>投机仓: 溢价区基本只卖不买，缩减至 5% 观察</strong> (5%)</p>
+
+<p>建议总仓位：<strong>10%</strong>（泡沫底仓 5% + 价值主力 0% + 投机奇兵 5%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>2.46%</strong>，历史分位 = <strong>5%</strong> 🚨 危险泡沫</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">2.46%</td>
-  <td style="text-align:right;"><strong>5%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">7.39%</td>
+  <td style="text-align:left;">1964条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
   <td style="text-align:right;"><strong>5%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;">历史上 5% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.00x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 -0.37% / 亏损空间 10.33%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">18.2x</td>
+  <td style="text-align:left;">历史均值 11.0x，最高 81.3x，最低 3.5x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🚨 已进入极度高估区，规避</strong></p>
 
 <table>
 <thead>
@@ -2203,15 +3790,117 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP在2.5%附近低位企稳，8月微升0.01个百分点。</strong>
+  <p>趋势方向：🟡 <strong>ERP在2.5%附近低位企稳，8月持平于2.46%</strong>
   📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 -0.18%（斜率 -0.006%/日）（历史分位 P51）— 估值无明显趋势，保持既有仓位。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位5%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>高估区（5%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.330</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">1.470</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-9.5%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.301</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.301</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.311</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>高估区（5%分位，触发动作升级）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.330</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.301</td>
+  <td style="text-align:left;">乖离 +2.2%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.301</td>
+  <td style="text-align:left;">乖离 +2.2%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -2225,6 +3914,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。</p>
+</blockquote>
 
 <hr />
 
@@ -2301,36 +3994,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🚨 危险泡沫</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 10.75%（显著低估） / P90 = 13.96%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>2.72%</strong>，历史分位 = <strong>2%</strong> 🚨 危险泡沫</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">2.72%</td>
-  <td style="text-align:right;"><strong>2%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">8.69%</td>
+  <td style="text-align:left;">1964条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
   <td style="text-align:right;"><strong>2%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;">历史上 2% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.00x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 -1.20% / 亏损空间 11.24%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">18.6x</td>
+  <td style="text-align:left;">历史均值 11.8x，最高 87.1x，最低 3.7x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🚨 已进入极度高估区，规避</strong></p>
 
 <table>
 <thead>
@@ -2368,15 +4079,118 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP在8月小幅回升至2.72%，但近三月整体延续低位震荡</strong>
+  <p>趋势方向：🟡 <strong>ERP近两月在2.67%-2.72%低位企稳，估值承压。</strong>
   📐 近20日斜率信号：🟡 <strong>横盘震荡</strong> — 近20日ERP变化 +0.12%（斜率 0.007%/日）（历史分位 P57）— 估值无明显趋势，保持既有仓位。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位2%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>高估区（2%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-16.3%达L2，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">2.024</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">2.418</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-16.3%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">2.104</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">2.129</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.970</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -16.3%（≥10%）且跌破MA20=2.104，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -16.3%（≥15%）且跌破MA60=2.129，但未持仓，仅供观察，无需操作</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>高估区（2%分位，触发动作升级）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">2.024</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">2.104</td>
+  <td style="text-align:left;">乖离 -3.8%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">2.129</td>
+  <td style="text-align:left;">乖离 -4.9%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -2390,6 +4204,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。</p>
+</blockquote>
 
 <hr />
 
@@ -2466,36 +4284,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟡 合理偏低</strong></p>
+<p><strong>泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定</strong> (30%)
+<strong>价值仓: 估值修复中，建议持有 30%-40% 主力仓位</strong> (35%)
+<strong>投机仓: 震荡区间，维持 10% 灵活部做T</strong> (10%)</p>
+
+<p>建议总仓位：<strong>75%</strong>（泡沫底仓 30% + 价值主力 35% + 投机奇兵 10%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>4.14%</strong>，历史分位 = <strong>65%</strong> 🟡 合理偏低</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">4.14%</td>
-  <td style="text-align:right;"><strong>49%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">3.86%</td>
+  <td style="text-align:left;">5252条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>49%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>65%</strong></td>
+  <td style="text-align:left;">历史上 65% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>1.19x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 2.29% / 亏损空间 1.92%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">17.1x</td>
+  <td style="text-align:left;">历史均值 14.7x，最高 79.6x，最低 3.4x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟡 可参与 — 胜率≥50% + 赔率≥1</strong></p>
 
 <table>
 <thead>
@@ -2533,15 +4372,117 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP近两月从4.19%微降至4.14%，仍处历史中高分位，风险溢价维持高位。</strong>
+  <p>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+0.46%</strong>
   📐 近20日斜率信号：🟢 <strong>估值快速改善</strong> — 近20日ERP持续走高 0.27%（斜率 0.015%/日）（历史分位 P85）— 估值快速修复，买入窗口正在打开。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位49%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（65%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.955</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">1.061</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-10.0%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.951</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.951</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.970</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（65%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.955</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.951</td>
+  <td style="text-align:left;">乖离 +0.4%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.951</td>
+  <td style="text-align:left;">乖离 +0.5%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -2555,6 +4496,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。</p>
+</blockquote>
 
 <hr />
 
@@ -2631,36 +4576,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟢 极度低估</strong></p>
+<p><strong>泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定</strong> (30%)
+<strong>价值仓: 足够便宜的价格，40% 核心主力必须在场</strong> (40%)
+<strong>投机仓: 极低估区，保持 20% 仓位积极做T降本</strong> (20%)</p>
+
+<p>建议总仓位：<strong>90%</strong>（泡沫底仓 30% + 价值主力 40% + 投机奇兵 20%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>1.45%</strong>，历史分位 = <strong>94%</strong> 🟢 极度低估</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">1.45%</td>
-  <td style="text-align:right;"><strong>28%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">-1.05%</td>
+  <td style="text-align:left;">1545条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>28%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>94%</strong></td>
+  <td style="text-align:left;">历史上 94% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
-  <td style="text-align:right;"><strong>∞</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
+  <td style="text-align:right;"><strong>极高（已超P90极度低估区）</strong></td>
+  <td style="text-align:left;">盈利空间 4.72% / 亏损空间 -0.12%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">31.4x</td>
+  <td style="text-align:left;">历史均值 53.4x，最高 9083.7x，最低 -11300.0x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 已进入极度低估区，极佳买点</strong></p>
 
 <table>
 <thead>
@@ -2776,9 +4742,111 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位28%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（94%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.609</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">0.752</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-19.0%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.598</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.603</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.627</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（94%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.609</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.598</td>
+  <td style="text-align:left;">乖离 +1.9%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.603</td>
+  <td style="text-align:left;">乖离 +1.0%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -2794,6 +4862,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
 
 <blockquote>
+  <p>⚠️ 基本面预警：本地关键词粗筛未命中任何近期快讯，本次跳过 AI 判断。结果为「未知」，请人工核实，不代表基本面正常。</p>
+</blockquote>
+
+<blockquote>
   <p>⚠️ 未能获取股息率数据（本地无缓存，请先调用 ensure<em>dividend</em>data_fresh()），跳过股息率估值锚分析。</p>
 </blockquote>
 
@@ -2805,36 +4877,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟢 极度低估</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = -0.50%（显著低估） / P90 = 0.06%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>0.50%</strong>，历史分位 = <strong>100%</strong> 🟢 极度低估</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">0.50%</td>
-  <td style="text-align:right;"><strong>58%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">-1.23%</td>
+  <td style="text-align:left;">3090条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>58%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>100%</strong></td>
+  <td style="text-align:left;">历史上 100% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
-  <td style="text-align:right;"><strong>∞</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
+  <td style="text-align:right;"><strong>极高（已超P90极度低估区）</strong></td>
+  <td style="text-align:left;">盈利空间 2.89% / 亏损空间 -0.45%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">45.1x</td>
+  <td style="text-align:left;">历史均值 64.1x，最高 186.0x，最低 33.0x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 已进入极度低估区，极佳买点</strong></p>
 
 <table>
 <thead>
@@ -2872,8 +4962,118 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟢 <strong>近两月ERP由负转正且持续走高，估值收缩至45倍附近。</strong>
+  <p>趋势方向：🟢 <strong>ERP近两月快速回升至0.50%，脱离负值区间。</strong>
   📐 近20日斜率信号：🚨 <strong>恐慌踩踏</strong> — 近20日ERP急速飙升 0.35%（斜率 0.019%/日）（历史分位 P95）— 市场处于恐慌抛售期，PE急速压缩，历史上往往是买点临近的强化信号，但需警惕基本面是否同步恶化。</p>
+</blockquote>
+
+<hr />
+
+<h3>减仓 / 清仓信号</h3>
+
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（100%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-31.2%达L3，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.093</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">1.588</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-31.2%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.140</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.255</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.332</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -31.2%（≥10%）且跌破MA20=1.140，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -31.2%（≥15%）且跌破MA60=1.255，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -31.2%（≥20%），已达硬止损阈值，但未持仓，仅供观察，无需操作；若后续建仓需重新评估</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（100%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.093</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.140</td>
+  <td style="text-align:left;">乖离 -4.1%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.255</td>
+  <td style="text-align:left;">乖离 -12.9%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
 </blockquote>
 
 <hr />
@@ -2888,6 +5088,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>无信号</strong></p>
 
 <p>热榜排名未见持续上升（3日内最好排名 7→8），关注度未提升，暂不构成加仓/减仓确认。</p>
+
+<blockquote>
+  <p>ℹ️ 基本面预警：本地关键词粗筛命中的新闻经AI判断均与该标的无关，本次无可用新闻进行基本面判断。结果为「未知」，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -2960,36 +5164,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟡 合理偏低</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 0.15%（显著低估） / P90 = 0.49%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>0.07%</strong>，历史分位 = <strong>70%</strong> 🟡 合理偏低</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">0.07%</td>
-  <td style="text-align:right;"><strong>29%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">-0.24%</td>
+  <td style="text-align:left;">2141条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>29%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>70%</strong></td>
+  <td style="text-align:left;">历史上 70% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>2.61x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 1.07% / 亏损空间 0.41%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">55.9x</td>
+  <td style="text-align:left;">历史均值 43.1x，最高 89.2x，最低 25.1x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 极佳机会 — 胜率&gt;60% + 赔率&gt;2</strong></p>
 
 <table>
 <thead>
@@ -3027,15 +5249,119 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟢 <strong>ERP触底回升至正值，近两月估值下修驱动风险溢价改善。</strong>
+  <p>趋势方向：🟡 <strong>ERP近两月虽从低点反弹但仍处负值，最新转正至0.07%。</strong>
   📐 近20日斜率信号：🟢 <strong>估值快速改善</strong> — 近20日ERP持续走高 0.21%（斜率 0.010%/日）（历史分位 P82）— 估值快速修复，买入窗口正在打开。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位29%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（70%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-34.5%达L3，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.605</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">0.924</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-34.5%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.620</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.679</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.743</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -34.5%（≥10%）且跌破MA20=0.620，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -34.5%（≥15%）且跌破MA60=0.679，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -34.5%（≥20%），已达硬止损阈值，但未持仓，仅供观察，无需操作；若后续建仓需重新评估</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（70%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.605</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.620</td>
+  <td style="text-align:left;">乖离 -2.4%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.679</td>
+  <td style="text-align:left;">乖离 -10.8%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -3049,6 +5375,28 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<hr />
+
+<h3>基本面暴雷预警（东方财富快讯本地粗筛 + AI 二次过滤判断，需人工确认）</h3>
+
+<blockquote>
+  <p>🔍 数据源：东方财富全球财经快讯（akshare，免key）+ AI 相关性过滤 + AI 判断。<strong>本模块仅供参考，不自动触发任何交易动作。</strong></p>
+</blockquote>
+
+<p>✅ <strong>正常</strong>（置信度：高）</p>
+
+<p>近期无重大基本面异常。</p>
+
+<p>📊 当日相关新闻：🟢正面 4 条 · 🔴负面 0 条 · ⚪中性 0 条（共4条）</p>
+
+<p><strong>摘要：</strong> 中东局势持续紧张，伊朗提升战备、美以评估对伊军事打击可能性，地缘冲突风险上升。此类消息对军工板块属于利好逻辑，不存在核心成分股财务暴雷、监管打压或系统性风险等基本面负面事件。</p>
+
+<p><strong>参考来源：</strong>
+  - 伊朗代理防长：敌方任何威胁都值得重视
+  - 美军高官称美缺乏足够军力继续保护以色列
+  - 伊朗国防部称将提升战备和威慑能力
+  - 以官员称美接近批准对伊军事打击 以方保持高度警惕</p>
 
 <hr />
 
@@ -3121,36 +5469,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟡 合理偏低</strong></p>
+<p><strong>泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定</strong> (30%)
+<strong>价值仓: 估值修复中，建议持有 30%-40% 主力仓位</strong> (35%)
+<strong>投机仓: 震荡区间，维持 10% 灵活部做T</strong> (10%)</p>
+
+<p>建议总仓位：<strong>75%</strong>（泡沫底仓 30% + 价值主力 35% + 投机奇兵 10%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>19.52%</strong>，历史分位 = <strong>70%</strong> 🟡 合理偏低</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">19.52%</td>
-  <td style="text-align:right;"><strong>36%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">10.91%</td>
+  <td style="text-align:left;">2769条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>36%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>70%</strong></td>
+  <td style="text-align:left;">历史上 70% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>1.42x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 21.55% / 亏损空间 15.23%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">4.7x</td>
+  <td style="text-align:left;">历史均值 39.3x，最高 121.5x，最低 1.6x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟡 可参与 — 胜率≥50% + 赔率≥1</strong></p>
 
 <table>
 <thead>
@@ -3188,15 +5557,17 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP近两月企稳于19%上方历史高位，风险偏好持续承压。</strong>
+  <p>趋势方向：🟢 <strong>ERP冲高回落至19.52%，仍处历史高位，风险溢价持续承压。</strong>
   📐 近20日斜率信号：🟢 <strong>估值快速改善</strong> — 近20日ERP持续走高 0.81%（斜率 0.082%/日）（历史分位 P88）— 估值快速修复，买入窗口正在打开。</p>
 </blockquote>
 
-<hr />
+<blockquote>
+  <p>⚠️ 减仓信号：无ETF价格数据，跳过。</p>
+</blockquote>
 
-<h3>📈 止盈信号</h3>
-
-<p>📈 处于高估区（分位36%），考虑止盈</p>
+<blockquote>
+  <p>⚠️ 止盈信号：无ETF价格数据，跳过。</p>
+</blockquote>
 
 <hr />
 
@@ -3210,6 +5581,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>无信号</strong></p>
 
 <p>热榜排名未见持续上升（3日内最好排名 2→5），关注度未提升，暂不构成加仓/减仓确认。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：本地关键词粗筛未命中任何近期快讯，本次跳过 AI 判断。结果为「未知」，请人工核实，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -3278,36 +5653,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟢 显著低估</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 1.21%（显著低估） / P90 = 2.05%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>1.87%</strong>，历史分位 = <strong>85%</strong> 🟢 显著低估</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">1.87%</td>
-  <td style="text-align:right;"><strong>48%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">0.07%</td>
+  <td style="text-align:left;">2879条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>48%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>85%</strong></td>
+  <td style="text-align:left;">历史上 85% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>21.54x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 3.83% / 亏损空间 0.18%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">27.9x</td>
+  <td style="text-align:left;">历史均值 39.6x，最高 121.5x，最低 14.5x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 极佳机会 — 胜率&gt;60% + 赔率&gt;2</strong></p>
 
 <table>
 <thead>
@@ -3345,15 +5738,119 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟢 <strong>ERP近两月自1.10%跃升至1.87%，估值快速回落至27.9倍。</strong>
+  <p>趋势方向：<strong>持续走高</strong>，区间变化：<strong>+1.41%</strong>
   📐 近20日斜率信号：🚨 <strong>恐慌踩踏</strong> — 近20日ERP急速飙升 0.79%（斜率 0.039%/日）（历史分位 P98）— 市场处于恐慌抛售期，PE急速压缩，历史上往往是买点临近的强化信号，但需警惕基本面是否同步恶化。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位48%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（85%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-29.2%达L3，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.633</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">2.307</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-29.2%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.704</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.914</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">1.960</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -29.2%（≥10%）且跌破MA20=1.704，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -29.2%（≥15%）且跌破MA60=1.914，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -29.2%（≥20%），已达硬止损阈值，但未持仓，仅供观察，无需操作；若后续建仓需重新评估</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（85%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.633</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.704</td>
+  <td style="text-align:left;">乖离 -4.1%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.914</td>
+  <td style="text-align:left;">乖离 -14.7%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -3367,6 +5864,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>无信号</strong></p>
 
 <p>热榜排名未见持续上升（2日内最好排名 8→9），关注度未提升，暂不构成加仓/减仓确认。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：本地关键词粗筛未命中任何近期快讯，本次跳过 AI 判断。结果为「未知」，请人工核实，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -3439,36 +5940,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟢 显著低估</strong></p>
+<p>🚨 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 3.17%（显著低估） / P90 = 4.90%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>3.55%</strong>，历史分位 = <strong>77%</strong> 🟢 显著低估</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">3.55%</td>
-  <td style="text-align:right;"><strong>54%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">0.98%</td>
+  <td style="text-align:left;">3774条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>54%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>77%</strong></td>
+  <td style="text-align:left;">历史上 77% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>3.94x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 5.29% / 亏损空间 1.34%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">19.0x</td>
+  <td style="text-align:left;">历史均值 33.6x，最高 90.5x，最低 9.4x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 极佳机会 — 胜率&gt;60% + 赔率&gt;2</strong></p>
 
 <table>
 <thead>
@@ -3506,8 +6025,113 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟢 <strong>ERP连续两月走高至3.55%，接近历史中高水位。</strong>
+  <p>趋势方向：🟢 <strong>ERP近两月触底回升至3.55%，估值吸引力显著修复。</strong>
   📐 近20日斜率信号：🟢 <strong>估值快速改善</strong> — 近20日ERP持续走高 0.26%（斜率 0.005%/日）（历史分位 P72）— 估值快速修复，买入窗口正在打开。</p>
+</blockquote>
+
+<hr />
+
+<h3>减仓 / 清仓信号</h3>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（77%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🚨 强制全清止损 — 回撤-28.3%触及硬止损线，止损优先（注：低估区但20%硬止损无豁免）</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.792</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">2.498</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-28.3%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.748</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.911</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">2.030</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - ⚠️ 回撤 -28.3%（≥15%）且跌破MA60=1.911，低估区降级处理：建议减仓至底仓（保留泡沫仓30%），而非全清
+  - 🚨 回撤 -28.3%（≥20%），触发强制止损线（注：当前为低估区，但20%是硬止损，判断失误须认错） → 全部清仓，止损优先</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（77%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">1.792</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">1.748</td>
+  <td style="text-align:left;">乖离 +2.5%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">1.911</td>
+  <td style="text-align:left;">乖离 -6.2%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
 </blockquote>
 
 <hr />
@@ -3522,6 +6146,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：发生异常（Expecting ',' delimiter: line 1 column 61 (char 60)），跳过。本次结果为「未知」，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -3594,36 +6222,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟠 合理区间</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = -0.35%（显著低估） / P90 = -0.22%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>-0.86%</strong>，历史分位 = <strong>35%</strong> 🟠 合理区间</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">-0.86%</td>
-  <td style="text-align:right;"><strong>3%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">-0.65%</td>
+  <td style="text-align:left;">515条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>3%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>35%</strong></td>
+  <td style="text-align:left;">历史上 35% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.19x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 0.12% / 亏损空间 0.65%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">117.6x</td>
+  <td style="text-align:left;">历史均值 91.4x，最高 172.2x，最低 45.6x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🔴 不参与 — 胜率或赔率不达标</strong></p>
 
 <table>
 <thead>
@@ -3661,15 +6307,119 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP年初修复后，6月骤降至-1.15%创历史新低，7月小幅反弹。</strong>
+  <p>趋势方向：🟡 <strong>ERP近两月从-1.15%快速回升至-0.86%，风险溢价边际修复。</strong>
   📐 近20日斜率信号：🚨 <strong>恐慌踩踏</strong> — 近20日ERP急速飙升 0.22%（斜率 0.012%/日）（历史分位 P92）— 市场处于恐慌抛售期，PE急速压缩，历史上往往是买点临近的强化信号，但需警惕基本面是否同步恶化。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位3%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>高估区（35%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-34.0%达L3，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">2.850</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">4.319</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-34.0%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">3.367</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">3.057</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">2.422</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -34.0%（≥10%）且跌破MA20=3.367，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -34.0%（≥15%）且跌破MA60=3.057，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -34.0%（≥20%），已达硬止损阈值，但未持仓，仅供观察，无需操作；若后续建仓需重新评估</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（35%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">2.850</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">3.367</td>
+  <td style="text-align:left;">乖离 -15.4%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">3.057</td>
+  <td style="text-align:left;">乖离 -6.8%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -3683,6 +6433,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>无信号</strong></p>
 
 <p>热榜排名未见持续上升（3日内最好排名 1→1），关注度未提升，暂不构成加仓/减仓确认。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：API返回错误（HTTP 429，已重试3次），跳过。本次结果为「未知」，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -3755,36 +6509,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟡 合理偏低</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 2.79%（显著低估） / P90 = 3.87%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>1.51%</strong>，历史分位 = <strong>60%</strong> 🟡 合理偏低</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">1.51%</td>
-  <td style="text-align:right;"><strong>17%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">1.38%</td>
+  <td style="text-align:left;">1457条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>17%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>60%</strong></td>
+  <td style="text-align:left;">历史上 60% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>1.21x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 2.87% / 亏损空间 2.36%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">31.1x</td>
+  <td style="text-align:left;">历史均值 33.8x，最高 80.8x，最低 10.3x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟡 可参与 — 胜率≥50% + 赔率≥1</strong></p>
 
 <table>
 <thead>
@@ -3822,15 +6594,117 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🔴 <strong>ERP近两月自1.90%高位回落至1.51%，估值有所修复。</strong>
+  <p>趋势方向：🔴 <strong>ERP从2026-06的1.90%回落至1.51%，估值小幅回升，风险溢价走低。</strong>
   📐 近20日斜率信号：🟠 <strong>估值快速恶化</strong> — 近20日ERP持续走低 -0.32%（斜率 -0.003%/日）（历史分位 P17）— 估值向贵的方向漂移，需提高警惕。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位17%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（60%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-31.3%达L3，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.380</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">0.553</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-31.3%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.364</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.370</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.412</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -31.3%（≥20%），已达硬止损阈值，但未持仓，仅供观察，无需操作；若后续建仓需重新评估</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（60%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.380</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.364</td>
+  <td style="text-align:left;">乖离 +4.4%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.370</td>
+  <td style="text-align:left;">乖离 +2.7%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -3844,6 +6718,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：本地关键词粗筛未命中任何近期快讯，本次跳过 AI 判断。结果为「未知」，请人工核实，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -3916,36 +6794,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟠 合理区间</strong></p>
+<p><strong>泡沫仓: 尚未达到远期目标价，底仓持有不动</strong> (30%)
+<strong>价值仓: 回到合理估值区间，开始减持主力仓位</strong> (10%)
+<strong>投机仓: 溢价区基本只卖不买，缩减至 5% 观察</strong> (5%)</p>
+
+<p>建议总仓位：<strong>45%</strong>（泡沫底仓 30% + 价值主力 10% + 投机奇兵 5%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>12.80%</strong>，历史分位 = <strong>44%</strong> 🟠 合理区间</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">12.80%</td>
-  <td style="text-align:right;"><strong>23%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">13.70%</td>
+  <td style="text-align:left;">2806条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>23%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>44%</strong></td>
+  <td style="text-align:left;">历史上 44% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.39x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 2.15% / 亏损空间 5.48%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">6.9x</td>
+  <td style="text-align:left;">历史均值 6.2x，最高 8.8x，最低 4.1x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🔴 不参与 — 胜率或赔率不达标</strong></p>
 
 <table>
 <thead>
@@ -3983,15 +6882,117 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🔴 <strong>ERP从历史高位14.40%回落至12.80%，但仍高于中位数13.26%。</strong>
+  <p>趋势方向：🔴 <strong>ERP于6月触及峰值后7月回落至12.80%，但仍高于近10月中枢。</strong>
   📐 近20日斜率信号：⚠️ <strong>情绪过热</strong> — 近20日ERP急速坠落 -1.58%（斜率 -0.075%/日）（历史分位 P2）— 市场情绪快速升温，估值泡沫化加速，警戒高位。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位23%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>高估区（44%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.836</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">0.840</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-0.5%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.793</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.781</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.786</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（44%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.836</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.793</td>
+  <td style="text-align:left;">乖离 +5.4%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.781</td>
+  <td style="text-align:left;">乖离 +7.1%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -4005,6 +7006,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：AI相关性过滤步骤发生异常（Expecting value: line 1 column 1 (char 0)），跳过本次判断。结果为「未知」，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -4077,36 +7082,54 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟢 显著低估</strong></p>
+<p>🔎 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+低估位置参考：P75 = 1.39%（显著低估） / P90 = 2.53%（极度低估）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>1.72%</strong>，历史分位 = <strong>81%</strong> 🟢 显著低估</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">1.72%</td>
-  <td style="text-align:right;"><strong>45%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">0.70%</td>
+  <td style="text-align:left;">2825条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>45%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>81%</strong></td>
+  <td style="text-align:left;">历史上 81% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>3.35x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 2.74% / 亏损空间 0.82%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">29.1x</td>
+  <td style="text-align:left;">历史均值 33.5x，最高 91.6x，最低 14.1x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🟢 极佳机会 — 胜率&gt;60% + 赔率&gt;2</strong></p>
 
 <table>
 <thead>
@@ -4144,15 +7167,118 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🟡 <strong>ERP先升后小幅回落，近两月处于历史高位区间。</strong>
+  <p>趋势方向：🟡 <strong>估值近月触底反弹，ERP高位小幅回落至1.72%</strong>
   📐 近20日斜率信号：🟠 <strong>估值快速恶化</strong> — 近20日ERP持续走低 -0.09%（斜率 -0.005%/日）（历史分位 P33）— 估值向贵的方向漂移，需提高警惕。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位45%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>低估区（81%分位，ERP≥P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>🔎 未持仓观察 — 回撤-30.8%达L3，无需操作</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.579</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">0.837</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-30.8%</strong></td>
+  <td style="text-align:left;">🔴 ≥20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.551</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.579</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.650</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 🔎 回撤 -30.8%（≥15%）且跌破MA60=0.579，但未持仓，仅供观察，无需操作
+  - 🔎 回撤 -30.8%（≥20%），已达硬止损阈值，但未持仓，仅供观察，无需操作；若后续建仓需重新评估</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（81%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.579</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.551</td>
+  <td style="text-align:left;">乖离 +5.0%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.579</td>
+  <td style="text-align:left;">乖离 -0.1%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -4166,6 +7292,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：本地关键词粗筛未命中任何近期快讯，本次跳过 AI 判断。结果为「未知」，请人工核实，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
@@ -4238,36 +7368,57 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 
 <hr />
 
-<h3>核心估值决策</h3>
+<h3>仓位建议</h3>
 
-<p><strong>🟠 合理区间</strong></p>
+<p><strong>泡沫仓: 尚未达到远期目标价，底仓持有不动</strong> (30%)
+<strong>价值仓: 回到合理估值区间，开始减持主力仓位</strong> (10%)
+<strong>投机仓: 溢价区基本只卖不买，缩减至 5% 观察</strong> (5%)</p>
+
+<p>建议总仓位：<strong>45%</strong>（泡沫底仓 30% + 价值主力 10% + 投机奇兵 5%）</p>
+
+<hr />
+
+<h3>核心估值决策（基于 ERP 框架）</h3>
+
+<blockquote>
+  <p>胜率 = ERP历史分位（越高代表当前越便宜）
+  赔率 = ERP回落盈利空间（当前ERP − P10） / ERP走高亏损空间（P90 − 当前ERP）
+  当前 ERP = <strong>3.19%</strong>，历史分位 = <strong>32%</strong> 🟠 合理区间</p>
+</blockquote>
 
 <table>
 <thead>
 <tr>
   <th style="text-align:left;">指标</th>
-  <th style="text-align:right;">当前值</th>
-  <th style="text-align:right;">历史分位</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">说明</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-  <td style="text-align:left;">ERP</td>
-  <td style="text-align:right;">3.19%</td>
-  <td style="text-align:right;"><strong>4%</strong></td>
+  <td style="text-align:left;">历史均值</td>
+  <td style="text-align:right;">3.71%</td>
+  <td style="text-align:left;">583条样本</td>
 </tr>
 <tr>
-  <td style="text-align:left;">胜率</td>
-  <td style="text-align:right;"><strong>4%</strong></td>
-  <td style="text-align:right;">（历史该位置胜率）</td>
+  <td style="text-align:left;"><strong>胜率</strong></td>
+  <td style="text-align:right;"><strong>32%</strong></td>
+  <td style="text-align:left;">历史上 32% 的时间比现在更贵（ERP更低）</td>
 </tr>
 <tr>
-  <td style="text-align:left;">赔率</td>
+  <td style="text-align:left;"><strong>赔率（盈亏比）</strong></td>
   <td style="text-align:right;"><strong>0.23x</strong></td>
-  <td style="text-align:right;">（盈利/亏损比）</td>
+  <td style="text-align:left;">盈利空间 0.38% / 亏损空间 1.65%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">当前 PE</td>
+  <td style="text-align:right;">20.4x</td>
+  <td style="text-align:left;">历史均值 18.1x，最高 22.5x，最低 14.6x</td>
 </tr>
 </tbody>
 </table>
+
+<p><strong>综合评级：🔴 不参与 — 胜率或赔率不达标</strong></p>
 
 <table>
 <thead>
@@ -4305,15 +7456,117 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <h3>近10月 ERP 趋势</h3>
 
 <blockquote>
-  <p>趋势方向：🔴 <strong>ERP 加速下行接近历史中位，风险溢价快速收窄</strong>
+  <p>趋势方向：🔴 <strong>ERP由5月3.26%降至7月3.19%，估值承压持续走低。</strong>
   📐 近20日斜率信号：🟠 <strong>估值快速恶化</strong> — 近20日ERP持续走低 -0.33%（斜率 -0.017%/日）（历史分位 P23）— 估值向贵的方向漂移，需提高警惕。</p>
 </blockquote>
 
 <hr />
 
-<h3>📈 止盈信号</h3>
+<h3>减仓 / 清仓信号</h3>
 
-<p>📈 处于高估区（分位4%），考虑止盈</p>
+<blockquote>
+  <p>🔎 当前标记为<strong>未持仓</strong>：以下所有信号仅为观察提示，不代表需要操作。</p>
+</blockquote>
+
+<blockquote>
+  <p>ERP区间：<strong>高估区（32%分位，ERP<P50）</strong>
+  阈值：L1 回撤10%+MA20 → 减1/3 · L2 回撤15%+MA60 → 减至底仓 · L3 回撤20% → 全清（硬止损）
+  低估区时L1/L2降级处理，L3硬止损无论何种情况均执行</p>
+</blockquote>
+
+<p>✅ 无减仓信号 — 价格结构健康，持仓不动</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.826</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">近期最高（120日内）</td>
+  <td style="text-align:right;">0.963</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">从高点回撤</td>
+  <td style="text-align:right;"><strong>-14.2%</strong></td>
+  <td style="text-align:left;">✅ &lt;20%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.814</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.815</td>
+  <td style="text-align:left;">✅ 站上</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA120</td>
+  <td style="text-align:right;">0.855</td>
+  <td style="text-align:left;">🔴 跌破</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>触发条件：</strong>
+  - 无</p>
+
+<blockquote>
+  <p>⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。</p>
+</blockquote>
+
+<hr />
+
+<h3>止盈信号</h3>
+
+<blockquote>
+  <p>估值区间：<strong>非高估区（32%分位）</strong>
+  阈值：L1 乖离MA20≥15% → 止盈1/3 · L2 乖离MA60≥25% → 止盈至底仓 · L3 乖离MA20≥40% → 止盈过半（硬性）
+  高估区时L1/L2动作升一级，L3无论估值区间均执行</p>
+</blockquote>
+
+<p>✅ 无止盈信号 — 未出现明显乖离过热</p>
+
+<table>
+<thead>
+<tr>
+  <th style="text-align:left;">指标</th>
+  <th style="text-align:right;">数值</th>
+  <th style="text-align:left;">状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td style="text-align:left;">当前价格</td>
+  <td style="text-align:right;">0.826</td>
+  <td style="text-align:left;">─</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA20</td>
+  <td style="text-align:right;">0.814</td>
+  <td style="text-align:left;">乖离 +1.5%｜✅ &lt;15%</td>
+</tr>
+<tr>
+  <td style="text-align:left;">MA60</td>
+  <td style="text-align:right;">0.815</td>
+  <td style="text-align:left;">乖离 +1.3%｜✅ &lt;25%</td>
+</tr>
+</tbody>
+</table>
+
+<blockquote>
+  <p>💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。</p>
+</blockquote>
 
 <hr />
 
@@ -4327,6 +7580,10 @@ code { background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }
 <p>─ <strong>数据不足</strong></p>
 
 <p>热榜数据不足（样本天数过少或该行业近期未上榜），跳过人气信号判断。</p>
+
+<blockquote>
+  <p>⚠️ 基本面预警：本地关键词粗筛未命中任何近期快讯，本次跳过 AI 判断。结果为「未知」，请人工核实，不代表基本面正常。</p>
+</blockquote>
 
 <hr />
 
