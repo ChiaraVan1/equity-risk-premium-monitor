@@ -38,35 +38,53 @@
 ## 整体执行流程
 
 ```
-配置层（全局，被所有模块读取）
-├─ config.json          → 指数/ETF/债券代码等原始配置
-└─ config_loader.py      → 解析 config.json，导出 ALL_INDICES / BOND_YIELD_CONFIG /
-                           HOLDING_CATEGORY / INDICES_LIST / HSTECH_TICKERS 等
-                           （避免各脚本重复维护配置）
-        ↓ 被下方所有脚本 import
+配置层
+├─ config.json
+├─ industry_map.json
+└─ config_loader.py → ALL_INDICES / BOND_YIELD_CONFIG / HOLDING_CATEGORY / INDICES_LIST / HSTECH_TICKERS
+        ↓
 
-数据生产层
+数据生产层（fetch/）
 ├─ simple_etf_metrics.py           → data/simple_etf_metrics.csv
-├─ fetch_bond_yield.py             → data/erp_*.csv（全量/首次抓取，读 config_loader.BOND_YIELD_CONFIG）
-├─ fetch_bond_yield_incremental.py → data/erp_*.csv（日常增量更新，同上配置）
+├─ fetch_bond_yield.py             → data/erp_*.csv（全量）
+├─ fetch_bond_yield_incremental.py → data/erp_*.csv（增量）
 ├─ fetch_ps.py                     → data/ps_HSTECH.csv
-├─ dividend_yield.py                → data/dividend_yield.csv
-└─ popularity_signal.py             → 雪球热榜人气信号
-                                      （依赖 industry_map.json 做行业映射）
-        ↓ 汇聚
-prepare_all_data.py（聚合所有 CSV，读取 config_loader 配置）
-        ↓ 传递
+└─ dividend_yield_fetch.py         → data/dividend_yield/dyr_*.csv
+        ↓
+
+prepare_all_data.py（聚合所有 CSV，subprocess 跑 fetch/ 脚本 + import ensure_dividend_data_fresh）
+        ↓
+
 分析层（analysis/）
 ├─ valuation.py
 ├─ risk.py
 ├─ trend.py
-├─ sentiment.py
-└─ etf_quality.py
-        ↓ 生成
+├─ sentiment.py           （调用 popularity_signal.py）
+├─ etf_quality.py
+├─ dividend_yield_analysis.py
+└─ popularity_signal.py
+        ↓
+
+analyze_and_suggest(某个code)
+  ├─ build_shiller_block()            valuation.py
+  ├─ build_unified_valuation_block()  valuation.py
+  ├─ build_trend_block()              trend.py
+  ├─ compute_exit_signal_summary()    risk.py
+  ├─ build_exit_signal_block()        risk.py
+  ├─ compute_profit_signal_summary()  risk.py
+  ├─ build_profit_signal_block()      risk.py
+  ├─ compute_range_drawdown_rebound() risk.py
+  ├─ build_sentiment_block()          sentiment.py
+  ├─ build_dividend_yield_block()     dividend_yield_analysis.py
+  └─ build_etf_quality_block()        etf_quality.py
+        ↓ 拼成单个标的的 Markdown
+
 报告层（report/）
-└─ markdown.py → HTML
-        ↓ 调度
-erp_position.py（主入口）
+└─ markdown.py → build_summary_block()（仪表盘）+ markdown_to_html() → HTML
+                 + save_html_report() / send_to_wechat()
+        ↓
+
+erp_position.py（主入口，根目录）
 ```
 
 **首次使用**须先跑全量脚本 `fetch_bond_yield.py` 建立历史数据，之后每日跑增量脚本即可。
