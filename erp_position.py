@@ -177,10 +177,24 @@ if __name__ == "__main__":
     if report_list:
         date_str = datetime.now().strftime("%Y-%m-%d")
         summary_html = build_summary_block(summary_list, output_format="html")
-        full_html = summary_html + "\n" + LEGEND_BLOCK + "\n".join(report_list)
+        full_md = summary_html + "\n" + LEGEND_BLOCK + "\n".join(report_list)
 
-        save_html_report(full_html, date_str)
-        send_to_wechat(full_html, date_str)
-        print(f"\n✅ {date_str} 报告已生成并推送")
+        # docs/report.html 照常本地生成——即使是预览模式也生成没关系，
+        # 因为 gh-pages 部署那一步在 workflow 里已经用
+        # `if: github.event.inputs.dry_run != 'true'` 挡住了，不会真的发布出去。
+        save_html_report(full_md, date_str)
+
+        dry_run = os.getenv("DRY_RUN", "").strip().lower() == "true"
+        if dry_run:
+            # 预览模式：不推真实微信，而是把完整 markdown 写到
+            # output_preview.md，配合 workflow 里的 actions/upload-artifact
+            # 步骤（path: output_preview.md）下载查看，方便验证改动对不对
+            # 再决定要不要真正跑一次正式（非 dry_run）流程。
+            with open("output_preview.md", "w", encoding="utf-8") as f:
+                f.write(full_md)
+            print(f"\n🔎 预览模式（DRY_RUN=true）：已生成 output_preview.md，未推送微信")
+        else:
+            send_to_wechat(full_md, date_str)
+            print(f"\n✅ {date_str} 报告已生成并推送")
     else:
         print("\n⚠️ 未生成任何报告")
