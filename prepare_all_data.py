@@ -14,7 +14,7 @@ import numpy as np
 
 from config_loader import HOLDING_CATEGORY, FUNDAMENTAL_KEYWORDS, INDICES_LIST
 from analysis.etf_quality import load_etf_metrics
-from dividend_yield import ensure_dividend_data_fresh
+from dividend_yield_fetch import ensure_dividend_data_fresh
 
 # ══════════════════════════════════════════════════════════════════════
 #  Shiller CAPE 长期回报锚模块
@@ -151,7 +151,7 @@ def prepare_all_data():
         ("simple_etf_metrics.py", "ETF 指标数据"),
         ("fetch_bond_yield_incremental.py", "国债 PE 增量数据"),
         ("fetch_ps.py", "HSTECH PS/PSY 数据"),
-        ("dividend_yield.py", "股息率数据"),
+        ("dividend_yield_analysis.py", "股息率数据"),  # 拆分后 __main__ 搬到这个文件
     ]
 
     for script, desc in scripts:
