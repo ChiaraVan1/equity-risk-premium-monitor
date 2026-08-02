@@ -112,6 +112,17 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     # 布尔均值计算受影响——这也是为什么此前"胜率"和"ERP历史分位"两个数字一起错，
     # 但估值分档阈值本身是对的。
     erp_series = df.set_index('Date')['ERP'].dropna()
+
+    # 【2026-08-02 恢复】欧美日锚定区间：SPY/QQQ/EWQ/EWG/EWJ 的早期历史PE
+    # 是用"今日值 × 与SPY的比值"反推估算出来的（不是真实数据），如果让分位/
+    # 胜率计算把这段估算历史也算进去，会得到失真的分位。原版做法是：这几个
+    # 标的只用 2022-01-01 之后的真实数据段作为分位锚（样本量不足30条时退回
+    # 全量，避免样本太少反而更不可靠）。
+    if code in ('EWQ', 'EWG', 'EWJ', 'SPY', 'QQQ'):
+        anchor = df[df['Date'] >= pd.Timestamp('2022-01-01')].set_index('Date')['ERP'].dropna()
+        if len(anchor) >= 30:
+            erp_series = anchor
+
     current_erp = erp_series.iloc[-1]
     quantiles = {
         'P10': erp_series.quantile(0.10),
