@@ -31,15 +31,17 @@ MAX_WORKERS = 5  # 并发线程数，遇到限流可调小
 
 # 新浪行情 symbol 前缀：上交所 sh，深交所 sz
 def _sina_symbol(etf_code: str) -> str:
-    if etf_code.startswith(('51', '58', '56', '50', '52', '00')):
-        return 'sh' + etf_code
-    return 'sz' + etf_code
+    code = etf_code.split('.')[0]  # 兼容 config.json 里带 .SH/.SZ 后缀的 etf_code
+    if code.startswith(('51', '58', '56', '50', '52', '00')):
+        return 'sh' + code
+    return 'sz' + code
 
 # ts_code 后缀（兼容下游）
 def _ts_code(etf_code: str) -> str:
-    if etf_code.startswith(('51', '58', '56', '50', '52', '00')):
-        return etf_code + '.SH'
-    return etf_code + '.SZ'
+    code = etf_code.split('.')[0]
+    if code.startswith(('51', '58', '56', '50', '52', '00')):
+        return code + '.SH'
+    return code + '.SZ'
 
 
 def _empty_record(erp_code, etf_code):
@@ -98,7 +100,7 @@ def fetch_etf_price(etf_code: str) -> pd.DataFrame | None:
 
 def fetch_etf_nav(etf_code: str, start_str: str, end_str: str) -> pd.DataFrame | None:
     try:
-        df = ak.fund_etf_fund_info_em(fund=etf_code, start_date=start_str, end_date=end_str)
+        df = ak.fund_etf_fund_info_em(fund=etf_code.split('.')[0], start_date=start_str, end_date=end_str)
         if df is None or df.empty:
             return None
         df = df.rename(columns={'净值日期': 'nav_date', '单位净值': 'unit_nav'})
