@@ -7,6 +7,7 @@ import requests
 import akshare as ak
 
 from etf_metrics import load_etf_metrics, build_etf_metrics_block, ERP_TO_ETF
+from dividend_yield import ensure_dividend_data_fresh, build_dividend_yield_block
 from popularity_signal import build_popularity_block, compute_popularity_confirmation
 
 # ══════════════════════════════════════════════════════════════════════
@@ -2126,6 +2127,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
     exit_block_final = exit_block
     etf_block        = build_etf_ai_interpretation(code, name, etf_df)
     shiller_block    = build_shiller_block(code)
+    dividend_block   = build_dividend_yield_block(code)
 
     if exit_summary["level"] > 0:
         position_block = f"""
@@ -2155,7 +2157,7 @@ def analyze_and_suggest(code, name, etf_df=None, summary_list=None):
 建议总仓位：**{total_pct}%**（泡沫底仓 {b_pct}% + 价值主力 {v_pct}% + 投机奇兵 {t_pct}%）
 """
 
-    md = f"""{header_block}{position_block}{unified_block}{trend_block}{exit_block_final}{profit_block}{popularity_block}{fundamental_block}{etf_block}{shiller_block}"""
+    md = f"""{header_block}{position_block}{unified_block}{trend_block}{exit_block_final}{profit_block}{popularity_block}{fundamental_block}{etf_block}{shiller_block}{dividend_block}"""
     print(md)
     return md
 
@@ -2170,6 +2172,8 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"⚠️ ETF 指标加载意外失败：{e}，主报告继续运行。")
         _etf_df = None
+
+    ensure_dividend_data_fresh()  # 股息率数据：本地缓存存在且未超7天则跳过，不消耗API配额
 
     indices = [
         ("000300", "沪深300"),
