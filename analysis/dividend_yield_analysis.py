@@ -7,11 +7,22 @@ dividend_yield_analysis.py
 【2026-08-02 拆分说明】本文件是从 dividend_yield.py 原样拆分出来的，只做了
 "搬家"，函数体没有任何改动，仅把对本地缓存的读取从"文件内直接调用"改成
 "import dividend_yield_fetch._load_cache"。
+【2026-08-02 目录重组说明】本文件从仓库根目录挪到了 analysis/ 下。
+它会被 prepare_all_data.py 以 `python analysis/dividend_yield_analysis.py`
+子进程方式直接运行（见该文件里的 scripts 列表），子进程运行时 Python 只会把
+"脚本自己所在目录"(analysis/) 加进 sys.path，不会自动带上仓库根目录——
+下面这段 sys.path 手动把仓库根目录加回去，否则 `from config_loader import`
+会在子进程模式下报 ModuleNotFoundError（但被 erp_position.py 直接 import 时
+不受影响，因为那种情况下 sys.path[0] 本来就是仓库根目录）。
 ──────────────────────────────────────────────────────────────────────────────
 """
 
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from config_loader import DIVIDEND_INDEX_CODES, YFINANCE_TICKERS
-from dividend_yield_fetch import _load_cache
+from fetch.dividend_yield_fetch import _load_cache
 
 _ZONE_THRESHOLDS = [
     (0.90, "🟢 股息率历史罕见地高"),
@@ -123,7 +134,7 @@ if __name__ == "__main__":
 
     # 从config_loader获取所有指数
     from config_loader import INDICES_LIST, get_all_codes
-    from dividend_yield_fetch import ensure_dividend_data_fresh
+    from fetch.dividend_yield_fetch import ensure_dividend_data_fresh
 
     # 更新所有指数的数据（A股 + yfinance）
     ensure_dividend_data_fresh()

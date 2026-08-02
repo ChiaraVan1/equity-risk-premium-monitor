@@ -1,6 +1,19 @@
 """
 analysis/sentiment.py
 情绪分析模块：热度信号、基本面预警（东方财富快讯 + AI 两阶段判断）
+
+【2026-08-02 恢复说明】
+build_fundamental_alert_block() 在重构中被替换成了纯本地关键词计数的桩函数——
+完全没有调用 AI，也没有"正常/关注/疑似暴雷"三档判断、置信度、摘要、逐条新闻
+正负面分类、宽基指数跳过判定，等于砍掉了 README 里描述的整套
+"本地粗筛 → AI相关性过滤 → AI最终判断"两阶段AI管道（全文件唯一调用AI做基本面
+判断的模块）。
+
+现在从重构前原始 erp_position.py（commit e1b472e，857-1064行 + 相关API重试
+辅助函数）完整取回，只做了一处架构适配：旧版内部自己拉取/缓存东方财富快讯
+（_fetch_em_news_df 全局缓存），新版由 prepare_all_data.py 统一拉取一次后
+通过 news_df 参数传入所有标的复用，避免21个标的各打一次接口；本文件内的
+_em_news_search 相应改为在传入的 news_df 里做本地关键词匹配，而不是自己发请求。
 """
 import os
 import json
@@ -8,7 +21,7 @@ import time
 
 import requests
 
-from popularity_signal import build_popularity_block, compute_popularity_confirmation
+from analysis.popularity_signal import build_popularity_block, compute_popularity_confirmation
 from config_loader import FUNDAMENTAL_KEYWORDS
 
 # ══════════════════════════════════════════════════════════════════════
