@@ -20,7 +20,7 @@ from analysis.trend import compute_erp_slope_signal, build_trend_block
 from analysis.sentiment import build_sentiment_block
 from analysis.utils import (check_metric_freshness, build_freshness_note, generate_action_sentence,
                              _format_win_odds, _format_range, safe_action_markers)
-from report.markdown import build_summary_block, build_etf_ai_interpretation, save_html_report, send_to_wechat, LEGEND_BLOCK
+from report.markdown import build_summary_block, save_html_report, send_to_wechat, LEGEND_BLOCK
 from dividend_yield import build_dividend_yield_block
 from popularity_signal import build_popularity_block, compute_popularity_confirmation
 from analysis.etf_quality import build_etf_quality_block
@@ -129,7 +129,7 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     dividend_block = build_dividend_yield_block(code)
 
     etf_df = prepared_data.get("etf_df")
-    etf_block = build_etf_ai_interpretation(code, name, etf_df)
+    etf_block = build_etf_quality_block(code, etf_df)
 
     md = f"""{header_block}{unified_block}{trend_block}{exit_block}{profit_block}{popularity_block}{dividend_block}{etf_block}{shiller_block}"""
 
