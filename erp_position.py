@@ -9,6 +9,7 @@ import akshare as ak
 from etf_metrics import load_etf_metrics, build_etf_metrics_block, ERP_TO_ETF
 from dividend_yield import ensure_dividend_data_fresh, build_dividend_yield_block
 from popularity_signal import build_popularity_block, compute_popularity_confirmation
+from config_loader import HOLDING_CATEGORY, FUNDAMENTAL_KEYWORDS, INDICES_LIST
 
 # ══════════════════════════════════════════════════════════════════════
 #  常量 & 配置
@@ -853,36 +854,6 @@ def _em_news_search(keywords: list[str], max_results: int = 8) -> list[dict]:
         })
     return results
 
-
-def _fundamental_keywords() -> dict:
-    """
-    本地关键词粗筛词表，仅覆盖行业/主题类指数（宽基/国别指数走 _SKIP_FUNDAMENTAL_CODES
-    直接跳过，不需要在此列出）。每个标的的关键词同时包含"标的核心词"和"风险类词"，
-    粗筛时只要任一关键词命中即可（粗筛允许假阳性，交给 AI 二次过滤）。
-    """
-    return {
-        "000922": ["红利", "分红", "高股息"],
-        "000015": ["红利", "分红", "高股息"],
-        "399989": ["医药", "医疗", "集采", "药监", "创新药"],
-        "931071": ["人工智能", "AI", "大模型", "算力"],
-        "000069": ["消费", "零售", "餐饮"],
-        "930781": ["影视", "票房", "广电", "传媒"],
-        "HSTECH": ["恒生科技", "互联网", "港股科技", "反垄断"],
-        "399967": ["军工", "国防", "军贸", "武器装备"],
-        "931066": ["军工", "国防", "军贸", "武器装备"],
-        "930794": ["中美互联网", "中概股", "互联网", "中美关系"],
-        "930598": ["稀土", "出口管制", "稀有金属"],
-        "000819": ["有色金属", "铜价", "铝价", "锂", "稀有金属"],
-        "950125": ["半导体", "芯片", "半导体设备", "半导体材料", "国产替代"],
-        "399975": ["证券", "券商", "两融", "投行", "IPO"],
-        "931637": ["港股通互联网", "互联网", "中概股", "港股科技"],
-        "399986": ["银行", "降准", "LPR", "净息差", "不良率"],
-        "930633": ["旅游"],
-        "931946": ["猪价", "生猪", "养殖", "禽流感", "疫病"],
-        
-    }
-
-
 def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
     """基本面暴雷预警：宽基跳过→关键词粗筛→AI相关性过滤→AI暴雷判断。全文件唯一调用AI的模块。"""
     _empty = {"alert_level": "─", "confidence": "─", "summary": ""}
@@ -893,8 +864,9 @@ def build_fundamental_alert_block(code: str, name: str) -> tuple[dict, str]:
             "\n> ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，"
             "本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。\n",
         )
-
-    keywords = _fundamental_keywords().get(code)
+        
+    keywords = FUNDAMENTAL_KEYWORDS.get(code, [])
+    
     if not keywords:
         return _empty, ""
 
@@ -1289,41 +1261,6 @@ def build_trend_block(df, name, erp_series, code, quantiles):
 # ══════════════════════════════════════════════════════════════════════
 #  仪表盘 & 图例
 # ══════════════════════════════════════════════════════════════════════
-
-# 持仓标记：True = 我持有该标的对应的ETF/指数，仅用于在仪表盘显示📌徽章
-# 及生成「我的持仓·减仓信号」置顶区域。不再承载分类文字。
-HOLDING_CATEGORY = {
-    "000300": True,
-    "000688": False,
-    "000922": False,
-    "000015": False,
-    "399989": True,
-    "931071": False,
-    "000069": True,
-    "930781": False,
-    "SPY":    True,
-    "QQQ":    False,
-    "EWQ":    False,
-    "EWG":    False,
-    "EWJ":    False,
-    "EEM":    False,
-    "HSTECH": False,
-    "399967": False,
-    "931066": False,
-    "930794": False,
-    "930598": False,
-    "000819": True,   # 有色金属
-    "950125": False,   # 半导体材料设备，不再持仓
-    "399975": False,
-    "931637": False,
-    "399986": False,
-    "930633": False,
-    "000989": False,
-    "931139": False,
-    "931946": False,
-    "980032": False,  #新能电池
-}
-
 
 def compute_range_drawdown_rebound(erp_code: str, lookback: int = 120) -> dict:
     """120天窗口内：峰值→峰值之后的谷值回撤 + 谷值→现在反弹。与止损模块的_load_etf_price_series共用同一份价格数据，
@@ -2175,34 +2112,7 @@ if __name__ == "__main__":
 
     ensure_dividend_data_fresh()  # 股息率数据：本地缓存存在且未超7天则跳过，不消耗API配额
 
-    indices = [
-        ("000300", "沪深300"),
-        ("000688", "科创50"),
-        ("000922", "中证红利"),
-        ("000015", "上证红利"),
-        ("399989", "中证医疗"),
-        ("931071", "人工智能"),
-        ("000069", "消费80"),
-        ("930781", "中证影视"),
-        ("399975", "证券公司"),
-        ("SPY",    "S&P 500"),
-        ("QQQ",    "Nasdaq 100"),
-        ("EWQ",    "MSCI France"),
-        ("EWG",    "MSCI Germany"),
-        ("EWJ",    "MSCI Japan"),
-        ("EEM",    "MSCI Emerging"),
-        ("HSTECH", "恒生科技指数"),
-        ("399967", "中证军工"),
-        ("931066", "军工龙头"),
-        ("930794", "中美互联网"),
-        ("930598", "稀土产业"),
-        ("000819", "有色金属"),
-        ("950125", "半导体材料设备"),
-        ("931637", "港股通互联网"),
-        ("399986", "中证银行"),
-        ("930633", "中证旅游"),    
-        ("980032", "新能电池"),
-    ]
+    indices = INDICES_LIST
 
     summary_list = []
     report_list  = []
