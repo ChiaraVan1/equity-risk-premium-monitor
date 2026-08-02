@@ -1,25 +1,13 @@
 """
 report/markdown.py
 报告生成模块：决策仪表盘、HTML生成、微信推送、报告保存
-
-【2026-08-02 恢复说明】
-build_summary_block()（决策仪表盘）在重构中被重写成了简化版，丢失了：
-  - 「🚨 需要处理」置顶区的正确判定（原版：持仓且触发止损 或 触发止盈 才算"需要处理"，
-    而不是"仅持仓且L3止损"这一种情况）
-  - 未持仓但价格结构已触线的标的，在正常估值分组里补一行🔎观察提示（不因未持仓而整条消失）
-  - 数据新鲜度预警区块
-  - HTML表格布局（原版 output_format="html" 时输出 <table>，重写版忽略了这个参数，
-    永远输出markdown bullet列表）
-现在照原逻辑恢复，字段名适配当前 erp_position.py 里 summary_list 的结构
-（如 holding / position{bubble,value,spec,total} / win_odds_str / range_str /
-action_sentence 等，这些是当前architecture已有的字段，直接复用，不重复计算）。
 """
+
 import os
 import requests
 from datetime import datetime
 import markdown2
 from dividend_yield import build_dividend_yield_block
-from analysis.etf_quality import build_etf_quality_block
 
 LEGEND_BLOCK = """
 ---
@@ -224,14 +212,6 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                         )
         table_html = '<table class="dashboard-table">\n' + "\n".join(rows_html) + "\n</table>"
         return f"{header}\n{legend}\n\n{table_html}\n\n---\n"
-
-
-def build_etf_ai_interpretation(code: str, name: str, etf_df) -> str:
-    """生成ETF解释块。"""
-    if etf_df is None:
-        return ""
-
-    return build_etf_quality_block(code, etf_df)
 
 
 def markdown_to_html(md_text: str, date_str: str) -> str:
