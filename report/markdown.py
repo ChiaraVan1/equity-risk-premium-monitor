@@ -7,7 +7,7 @@ import requests
 from datetime import datetime
 import markdown2
 from dividend_yield import build_dividend_yield_block
-from etf_metrics import build_etf_metrics_block
+from analysis.etf_quality import build_etf_quality_block
 
 
 LEGEND_BLOCK = """
@@ -68,7 +68,7 @@ def build_etf_ai_interpretation(code: str, name: str, etf_df) -> str:
     if etf_df is None:
         return ""
 
-    return build_etf_metrics_block(code, etf_df)
+    return build_etf_quality_block(code, etf_df)
 
 
 def markdown_to_html(md_text: str, date_str: str) -> str:
