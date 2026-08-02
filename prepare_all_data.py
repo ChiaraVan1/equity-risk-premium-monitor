@@ -4,6 +4,8 @@ prepare_all_data.py
 在 erp_position.py 运行前调用，确保所有分析所需的数据都已就绪
 """
 import os
+import sys
+import subprocess
 import time
 from datetime import datetime
 
@@ -11,7 +13,7 @@ import pandas as pd
 import numpy as np
 
 from config_loader import HOLDING_CATEGORY, FUNDAMENTAL_KEYWORDS, INDICES_LIST
-from etf_metrics import load_etf_metrics
+from analysis.etf_quality import load_etf_metrics
 from dividend_yield import ensure_dividend_data_fresh
 
 # ══════════════════════════════════════════════════════════════════════
@@ -141,6 +143,42 @@ def prepare_all_data():
     print("\n" + "=" * 60)
     print("📊 数据准备阶段")
     print("=" * 60)
+
+    # ⚙️  第1步：运行所有数据生成脚本
+    print("\n⚙️  第1步：运行所有数据生成脚本...")
+
+    scripts = [
+        ("simple_etf_metrics.py", "ETF 指标数据"),
+        ("fetch_bond_yield_incremental.py", "国债 PE 增量数据"),
+        ("fetch_ps.py", "HSTECH PS/PSY 数据"),
+        ("dividend_yield.py", "股息率数据"),
+    ]
+
+    for script, desc in scripts:
+        if os.path.exists(script):
+            print(f"\n   ▶️  {desc}: 运行 {script}...")
+            try:
+                result = subprocess.run(
+                    [sys.executable, script],
+                    capture_output=True,
+                    text=True,
+                    timeout=300
+                )
+                if result.returncode == 0:
+                    print(f"   ✓ {desc} 完成")
+                else:
+                    print(f"   ⚠️  {script} 返回码 {result.returncode}")
+                    if result.stderr:
+                        print(f"      {result.stderr[:200]}")
+            except subprocess.TimeoutExpired:
+                print(f"   ⚠️  {script} 超时（>5分钟）")
+            except Exception as e:
+                print(f"   ⚠️  {script} 异常: {e}")
+        else:
+            print(f"   ⚠️  {script} 不存在，跳过")
+
+    # 📦 第2步：加载已准备好的数据
+    print("\n📦 第2步：加载数据...")
 
     # 1. 加载 Shiller CAPE 数据
     print("\n1️⃣  加载 Shiller CAPE 数据...")
