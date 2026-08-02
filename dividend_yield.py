@@ -4,8 +4,8 @@ dividend_yield.py（扩展版）
 指数股息率估值锚模块，支持 A股（理杏仁）+ 境外/港股（yfinance）双数据源
 
 数据源：
-  1. 理杏仁开放平台「指数基本面数据API」 → A股指数
-  2. yfinance → SPY / QQQ / EWQ / EWJ / EWG / EEM + HSTECH(代理3032.HK)
+1. 理杏仁开放平台「指数基本面数据API」 → A股指数
+2. yfinance → SPY / QQQ / EWQ / EWJ / EWG / EEM + HSTECH(代理3032.HK)
 
 A股更新频率：周更（免费额度1000/年）
 yfinance：周更（无配额限制），港股数据可能有1-2天延迟
@@ -24,6 +24,9 @@ import pandas as pd
 import requests
 import yfinance as yf
 
+# ── 从中心配置文件导入指数/标的配置 ──────────────────────────────────────────
+from config_loader import DIVIDEND_INDEX_CODES, YFINANCE_TICKERS
+
 # ── 配置 ──────────────────────────────────────────────────────────────────
 LIXINGER_URL = "https://open.lixinger.com/api/cn/index/fundamental"
 LIXINGER_TOKEN_ENV = "LIXINGER_TOKEN"
@@ -31,47 +34,11 @@ LIXINGER_TOKEN_ENV = "LIXINGER_TOKEN"
 CACHE_DIR = "./data/dividend_yield"
 _STATE_PATH = os.path.join(CACHE_DIR, "_last_update.json")
 
-BACKFILL_YEARS = 10  # 单次日期区间查询理杏仁上限就是10年
-UPDATE_INTERVAL_DAYS = 7  # 周更，不做日更
+BACKFILL_YEARS = 10 # 单次日期区间查询理杏仁上限就是10年
+UPDATE_INTERVAL_DAYS = 7 # 周更，不做日更
 
 _API_MAX_RETRIES = 3
-_API_RETRY_BASE_DELAY = 5  # 秒，指数退避：5s, 10s, 20s
-
-# ── A股指数配置（理杏仁数据源）──────────────────────────────────────────────
-# key = erp_code，value = 理杏仁的指数代码
-DIVIDEND_INDEX_CODES = {
-    "000300": "000300",  # 沪深300
-    "000688": "000688",  # 科创50
-    "000922": "000922",  # 中证红利
-    "000015": "000015",  # 红利指数
-    "399989": "399989",  # 中证医疗
-    "931071": "931071",  # 人工智能
-    "000069": "000069",  # 深证消费
-    "930781": "930781",  # 中证影视
-    "399967": "399967",  # 中证军工
-    "931066": "931066",  # 军工龙头
-    "930598": "930598",  # 稀土产业
-    "931637": "931637",  # 港股通互联网
-    "000819": "000819",  # 有色金属
-    "950125": "950125",  # 半导体材料设备
-    "399975": "399975",  # 证券公司
-    "399986": "399986",  # 中证银行
-    "930633": "930633",  # 中证旅游
-    "931946": "931946",  # 畜牧养殖
-    "980032": "980032",  # 新能源车电池
-}
-
-# ── 境外/港股标的配置（yfinance数据源）──────────────────────────────────────
-# key = erp_code，value = yfinance ticker symbol
-YFINANCE_TICKERS = {
-    "SPY": "SPY",        # S&P 500 ETF
-    "QQQ": "QQQ",        # Nasdaq 100 ETF
-    "EWQ": "EWQ",        # iShares MSCI France
-    "EWJ": "EWJ",        # iShares MSCI Japan
-    "EWG": "EWG",        # iShares MSCI Germany
-    "EEM": "EEM",        # iShares MSCI Emerging
-    "HSTECH": "3032.HK", # Hang Seng TECH（用3032.HK ETF代理）
-}
+_API_RETRY_BASE_DELAY = 5 # 秒，指数退避：5s, 10s, 20s
 
 _ZONE_THRESHOLDS = [
     (0.90, "🟢 股息率历史罕见地高"),
@@ -82,12 +49,11 @@ _ZONE_THRESHOLDS = [
     (0.00, "🚨 股息率历史罕见地低"),
 ]
 
-_dy_cache = {}  # 内存缓存，避免同一进程内重复读盘
+_dy_cache = {} # 内存缓存，避免同一进程内重复读盘
 
 # ──────────────────────────────────────────────────────────────────────────
 # ── 理杏仁数据源（A股）
 # ──────────────────────────────────────────────────────────────────────────
-
 
 def _get_token() -> str:
     token = os.getenv(LIXINGER_TOKEN_ENV, "")
@@ -96,7 +62,6 @@ def _get_token() -> str:
             f"未设置环境变量 {LIXINGER_TOKEN_ENV}，请先 export {LIXINGER_TOKEN_ENV}=\"你的token\""
         )
     return token
-
 
 def _call_lixinger(payload: dict) -> list | None:
     """POST请求理杏仁接口，带限流退避重试。失败返回None，不抛异常，由调用方降级处理。"""
@@ -122,7 +87,6 @@ def _call_lixinger(payload: dict) -> list | None:
     )
     return None
 
-
 def _parse_records(records: list) -> pd.DataFrame:
     """理杏仁返回记录形如 {'date': '...', 'dyr.mcw': 0.0272..., 'stockCode': '...'}。"""
     rows = []
@@ -134,7 +98,6 @@ def _parse_records(records: list) -> pd.DataFrame:
             {"date": pd.to_datetime(r["date"]).tz_localize(None), "dy": dy * 100}
         )
     return pd.DataFrame(rows)
-
 
 def _backfill_index(index_code: str) -> bool:
     """单个指数一次性回填最长10年历史（一次API调用）。已有本地缓存则跳过。"""
@@ -166,11 +129,9 @@ def _backfill_index(index_code: str) -> bool:
     )
     return True
 
-
 # ──────────────────────────────────────────────────────────────────────────
 # ── yfinance 数据源（境外/港股）
 # ──────────────────────────────────────────────────────────────────────────
-
 
 def _backfill_yfinance_ticker(erp_code: str) -> bool:
     """用yfinance拉单个标的的分红+价格历史，计算股息率序列。已有本地缓存则跳过。"""
@@ -244,7 +205,6 @@ def _backfill_yfinance_ticker(erp_code: str) -> bool:
         print(f"⚠️ yfinance 拉取 {erp_code}({ticker_symbol}) 失败：{e}")
         return False
 
-
 def _update_yfinance_ticker(erp_code: str) -> bool:
     """增量更新单个yfinance标的（追加最新一条数据）。"""
     ticker_symbol = YFINANCE_TICKERS.get(erp_code)
@@ -298,16 +258,13 @@ def _update_yfinance_ticker(erp_code: str) -> bool:
         print(f"⚠️ yfinance 增量更新 {erp_code}({ticker_symbol}) 失败：{e}")
         return False
 
-
 # ──────────────────────────────────────────────────────────────────────────
 # ── 缓存管理（通用）
 # ──────────────────────────────────────────────────────────────────────────
 
-
 def _cache_path(code: str) -> str:
     """缓存文件路径（A股和yfinance都用同一目录）。"""
     return os.path.join(CACHE_DIR, f"dyr_{code}.csv")
-
 
 def _load_cache(code: str) -> pd.DataFrame | None:
     """加载本地缓存。"""
@@ -324,7 +281,6 @@ def _load_cache(code: str) -> pd.DataFrame | None:
     _dy_cache[code] = df
     return df
 
-
 def _save_cache(code: str, df: pd.DataFrame):
     """保存本地缓存。"""
     os.makedirs(CACHE_DIR, exist_ok=True)
@@ -336,11 +292,9 @@ def _save_cache(code: str, df: pd.DataFrame):
     df.to_csv(_cache_path(code), index=False)
     _dy_cache[code] = df
 
-
 # ──────────────────────────────────────────────────────────────────────────
 # ── 主入口
 # ──────────────────────────────────────────────────────────────────────────
-
 
 def ensure_dividend_data_fresh(
     index_codes: list[str] | None = None,
@@ -349,8 +303,8 @@ def ensure_dividend_data_fresh(
     """主入口：确保本地缓存存在且不超过UPDATE_INTERVAL_DAYS天没更新。
 
     参数：
-      index_codes: A股指数代码列表（默认所有理杏仁支持的指数）
-      ticker_codes: yfinance标的代码列表（默认所有yfinance支持的标的）
+    index_codes: A股指数代码列表（默认所有理杏仁支持的指数）
+    ticker_codes: yfinance标的代码列表（默认所有yfinance支持的标的）
 
     在 erp_position.py 主流程开头调用一次即可，内部自己判断要不要真的发请求。
     """
@@ -378,7 +332,7 @@ def ensure_dividend_data_fresh(
             last_update = None
 
     if last_update is not None and (datetime.now() - last_update).days < UPDATE_INTERVAL_DAYS:
-        return  # 距上次更新不到7天，跳过，不浪费配额
+        return # 距上次更新不到7天，跳过，不浪费配额
 
     # 第三步：批量增量更新
     # A股：用理杏仁 date 模式一次最多100个指数，18个一次搞定
@@ -424,11 +378,9 @@ def ensure_dividend_data_fresh(
     with open(_STATE_PATH, "w") as f:
         json.dump({"last_update": datetime.now().isoformat()}, f)
 
-
 # ──────────────────────────────────────────────────────────────────────────
 # ── 分位计算 & 报告生成
 # ──────────────────────────────────────────────────────────────────────────
-
 
 def compute_dividend_percentile(code: str) -> dict:
     """计算当前股息率在本地缓存历史序列中的分位。股息率越高越便宜，
@@ -459,7 +411,6 @@ def compute_dividend_percentile(code: str) -> dict:
         "p90": dy_series.quantile(0.90),
         "series": dy_series,
     }
-
 
 def build_dividend_yield_block(erp_code: str) -> str:
     """股息率估值锚区块，风格仿照 build_shiller_block()。
@@ -520,20 +471,22 @@ def build_dividend_yield_block(erp_code: str) -> str:
 """
     return block
 
-
 # ── 本地测试 ──────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
-    # 测试A股
     print("=" * 80)
-    print("测试 A股指数")
+    print("股息率数据更新 & 报告生成")
     print("=" * 80)
-    ensure_dividend_data_fresh(
-        index_codes=["000300", "000922"],
-        ticker_codes=["SPY", "QQQ"]
-    )
 
-    for erp_code in ["000300", "000922", "SPY", "QQQ"]:
-        block = build_dividend_yield_block(erp_code)
+    # 从config_loader获取所有指数
+    from config_loader import INDICES_LIST, get_all_codes
+
+    # 更新所有指数的数据（A股 + yfinance）
+    ensure_dividend_data_fresh()
+
+    # 为所有指数生成报告块
+    all_codes = get_all_codes()
+    for code in all_codes:
+        block = build_dividend_yield_block(code)
         if block:
             print(block)
-            print("\n" + "=" * 80 + "\n")
+            print("\n")
