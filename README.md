@@ -38,26 +38,18 @@
 ## 整体执行流程
 
 ```
-每日触发（GitHub Actions）
+├── prepare_all_data.py          # 数据准备编排（205行）
+├── erp_position.py              # 主入口（139行，简化版）
 │
-├── 1. fetch_bond_yield_incremental.py   ← 增量拉取国债 + PE，更新 erp_*.csv
-│        ├── 中国国债：akshare
-│        ├── 美/法/德/日国债：FRED API
-│        ├── A股PE：中证指数官网（akshare）
-│        ├── 美股PE：worldperatio.com（SPY）/ 手动填入（QQQ）
-│        ├── 欧日新兴PE：worldperatio.com（当日值）
-│        └── HSTECH：yfinance 市值 + akshare 财报 → 自建 PS/PSY/PE/ERP
+├── analysis/                    # 分析模块（589行）
+│   ├── valuation.py            # 估值分析（Shiller、股息率、赔率）
+│   ├── risk.py                 # 风险分析（止损、止盈、回撤）
+│   ├── trend.py                # 趋势分析（斜率、月度趋势）
+│   ├── sentiment.py            # 情绪分析（热度、基本面预警）
+│   └── utils.py                # 工具函数（新鲜度检查、格式化）
 │
-├── 2. simple_etf_metrics.py → 写入 data/simple_etf_metrics.csv + data/etf_price.csv
-│        └── 折溢价 / 换手 / 波动 / 超额收益 / 新鲜度校验（stale_flag）
-│
-└── 3. erp_position.py                   ← 生成报告 + 微信推送
-         ├── 读取 erp_*.csv（各指数 ERP 历史）
-         ├── 读取 ps_HSTECH.csv（恒生科技 PS/PSY）
-         ├── 读取 data/simple_etf_metrics.csv（ETF 执行质量）
-         ├── 读取 data/etf_price.csv（ETF 价格序列，用于减仓信号）
-         └── 输出：胜率 / 赔率 / 仓位建议 / ERP斜率信号 / 减仓信号 / 基本面预警 / ETF折溢价
-             → 生成 docs/report.html（gh-pages）+ 微信摘要推送
+└── report/                      # 报告模块（133行）
+    └── markdown.py             # HTML/微信推送
 ```
 
 **首次使用**须先跑全量脚本 `fetch_bond_yield.py` 建立历史数据，之后每日跑增量脚本即可。
@@ -93,20 +85,6 @@
 | 931637 | 港股通互联网 | 513770.SH | ⚠️ 尚未接入每日抓取，见下方TODO | CN10Y | ─ |
 
 > EWQ/EWG/EWJ/EEM 的**历史 PE 为估算值**：以今日该指数与 SPY 的 PE 比值为固定系数，乘以 SPY 历史 PE 序列反推。今日值为 worldperatio.com 真实数据。
-
----
-
-## 数据文件说明
-
-| 文件 | 生成方式 | 内容 |
-|-----|---------|------|
-| `data/erp_{CODE}.csv` | `fetch_bond_yield_incremental.py` 每日写入 | Date / PE / Bond_Yield_10Y / ERP |
-| `data/ps_HSTECH.csv` | `fetch_bond_yield_incremental.py` 每日写入 | date / ps / psy / pe / erp / rf（月频） |
-| `data/simple_etf_metrics.csv` | `simple_etf_metrics.py` 每日写入，随每日commit一并提交 | ETF 折溢价 / 换手 / 波动 / 超额收益 / 新鲜度校验（日频） |
-| `data/etf_price.csv` | `simple_etf_metrics.py` 每日生成，随每日commit一并提交 | ETF 日收盘价序列，供减仓信号模块使用 |
-| `docs/report.html` | `erp_position.py` 每日生成 | 完整报告，部署到 GitHub Pages |
-
-> ⚠️ `data/erp_HSTECH.csv` 为历史遗留文件：HSTECH 实际估值口径已切换为 PS/PSY（见 `data/ps_HSTECH.csv`），该文件不再被任何脚本读取或写入消费，仅作历史备用保留，不影响任何报告输出或仓位决策。
 
 ---
 
