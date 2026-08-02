@@ -1,0 +1,8 @@
+pandas
+akshare
+requests
+yfinance
+scipy
+markdown2
+openpyxl
+numpy
