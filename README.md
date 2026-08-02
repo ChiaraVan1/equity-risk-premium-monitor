@@ -55,6 +55,7 @@ prepare_all_data.py（聚合所有 CSV）
 ├─ risk.py
 ├─ trend.py
 └─ sentiment.py
+└─ etf_quality.py
 
         ↓ 生成
 
