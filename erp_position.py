@@ -13,7 +13,7 @@ from analysis.valuation import build_shiller_block, build_unified_valuation_bloc
 from analysis.risk import (compute_exit_signal_summary, build_exit_signal_block,
                             compute_profit_signal_summary, build_profit_signal_block,
                             compute_range_drawdown_rebound)
-from analysis.trend import compute_erp_slope_signal, build_trend_block, build_monthly_trend_ai_block
+from analysis.trend import compute_erp_slope_signal, build_trend_block
 from analysis.sentiment import build_sentiment_block
 from analysis.utils import (check_metric_freshness, build_freshness_note, generate_action_sentence,
                              _format_win_odds, _format_range, safe_action_markers)
@@ -105,7 +105,7 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
 
     unified_block = build_unified_valuation_block(df, code, val_series=erp_series, win_rate=win_rate, odds_ratio=odds_ratio)
 
-    trend_block = build_trend_block(df, name, erp_series, code, quantiles)
+    trend_block = build_trend_block(df, name, erp_series, code, quantiles, ps_df=prepared_data.get("ps_data"))
 
     exit_summary = compute_exit_signal_summary(code, win_rate, price_series, holding)
     exit_block = build_exit_signal_block(code, win_rate, price_series, holding)
