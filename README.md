@@ -38,18 +38,32 @@
 ## 整体执行流程
 
 ```
-├── prepare_all_data.py          # 数据准备编排（205行）
-├── erp_position.py              # 主入口（139行，简化版）
-│
-├── analysis/                    # 分析模块（589行）
-│   ├── valuation.py            # 估值分析（Shiller、股息率、赔率）
-│   ├── risk.py                 # 风险分析（止损、止盈、回撤）
-│   ├── trend.py                # 趋势分析（斜率、月度趋势）
-│   ├── sentiment.py            # 情绪分析（热度、基本面预警）
-│   └── utils.py                # 工具函数（新鲜度检查、格式化）
-│
-└── report/                      # 报告模块（133行）
-    └── markdown.py             # HTML/微信推送
+数据生产层
+├─ simple_etf_metrics.py → data/simple_etf_metrics.csv
+├─ fetch_bond_yield_incremental.py → data/erp_*.csv
+├─ fetch_ps.py → data/ps_HSTECH.csv
+└─ dividend_yield.py → data/dividend_yield.csv
+
+        ↓ 汇聚
+
+prepare_all_data.py（聚合所有 CSV）
+
+        ↓ 传递
+
+分析层（analysis/）
+├─ valuation.py
+├─ risk.py
+├─ trend.py
+└─ sentiment.py
+
+        ↓ 生成
+
+报告层（report/）
+└─ markdown.py → HTML
+
+        ↓ 调度
+
+erp_position.py（主入口）
 ```
 
 **首次使用**须先跑全量脚本 `fetch_bond_yield.py` 建立历史数据，之后每日跑增量脚本即可。
