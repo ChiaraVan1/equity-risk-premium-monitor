@@ -158,5 +158,8 @@ def build_unified_valuation_block(df, code, val_series=None, win_rate=None, odds
 # ══════════════════════════════════════════════════════════════════════
 
 def is_holding(code: str) -> bool:
-    """检查该标的是否在持仓列表中。"""
-    return HOLDING_CATEGORY.get(code, "") == "持仓"
+    """检查该标的是否在持仓列表中。
+    【2026-08-02 修复】config.json 里 holding 字段本身就是布尔值 True/False，
+    不是字符串"持仓"——旧代码 `== "持仓"` 恒为 False，导致 📌 自选标记和
+    「🚨 需要处理」置顶区永远判定为"未持仓"，整块功能失效。改为直接取真值。"""
+    return bool(HOLDING_CATEGORY.get(code, False))
