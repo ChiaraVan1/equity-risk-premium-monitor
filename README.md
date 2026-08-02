@@ -1,6 +1,14 @@
 # ERP 策略每日监控报告
 
-每日自动计算各主要指数的股权风险溢价（ERP），结合胜率/赔率框架输出仓位建议，并推送微信。
+## TODO
+
+- 加入其他信号指标
+- 港股通互联网(931637) 目前已接入 ETF 执行质量 / 基本面暴雷预警模块，但尚未加入 `fetch_bond_yield_incremental.py` 的 `INDEX_CONFIG` 每日 ERP/PE 抓取管道，暂无历史数据、无法参与胜率/赔率计算
+- `fetch/simple_etf_metrics.py` 今天超时（>5分钟）未能写入新的 ETF 指标文件，当日折溢价/资金流/波动率数据读取到的是旧缓存；需排查是数据源响应慢还是需要调大子进程 timeout / 调小 `MAX_WORKERS`
+- HSTECH 报告里估值指标仍标注为"ERP"，应为"PSY"（仅文字标注问题，数值本身正确）
+- feature/pe-band-demo 分支也在用这份代码，这次 main 分支的一系列修复/重构还没同步过去，需要评估要不要同步
+- dashscope.aliyuncs.com（阿里云百炼，"近10月趋势"AI解读用）今天单次运行里连续3次超时（60s），虽有规则法自动降级、不影响报告生成，但接口稳定性值得关注——如果频繁超时，考虑调大 timeout 或换个更稳的接口/模型
+- 微信没收到推送，但是log显示推送成功了
 
 ## 已完成
 
@@ -34,16 +42,6 @@
 - `dividend_yield.py` 拆分为 `fetch/dividend_yield_fetch.py`（数据获取）+ `analysis/dividend_yield_analysis.py`（分析/报告）
 - 移除 `report/markdown.py` 内多余的转发壳函数，ETF 执行质量改为直接调用 `analysis/etf_quality.py`
 - QQQ PE 改为脚本化自动抓取（替代 Claude Cowork/Chrome MCP 手动写入 QQQ_PE_TODAY 的方式）
-
-## TODO
-
-- 加入其他信号指标
-- 港股通互联网(931637) 目前已接入 ETF 执行质量 / 基本面暴雷预警模块，但尚未加入 `fetch_bond_yield_incremental.py` 的 `INDEX_CONFIG` 每日 ERP/PE 抓取管道，暂无历史数据、无法参与胜率/赔率计算
-- `fetch/simple_etf_metrics.py` 今天超时（>5分钟）未能写入新的 ETF 指标文件，当日折溢价/资金流/波动率数据读取到的是旧缓存；需排查是数据源响应慢还是需要调大子进程 timeout / 调小 `MAX_WORKERS`
-- HSTECH 报告里估值指标仍标注为"ERP"，应为"PSY"（仅文字标注问题，数值本身正确）
-- feature/pe-band-demo 分支也在用这份代码，这次 main 分支的一系列修复/重构还没同步过去，需要评估要不要同步
-- dashscope.aliyuncs.com（阿里云百炼，"近10月趋势"AI解读用）今天单次运行里连续3次超时（60s），虽有规则法自动降级、不影响报告生成，但接口稳定性值得关注——如果频繁超时，考虑调大 timeout 或换个更稳的接口/模型
-- 微信没收到推送，但是log显示推送成功了
 
 ---
 
