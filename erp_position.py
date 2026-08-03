@@ -282,6 +282,10 @@ if __name__ == "__main__":
         # `if: github.event.inputs.dry_run != 'true'` 挡住了，不会真的发布出去。
         save_html_report(full_md, date_str)
 
+        report_url = "https://chiaravan1.github.io/equity-risk-premium-monitor/report.html"
+        summary_md = build_summary_block(summary_list, output_format="markdown")
+        wechat_md = f"{summary_md}\n\n📄 [查看完整报告]({report_url})"
+
         dry_run = os.getenv("DRY_RUN", "").strip().lower() == "true"
         if dry_run:
             # 预览模式：不推真实微信，而是把完整 markdown 写到
@@ -292,7 +296,7 @@ if __name__ == "__main__":
                 f.write(full_md)
             print(f"\n🔎 预览模式（DRY_RUN=true）：已生成 output_preview.md，未推送微信")
         else:
-            send_to_wechat(full_md, date_str)
+            send_to_wechat(wechat_md, date_str)
             print(f"\n✅ {date_str} 报告已生成并推送")
     else:
         print("\n⚠️ 未生成任何报告")
