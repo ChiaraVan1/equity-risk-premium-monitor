@@ -430,6 +430,11 @@ if __name__ == '__main__':
         print("❌ 未获取到任何数据，请检查网络")
         exit(1)
 
+    empty_count = df['trade_date'].isna().sum()
+    if empty_count > 10:
+        print(f"❌ 健全性校验失败：{empty_count} 个标的未获取到行情数据（阈值10），判定本次抓取异常")
+        exit(1)
+
     print("\n" + "=" * 80)
     print("ETF 指标汇总")
     print("=" * 80)
