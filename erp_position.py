@@ -192,8 +192,13 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     exit_summary = compute_exit_signal_summary(code, win_rate, price_series, holding)
     exit_block = build_exit_signal_block(code, win_rate, price_series, holding)
 
-    profit_summary = compute_profit_signal_summary(code, win_rate, price_series)
-    profit_block = build_profit_signal_block(code, win_rate, price_series)
+    # 止盈信号仅对持仓有意义，未持仓无仓位可止盈，维持跳过（拆分前原版逻辑，2026-08-03恢复）。
+    if holding:
+        profit_summary = compute_profit_signal_summary(code, win_rate, price_series)
+        profit_block = build_profit_signal_block(code, win_rate, price_series)
+    else:
+        profit_summary = {"level": 0, "verdict_icon": "─", "message": ""}
+        profit_block = ""
 
     # 【2026-08-02 恢复】仓位建议区块（三仓文案 + 触发止损/止盈时的override提示），
     # 之前完全没有生成，仪表盘/详情页都看不到"为什么是这个仓位比例"的文字说明。
