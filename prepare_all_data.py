@@ -170,6 +170,9 @@ def prepare_all_data():
                     print(f"   ⚠️  {script} 返回码 {result.returncode}")
                     if result.stderr:
                         print(f"      {result.stderr[:200]}")
+                    if script == "fetch/simple_etf_metrics.py":
+                        print("   ❗ 核心数据源失败，终止流程")
+                        sys.exit(1)
             except subprocess.TimeoutExpired:
                 print(f"   ⚠️  {script} 超时（>5分钟）")
             except Exception as e:
