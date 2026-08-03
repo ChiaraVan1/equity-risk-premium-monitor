@@ -77,14 +77,70 @@ def _erp_monthly_trend_ai_prompt(name, code, monthly_rows, quantiles):
 {{"trend_summary": "≤30字", "direction": "走高"|"走低"|"震荡"}}"""
 
 
+_QNAIGC_API_URL = "https://api.qnaigc.com/v1/messages"
+
+
+def _call_qnaigc_with_retry(payload, headers):
+    """调用七牛云 Anthropic 兼容接口（qnaigc）。作为 DashScope 的第二级降级：
+    dashscope.aliyuncs.com 面向国内网络优化，GitHub Actions runner 跑在海外机房，
+    跨境访问这条链路本身延迟高、偶发超时；qnaigc 对海外访问更稳，因此 DashScope
+    失败时先尝试切到这里，两个AI源都失败才交给调用方走规则法兜底。
+    限流退避/调用间隔逻辑与 _call_dashscope_with_retry 一致，共用同一个
+    _last_api_call_ts 节流（不区分数据源，避免两边加起来仍触发限流）。
+    """
+    elapsed = time.time() - _last_api_call_ts["t"]
+    if elapsed < _API_CALL_MIN_INTERVAL:
+        time.sleep(_API_CALL_MIN_INTERVAL - elapsed)
+
+    last_exc = None
+    for attempt in range(_API_MAX_RETRIES):
+        try:
+            resp = requests.post(_QNAIGC_API_URL, json=payload, headers=headers, timeout=60)
+            _last_api_call_ts["t"] = time.time()
+
+            if resp.status_code == 429:
+                wait = _API_RETRY_BASE_DELAY * (2 ** attempt)
+                retry_after = resp.headers.get("retry-after")
+                if retry_after:
+                    try:
+                        wait = max(wait, float(retry_after))
+                    except ValueError:
+                        pass
+                if attempt < _API_MAX_RETRIES - 1:
+                    time.sleep(wait)
+                    continue
+                resp.raise_for_status()
+
+            resp.raise_for_status()
+            return resp
+
+        except requests.exceptions.HTTPError as e:
+            last_exc = e
+            if e.response is not None and e.response.status_code == 429 and attempt < _API_MAX_RETRIES - 1:
+                continue
+            raise
+        except requests.exceptions.RequestException as e:
+            last_exc = e
+            raise
+
+    raise last_exc
+
+
 def build_monthly_trend_ai_block(name, code, monthly_rows, quantiles):
-    """调用AI生成近10个月趋势一句话解读。失败返回 (None, False)，调用方负责规则法兜底。"""
+    """调用AI生成近10个月趋势一句话解读。三级降级：① 阿里云百炼 DashScope
+    （国内数据源，优先尝试）→ ② 七牛云 Anthropic 兼容接口 qnaigc（跨境访问更稳，
+    DashScope超时/失败时切换）→ ③ 规则法（两个AI源都失败时，返回 (None, False)
+    交由调用方兜底，本函数不做规则判断）。
+    """
+    prompt = _erp_monthly_trend_ai_prompt(name, code, monthly_rows, quantiles)
+
+    # ── 第一级：阿里云百炼 DashScope ──────────────────────────────────
     try:
         payload = {
             "model": "deepseek-v4-pro",
             "max_tokens": 300,
             "enable_thinking": False,
-            "messages": [{"role": "user", "content": _erp_monthly_trend_ai_prompt(name, code, monthly_rows, quantiles)}]
+            "messages": [{"role": "user", "content": prompt}]
         }
         headers = {
             "Content-Type": "application/json",
@@ -97,7 +153,29 @@ def build_monthly_trend_ai_block(name, code, monthly_rows, quantiles):
         icon = {"走高": "🟢", "走低": "🔴", "震荡": "🟡"}.get(result.get("direction", ""), "🟡")
         return f"趋势方向：{icon} **{result.get('trend_summary','')}**", True
     except Exception as e:
-        print(f"⚠️ AI趋势解读失败（已降级到规则法）：{type(e).__name__}: {e}")
+        print(f"⚠️ DashScope AI趋势解读失败（尝试降级到 qnaigc）：{type(e).__name__}: {e}")
+
+    # ── 第二级：七牛云 Anthropic 兼容接口（qnaigc，跨境访问更稳）──────
+    try:
+        payload = {
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 300,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
+            "anthropic-version": "2023-06-01",
+        }
+        resp = _call_qnaigc_with_retry(payload, headers)
+        data = resp.json()
+        text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
+        raw = "\n".join(text_blocks).strip().replace("```json", "").replace("```", "").strip()
+        result = json.loads(raw)
+        icon = {"走高": "🟢", "走低": "🔴", "震荡": "🟡"}.get(result.get("direction", ""), "🟡")
+        return f"趋势方向：{icon} **{result.get('trend_summary','')}**", True
+    except Exception as e:
+        print(f"⚠️ qnaigc AI趋势解读也失败（已降级到规则法）：{type(e).__name__}: {e}")
         return None, False
 
 
