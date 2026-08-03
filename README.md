@@ -41,6 +41,7 @@
 - 移除 `report/markdown.py` 内多余的转发壳函数，ETF 执行质量改为直接调用 `analysis/etf_quality.py`
 - QQQ PE 改为脚本化自动抓取（替代 Claude Cowork/Chrome MCP 手动写入 QQQ_PE_TODAY 的方式）
 - 近10月趋势 AI 解读（DashScope 生成一句话走势总结，双数据源降级：DashScope → qnaigc → 规则法兜底，规则法基于分位数五档判断）
+- ETF 行情抓取健全性校验：`simple_etf_metrics.py` 中 `trade_date` 缺失标的超过10个时判定为抓取异常并 `exit(1)`，`prepare_all_data.py` 将其传播为流程终止，避免数据全空但 CI 显示成功的情况
 
 ---
 
