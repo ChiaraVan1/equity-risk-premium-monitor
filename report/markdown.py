@@ -1,18 +1,6 @@
 """
 report/markdown.py
 报告生成模块：决策仪表盘、HTML生成、微信推送、报告保存
-
-【2026-08-02 恢复说明】
-build_summary_block()（决策仪表盘）在重构中被重写成了简化版，丢失了：
-  - 「🚨 需要处理」置顶区的正确判定（原版：持仓且触发止损 或 触发止盈 才算"需要处理"，
-    而不是"仅持仓且L3止损"这一种情况）
-  - 未持仓但价格结构已触线的标的，在正常估值分组里补一行🔎观察提示（不因未持仓而整条消失）
-  - 数据新鲜度预警区块
-  - HTML表格布局（原版 output_format="html" 时输出 <table>，重写版忽略了这个参数，
-    永远输出markdown bullet列表）
-现在照原逻辑恢复，字段名适配当前 erp_position.py 里 summary_list 的结构
-（如 holding / position{bubble,value,spec,total} / win_odds_str / range_str /
-action_sentence 等，这些是当前architecture已有的字段，直接复用，不重复计算）。
 """
 import os
 import requests
@@ -276,7 +264,17 @@ def save_html_report(full_report_md: str, date_str: str):
 
 
 def send_to_wechat(summary_md: str, date_str: str):
-    """推送摘要到微信。"""
+    """推送摘要到微信（通过 Server酱 sctapi.ftqq.com）。
+
+    【2026-08-02 修复】之前 requests.post() 的返回结果完全没有被检查——只要这次
+    HTTP 请求本身没有网络层异常（DNS/连接失败/超时），无论 Server酱 服务端实际
+    是否接受了这条推送，都会打印"✅ 微信推送成功"。Server酱的失败响应通常仍然是
+    HTTP 200（把错误码放在响应体的 JSON 里，比如 sckey 无效、超出当日推送额度、
+    内容超长被拒等），这类"HTTP 200 但业务失败"的情况完全被吞掉了——这正是日志
+    显示"推送成功"但微信实际没收到消息的原因。现在改为：检查 HTTP 状态码 +
+    解析响应体里的 code 字段（Server酱约定 0=成功），任何一处不对都打印出具体的
+    响应内容，方便诊断（常见原因：SCT_KEY 失效、超出免费额度、desp 内容过长被拒）。
+    """
     sct_key = os.getenv("SCT_KEY")
     if not sct_key:
         print("⚠️ 未设置 SCT_KEY，跳过微信推送")
@@ -288,7 +286,25 @@ def send_to_wechat(summary_md: str, date_str: str):
             "title": f"ERP策略报告 - {date_str}",
             "desp": summary_md,
         }
-        requests.post(url, json=payload, timeout=10)
-        print("✅ 微信推送成功")
+        resp = requests.post(url, json=payload, timeout=10)
+
+        if resp.status_code != 200:
+            print(f"❌ 微信推送失败：HTTP {resp.status_code}，响应内容：{resp.text[:500]}")
+            return
+
+        try:
+            result = resp.json()
+        except Exception:
+            print(f"❌ 微信推送响应无法解析为JSON（HTTP {resp.status_code}）：{resp.text[:500]}")
+            return
+
+        # Server酱约定：code == 0 表示服务端真正受理成功；非0一律视为失败，
+        # 常见原因：sckey无效/过期、超出当日免费推送额度、desp内容过长被截断拒收。
+        if result.get("code") == 0:
+            print(f"✅ 微信推送成功（Server酱返回: {result.get('data', {})}）")
+        else:
+            print(f"❌ 微信推送失败：Server酱返回 code={result.get('code')}，"
+                  f"message={result.get('message', '')}，完整响应：{result}")
+
     except Exception as e:
-        print(f"❌ 微信推送失败: {e}")
+        print(f"❌ 微信推送失败（网络异常）: {e}")
