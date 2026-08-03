@@ -3,7 +3,6 @@
 ## TODO
 
 - 加入其他信号指标
-- 港股通互联网(931637) 目前已接入 ETF 执行质量 / 基本面暴雷预警模块，但尚未加入 `fetch_bond_yield_incremental.py` 的 `INDEX_CONFIG` 每日 ERP/PE 抓取管道，暂无历史数据、无法参与胜率/赔率计算
 - `fetch/simple_etf_metrics.py` 今天超时（>5分钟）未能写入新的 ETF 指标文件，当日折溢价/资金流/波动率数据读取到的是旧缓存；需排查是数据源响应慢还是需要调大子进程 timeout / 调小 `MAX_WORKERS`
 - HSTECH 报告里估值指标仍标注为"ERP"，应为"PSY"（仅文字标注问题，数值本身正确）
 - feature/pe-band-demo 分支也在用这份代码，这次 main 分支的一系列修复/重构还没同步过去，需要评估要不要同步
@@ -127,7 +126,7 @@ erp_position.py（主入口，根目录）
 | EWJ | MSCI Japan | 513880.SH | worldperatio.com（今日值）× SPY比值估算历史 | JP10Y | 日频今日，历史为估算 |
 | EEM | MSCI Emerging | 520580.SH | worldperatio.com（今日值）× SPY比值估算历史 | CN10Y | 日频今日，历史为估算 |
 | HSTECH | 恒生科技 | 513180.SH | 自建：yfinance 市值 + akshare 季报营收/净利润 | CN10Y | 月频 |
-| 931637 | 港股通互联网 | 513770.SH | ⚠️ 尚未接入每日抓取，见下方TODO | CN10Y | ─ |
+| 931637 | 港股通互联网 | 513770.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 
 > EWQ/EWG/EWJ/EEM 的**历史 PE 为估算值**：以今日该指数与 SPY 的 PE 比值为固定系数，乘以 SPY 历史 PE 序列反推。今日值为 worldperatio.com 真实数据。
 
