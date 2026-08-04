@@ -259,7 +259,7 @@ PSY 用于替代 ERP 参与胜率/赔率计算，斜率信号和减仓信号同�
 | `SCT_KEY` | ServerChan 微信推送 Key | 是 |
 | `ANTHROPIC_API_KEY` | 七牛云 API Key（Anthropic 兼容接口 `api.qnaigc.com`），供基本面暴雷预警模块调用 | 是 |
 | `SHILLER_PATH` | Shiller CAPE 数据文件路径，默认 `./data/ie_data.xls` | 否 |
-| `GH_PAT` | GitHub Personal Access Token，供 Claude Cowork 通过 Chrome MCP 模拟操作（如写入 Variable） | 是 |
+| `GH_PAT` | GitHub Personal Access Token，供 Claude Cowork 调用 GitHub REST API（如写入 QQQ_PE_TODAY Variable）。抓取仍用 Chrome MCP 浏览网页，但写入已改为直接 API 调用，不再模拟网页表单操作，详见 [STATUS.md](./STATUS.md) 的「QQQ PE 抓取机制」 | 是 |
 | `ALIYUN_API_KEY` | DashScope（阿里云）API Key，供近10月趋势 AI 解读 / ETF 执行质量 AI 解读调用 | 是 |
 | `LIXINGER_TOKEN` | 理杏仁 API Token，供 dividend_yield_fetch.py 抓取股息率数据 | 是 |
 | `TAVILY_API_KEY` | workflow 中已配置，代码内暂未找到实际调用处，待确认是否仍在使用 | 否 |
