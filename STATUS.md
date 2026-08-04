@@ -21,6 +21,7 @@ STATUS.md — 跨 session 运行记忆
 |---|---|
 | 2026-08-04 | 修复 ETF 价格数据自 8/2 起冻结不更新的 bug，搭建本地定时抓取自动化方案作为补充 |
 | 2026-08-04 | 修复 HSTECH 估值信号失真 bug：估值计算口径从 PE-ERP 切换为 PS/PSY，删除 HS_TECH_PE_TODAY 手动填值机制 |
+| 2026-08-02 | 代码目录重组：数据获取脚本迁移至 fetch/，分析类模块统一收进 analysis/ |
 | 2026-07-06 | 移除已废弃的 pi-mobile host 相关记录（不再使用）；QQQ PE 抓取从本地 launchd+AppleScript 方案迁移为 Claude Cowork 自带定时任务；确认 simple_etf_metrics.py 无重复、FRED_API_KEY 硬编码非问题，从"已知问题"中移除；数据覆盖指数从23个更正为21个（000989/931139/931946 已彻底下线，此前数字把它们也算进去了） |
 | 2026-07-02 | Claude Cowork 新增2只指数：有色金属（000819→512400.SH）、半导体材料设备（950125→588710.SH）。同步更新 fetch_bond_yield_incremental.py / fetch_bond_yield.py 的 INDEX_CONFIG，erp_position.py 的 indices / HOLDING_CATEGORY / 基本面预警关键词，etf_metrics.py 的 ERP_TO_ETF；已手动触发 init_history.yml 回填历史 PE |
 | 2026-06-10 18:00 | 删除 com.chiaravan.update-pe.plist（update_pe.py 不存在，每日报错）；gh auth login 完成（ChiaraVan1）；update_pe_trigger.sh prompt 第二步改为 gh variable set QQQ_PE_TODAY 替代浏览器导航 GitHub settings（更稳定，不依赖 Chrome 登录状态） |
@@ -56,7 +57,6 @@ STATUS.md — 跨 session 运行记忆
 | （早期，无精确日期） | 「仓位建议」文字说明区块 |
 | （早期，无精确日期） | 「核心估值决策」里综合评级、历史均值、PE历史统计 |
 | （早期，无精确日期） | 止盈信号接入仪表盘「需要处理」置顶判定 |
-| （早期，无精确日期） | 代码目录重组：数据获取脚本迁移至 fetch/，分析类模块统一收进 analysis/ |
 | （早期，无精确日期） | QQQ PE 改为脚本化自动抓取（替代 Claude Cowork/Chrome MCP 手动写入 QQQ_PE_TODAY 的方式） |
 | （早期，无精确日期） | 近10月趋势 AI 解读（DashScope 生成一句话走势总结，双数据源降级：DashScope → qnaigc → 规则法兜底，规则法基于分位数五档判断） |
 | （早期，无精确日期） | ETF 行情抓取健全性校验：simple_etf_metrics.py 中 trade_date 缺失标的超过10个时判定为抓取异常并 exit(1)，prepare_all_data.py 将其传播为流程终止，避免数据全空但 CI 显示成功的情况 |
