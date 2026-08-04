@@ -32,8 +32,8 @@ BOND_CONFIG = {
 _qqq_pe_env = os.environ.get("QQQ_PE_TODAY")
 QQQ_PE_TODAY = float(_qqq_pe_env) if _qqq_pe_env else None
 
-_hstech_pe_env = os.environ.get("HS_TECH_PE_TODAY")
-HS_TECH_PE_TODAY = float(_hstech_pe_env) if _hstech_pe_env else None
+# 【2026-08-04】HS_TECH_PE_TODAY 手动填值机制已删除：HSTECH 改用 PS/PSY 口径
+# （见 fetch/fetch_ps.py、erp_position.py），不再需要人工每日填PE。
 
 # ── 国债增量获取 ───────────────────────────────────────────────────────────────
 
@@ -301,11 +301,7 @@ def main():
     else:
         print(f"✅ QQQ 今日 PE: {QQQ_PE_TODAY}（来源: GuruFocus TTM）\n")
 
-    if HS_TECH_PE_TODAY is None:
-        print("⚠️  警告: HS_TECH_PE_TODAY 未填写，今日恒生科技 ERP 将不会更新！")
-        print("    请根据最新数据手动填写（例如从 GuruFocus 或其它数据源获取）。\n")
-    else:
-        print(f"✅ 恒生科技 今日 PE: {HS_TECH_PE_TODAY}\n")
+    print("ℹ️  恒生科技已改用 PS/PSY 口径，不再依赖 HS_TECH_PE_TODAY。\n")
 
     end_date_str   = datetime.now().strftime("%Y%m%d")
     start_date_str = (datetime.now() - timedelta(days=30)).strftime("%Y%m%d")
@@ -341,8 +337,6 @@ def main():
                 print(f"   ✓ {sym}: {pe_today_dict[sym]}")
         if QQQ_PE_TODAY is not None:
             print(f"   ✓ QQQ: {QQQ_PE_TODAY} (手动填入, GuruFocus TTM)")
-        if HS_TECH_PE_TODAY is not None:
-            print(f"   ✓ HSTECH: {HS_TECH_PE_TODAY} (手动填入)")
     except Exception as e:
         print(f"   ❌ worldperatio 失败: {e}")
         pe_today_dict = {}
@@ -377,10 +371,8 @@ def main():
                         continue
                     pe_df = pd.DataFrame({'Date': [today], 'PE': [float(QQQ_PE_TODAY)]})
                 elif code == 'HSTECH':
-                    if HS_TECH_PE_TODAY is None:
-                        print(f"   ⚠️ [{code}] HS_TECH_PE_TODAY 未填写，跳过今日更新")
-                        continue
-                    pe_df = pd.DataFrame({'Date': [today], 'PE': [float(HS_TECH_PE_TODAY)]})
+                    # 【2026-08-04】HSTECH 已改用 PS/PSY 口径，PE 不再维护，直接跳过
+                    continue
                 else:
                     raise ValueError(f"未知 manual 指数: {code}")
 
