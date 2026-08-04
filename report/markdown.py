@@ -79,13 +79,9 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
     ]
 
     header = f"## 📊 决策仪表盘 · {date_str}"
-    legend = (
-        "胜率🟢≥75% 🟡50-75% 🟠25-50% 🔴<25% · 折溢价💎大折 🟢折 🟡平 🟠溢 🔴大溢 · "
-        "波🔴高位 · 量⚠️背离 · 🚨止损 💰止盈 🔎未持仓观察 · 🕓数据未更新 · 📌=持仓\n\n---"
-    )
 
     if output_format == "markdown":
-        lines = [header, "", legend, ""]
+        lines = [header, ""]
 
         if stale_list:
             lines.append(f"\n**🕓 数据新鲜度预警 ({len(stale_list)})**")
@@ -210,7 +206,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                             f'</tr>'
                         )
         table_html = '<table class="dashboard-table">\n' + "\n".join(rows_html) + "\n</table>"
-        return f"{header}\n{legend}\n\n{table_html}\n\n---\n"
+        return f"{header}\n\n{table_html}\n\n---\n"
 
 
 def markdown_to_html(md_text: str, date_str: str) -> str:
