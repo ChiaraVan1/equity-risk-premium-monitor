@@ -64,16 +64,17 @@ def _call_dashscope_with_retry(payload, headers):
 
 def _erp_monthly_trend_ai_prompt(name, code, monthly_rows, quantiles):
     monthly_str = "\n".join(f"{d}: PE={pe:.1f}x, ERP={erp:.2%}" for d, pe, erp in monthly_rows)
-    return f"""你是量化策略分析师，基于"{name}({code})"近10个月月末ERP数据写一句趋势解读。
+    return f"""你是一个说话直白的投资助手，要把"{name}({code})"近10个月的估值数据，讲给完全不懂金融术语的普通人听。
 
 {monthly_str}
 
 历史分位：P90={quantiles['P90']:.2%} P75={quantiles['P75']:.2%} P50={quantiles['P50']:.2%} P25={quantiles['P25']:.2%} P10={quantiles['P10']:.2%}
 
 要求：
-1. 概括近10个月整体走势，优先反映最近1-2个月的实际变化，不要被更早月份的趋势主导。
-2. ≤30字，不输出免责声明。
-3. 严格输出以下JSON，不要输出其他内容：
+1. 先说清楚近10个月整体是"越来越贵""越来越便宜"还是"来回震荡"，再补充最近1-2个月有没有明显变化，两者都要体现，不能只讲最近1-2个月而漏掉整体走势。
+2. 尽量少用"ERP""风险补偿""溢价""分位""估值中枢"这类专业词，优先用"贵/便宜""性价比""处在近期偏高/偏低的位置"这种大白话表达；如果大白话说不清楚或容易产生歧义，也可以用专业词汇。
+3. ≤30字，不输出免责声明。
+4. 严格输出以下JSON，不要输出其他内容：
 {{"trend_summary": "≤30字", "direction": "走高"|"走低"|"震荡"}}"""
 
 
