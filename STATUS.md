@@ -15,6 +15,27 @@ STATUS.md — 跨 session 运行记忆
 - 缺少远程失败通知（目前仅本地通知）；QQQ PE 若当日未成功写入 QQQ_PE_TODAY，QQQ ERP 不会更新（沿用最近历史值），需要确认 Claude Cowork 定时任务失败时是否有可见的失败提示
 - EWQ/EWG/EWJ/EEM 历史 PE 为估算值（今日 PE 与 SPY 比值 × SPY 历史序列），历史精度有限，长期看是否有更准确的数据源
 
+## QQQ PE 抓取机制
+
+QQQ 没有类似中证指数官网的公开 PE 数据源，历史上经历了几次迭代，当前（第4阶段）机制如下：
+
+1. **纯手动**：人工查 PE，手动去 GitHub Settings 页面写入 `QQQ_PE_TODAY`。
+2. **本地定时 + MCP 网页操作写入**：macOS launchd 定时用 AppleScript 唤起 Claude 桌面应用，Chrome MCP 导航到 GitHub Settings 页面，模拟点击「Edit」「清空输入框」「打字」「保存」写入 Variable。
+3. **本地定时 + MCP 抓取 + API 写入**：写入方式改为 `gh variable set`（本质是 API 调用），不再模拟网页表单，但触发仍依赖本地 launchd。
+4. **（当前）Cowork 定时任务 + MCP 抓取 + REST API 写入**：触发也不再依赖本地 launchd，改由 Claude Cowork 自带的定时任务负责。Chrome MCP 负责导航到 GuruFocus 抓取当日 PE，随后直接调用 GitHub REST API（`PATCH /actions/variables/QQQ_PE_TODAY`）写入，不经过网页 UI。
+
+**为什么从"模拟网页表单"改成"直接调 API"：**
+
+网页表单模拟慢且容易失败：
+- 依赖页面元素能被正确定位（选择器、加载时机），DOM 结构变化或加载慢一点就会点空。
+- 打字模拟经常触发 GitHub 的异常活动检测，弹出「Confirm access」二次验证，这类弹窗需要人工过验证，非交互场景下没人处理，直接卡死。
+- 表单操作是多步骤（导航→找到变量→点 Edit→清空→输入→保存→等确认），任何一步失败都要重试，累积起来就慢。
+
+直接用 REST API（token 认证）一次 HTTP 请求即可完成，不经过网页 UI，也就不会触发针对"网页交互"设计的异常检测机制：
+- 一次调用，状态码 204 直接确认成功，不用等页面渲染。
+- 不会碰到 Confirm access 弹窗。
+- 出错也很明确（如 401/403 代表 token 失效或权限不对），不用靠截图猜。
+
 ## 变更日志
 
 | 日期 | 变更内容 |
@@ -57,7 +78,7 @@ STATUS.md — 跨 session 运行记忆
 | （早期，无精确日期） | 「仓位建议」文字说明区块 |
 | （早期，无精确日期） | 「核心估值决策」里综合评级、历史均值、PE历史统计 |
 | （早期，无精确日期） | 止盈信号接入仪表盘「需要处理」置顶判定 |
-| （早期，无精确日期） | QQQ PE 改为脚本化自动抓取（替代 Claude Cowork/Chrome MCP 手动写入 QQQ_PE_TODAY 的方式） |
+| （早期，无精确日期） | QQQ PE 写入方式从"模拟网页表单操作"改为"GitHub REST API PATCH 直接写入"，抓取仍由 Claude Cowork + Chrome MCP 完成，见下方「QQQ PE 抓取机制」说明 |
 | （早期，无精确日期） | 近10月趋势 AI 解读（DashScope 生成一句话走势总结，双数据源降级：DashScope → qnaigc → 规则法兜底，规则法基于分位数五档判断） |
 | （早期，无精确日期） | ETF 行情抓取健全性校验：simple_etf_metrics.py 中 trade_date 缺失标的超过10个时判定为抓取异常并 exit(1)，prepare_all_data.py 将其传播为流程终止，避免数据全空但 CI 显示成功的情况 |
 | （早期，无精确日期） | ETF 执行质量加入 AI 解读 |
