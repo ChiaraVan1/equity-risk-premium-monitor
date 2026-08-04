@@ -123,6 +123,18 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         if len(anchor) >= 30:
             erp_series = anchor
 
+    # 【2026-08-04】HSTECH 专用估值口径：港股科技盈利波动大，PE长期失真且
+    # HS_TECH_PE_TODAY 需人工手填，长期无人维护导致PE被ffill冻结近一个月，
+    # 静默产出失真的"极度低估"信号。HSTECH 改用 prepare_all_data.py 里
+    # 已经在维护的 PS/PSY 口径（psy = 1/PS - 国债收益率，与ERP同构，"越高越
+    # 便宜"），彻底不再依赖erp_HSTECH.csv里的PE/ERP列。
+    if code == 'HSTECH':
+        ps_data = prepared_data.get("ps_data")
+        if ps_data is not None and 'psy' in ps_data.columns:
+            hstech_psy = ps_data['psy'].dropna()
+            if len(hstech_psy) > 0:
+                erp_series = hstech_psy
+
     current_erp = erp_series.iloc[-1]
     quantiles = {
         'P10': erp_series.quantile(0.10),
