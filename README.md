@@ -7,6 +7,8 @@
 - HSTECH 报告里估值指标仍标注为"ERP"，应为"PSY"（仅文字标注问题，数值本身正确）
 - feature/pe-band-demo 分支也在用这份代码，这次 main 分支的一系列修复/重构还没同步过去，需要评估要不要同步
 - 微信没收到推送，但是log显示推送成功了，desp 参数有 32KB 硬性长度限制
+- 新鲜度校验目前只做到"检测并展示"（check_metric_freshness() /build_freshness_note()，HSTECH 的 PS 校验分支已经在跑），但检测到连续 N 天未更新时，报告里不会有任何降级动作——"极度低估/极佳买点"。这类强建仓结论照常输出。需要补上熔断：连续 ffill 超过阈值时，至少给对应标的的信号打上明显降级标记，而不是让它悄悄混进正常信号里。（这次 HSTECH 的 bug 能潜伏近一个月，就是卡在这一步——检测到了，但没人看日志，报告本身也没变。）
+- 新鲜度校验计划扩展到全部标的的全部数值列（不只是手填的），逐个指数、逐个字段加新鲜度检查，覆盖所有数据源，不管是自动抓取还是人工填入。
 
 ## 已完成
 
@@ -42,6 +44,8 @@
 - QQQ PE 改为脚本化自动抓取（替代 Claude Cowork/Chrome MCP 手动写入 QQQ_PE_TODAY 的方式）
 - 近10月趋势 AI 解读（DashScope 生成一句话走势总结，双数据源降级：DashScope → qnaigc → 规则法兜底，规则法基于分位数五档判断）
 - ETF 行情抓取健全性校验：`simple_etf_metrics.py` 中 `trade_date` 缺失标的超过10个时判定为抓取异常并 `exit(1)`，`prepare_all_data.py` 将其传播为流程终止，避免数据全空但 CI 显示成功的情况
+- 【2026-08-04】修复 HSTECH 估值信号失真 bug：erp_HSTECH.csv 里的 PE 因HS_TECH_PE_TODAY 无人手动填值，被 ffill 冻结近一个月，导致 ERP 分位失真，报告持续误判"极度低估"。已将 HSTECH 的估值计算（win_rate/odds_ratio/
+  erp_zone/仓位建议）从 PE-ERP 口径切换为已在维护的 PS/PSY 口径（erp_position.py），并彻底删除 HS_TECH_PE_TODAY 手动填值机制（fetch/fetch_bond_yield_incremental.py）。commits: 505c501（erp_position.py）、e33249d（fetch_bond_yield_incremental.py）
 
 ---
 
