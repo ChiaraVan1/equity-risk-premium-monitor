@@ -159,7 +159,7 @@ def build_unified_valuation_block(df, code, val_series=None, win_rate=None, odds
 
     # ── 综合评级 ──────────────────────────────────────────────────────
     if odds_ratio is None:
-        rating = "🟢 已进入极度低估区，极佳买点"
+        rating = "🟢 极佳买点"
     elif odds_ratio == 0.0:
         rating = "🚨 已进入极度高估区，规避"
     elif win_rate is not None and win_rate == win_rate and win_rate >= 0.60 and odds_ratio >= 2.0:
