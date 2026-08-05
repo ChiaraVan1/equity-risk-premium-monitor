@@ -125,7 +125,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
             for r in group_items:
                 _r_rating = _rating_short(r)
                 if _r_rating != _current_rating:
-                    lines.append(f"　{_r_rating}")
+                    lines.append(f"\n　{_r_rating}")
                     _current_rating = _r_rating
                 badge = "📌 " if r.get("holding") else ""
                 pos = r.get("position", {})
@@ -156,7 +156,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 if r.get("exit_level", 0) > 0 and not r.get("holding", False):
                     obs_line = r.get("exit_message", "")
                     if obs_line:
-                        lines.append(f"　{obs_line}")
+                        lines.append(f"\n　{obs_line}")
         return "\n".join(lines) + "\n\n---\n"
 
     else:
