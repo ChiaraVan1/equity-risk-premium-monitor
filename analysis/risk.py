@@ -257,6 +257,9 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float,
 
 {level_line}
 
+<details>
+<summary>查看减仓信号指标明细</summary>
+
 | 指标 | 数值 | 状态 |
 |:-----|-----:|:-----|
 | 当前价格 | {cur_price:.3f} | ─ |
@@ -266,10 +269,10 @@ def build_exit_signal_block(erp_code: str, current_erp_percentile: float,
 | MA60 | {ma60_str} | {"🔴 跌破" if below_ma60 else "✅ 站上"} |
 | MA120 | {ma120_str} | {"🔴 跌破" if below_ma120 else "✅ 站上"} |
 
+</details>
+
 **触发条件：**
 {alerts_md}
-
-> ⚠️ 基本面暴雷属于独立预警，见下方「基本面预警」模块。
 """
     return qqq_drop_block + exit_block
 
@@ -379,13 +382,16 @@ def build_profit_signal_block(erp_code: str, current_erp_percentile: float, pric
 
 {summary['message']}
 
+<details>
+<summary>查看止盈信号指标明细</summary>
+
 | 指标 | 数值 | 状态 |
 |:-----|-----:|:-----|
 | 当前价格 | {cur_price:.3f} | ─ |
 | MA20 | {ma20_str} | 乖离 {dev20_str}｜{dev_status(_TP_L1, dev20)} |
 | MA60 | {ma60_str} | 乖离 {dev60_str}｜{dev_status(_TP_L2, dev60)} |
 
-> 💡 止盈信号与减仓/止损信号相互独立：止盈针对"涨多了要不要落袋"，止损针对"跌多了要不要认赔"。两者可能同时不触发，也可能未来在剧烈震荡中先后触发。
+</details>
 """
     return profit_block
 
