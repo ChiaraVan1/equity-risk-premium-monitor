@@ -17,7 +17,7 @@ from analysis.trend import compute_erp_slope_signal, build_trend_block
 from analysis.sentiment import build_sentiment_block
 from analysis.utils import (check_metric_freshness, build_freshness_note, generate_action_sentence,
                              _format_win_odds, _format_range, safe_action_markers)
-from report.markdown import build_summary_block, save_html_report, send_to_wechat, LEGEND_BLOCK
+from report.markdown import build_summary_block, save_html_report, send_to_wechat
 from analysis.dividend_yield_analysis import build_dividend_yield_block
 from analysis.popularity_signal import build_popularity_block, compute_popularity_confirmation
 from analysis.etf_quality import build_etf_quality_block
@@ -292,7 +292,7 @@ if __name__ == "__main__":
     if report_list:
         date_str = datetime.now().strftime("%Y-%m-%d")
         summary_html = build_summary_block(summary_list, output_format="html")
-        full_md = summary_html + "\n" + LEGEND_BLOCK + "\n".join(report_list)
+        full_md = summary_html + "\n" + "\n".join(report_list)
 
         # docs/report.html 照常本地生成——即使是预览模式也生成没关系，
         # 因为 gh-pages 部署那一步在 workflow 里已经用
