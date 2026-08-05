@@ -181,6 +181,9 @@ def build_unified_valuation_block(df, code, val_series=None, win_rate=None, odds
 ---
 ### 核心估值决策（基于 {metric_name} 框架）
 
+<details>
+<summary>**综合评级：{rating}**</summary>
+
 > 胜率 = {metric_name}历史分位（越高代表当前越便宜）
 > 赔率 = {metric_name}回落盈利空间（当前{metric_name} − P10） / {metric_name}走高亏损空间（P90 − 当前{metric_name}）
 > 当前 {metric_name} = **{current_val:.2%}**，历史分位 = **{win_str}** {zone}
@@ -191,15 +194,7 @@ def build_unified_valuation_block(df, code, val_series=None, win_rate=None, odds
 | **胜率** | **{win_str}** | 历史上 {win_str} 的时间比现在更贵（{metric_name}更低） |
 | **赔率（盈亏比）** | **{odds_str}** | 盈利空间 {upside:.2%} / 亏损空间 {downside:.2%} |
 {pe_row}
-**综合评级：{rating}**
-
-| 估值分档 | {metric_name}阈值 |
-|:--------|--------:|
-| P90 极度低估 | > {quantiles['P90']:.2%} |
-| P75 显著低估 | > {quantiles['P75']:.2%} |
-| P50 中位 | > {quantiles['P50']:.2%} |
-| P25 高估 | > {quantiles['P25']:.2%} |
-| P10 泡沫 | ≤ {quantiles['P10']:.2%} |
+</details>
 """
     return block
 
