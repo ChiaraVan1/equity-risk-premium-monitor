@@ -48,6 +48,17 @@ def _pos_color_class(pct):
     return "pos-min"
 
 
+def _rating_short(r):
+    """基于胜率/赔率的综合评级（简化三档，用于仪表盘二级分组）。"""
+    win_rate = r.get("win_rate")
+    odds_ratio = r.get("odds_ratio")
+    if odds_ratio is None:
+        return "🟢 极佳买点"
+    if win_rate is not None and win_rate == win_rate and win_rate >= 0.50 and odds_ratio >= 1.0:
+        return "🟡 可参与"
+    return "🔴 不参与"
+
+
 def _is_actionable(r):
     """判断是否属于「🚨 需要处理」置顶区。
     exit_level>0 且实际持仓 → 需要操作；profit_level>0 → 无论是否持仓都提示止盈
@@ -108,7 +119,14 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
             if not group_items:
                 continue
             lines.append(f"\n**{group_label} ({len(group_items)})**")
+            _rating_order = ["🟢 极佳买点", "🟡 可参与", "🔴 不参与"]
+            group_items = sorted(group_items, key=lambda r: _rating_order.index(_rating_short(r)) if _rating_short(r) in _rating_order else 99)
+            _current_rating = None
             for r in group_items:
+                _r_rating = _rating_short(r)
+                if _r_rating != _current_rating:
+                    lines.append(f"　{_r_rating}")
+                    _current_rating = _r_rating
                 badge = "📌 " if r.get("holding") else ""
                 pos = r.get("position", {})
                 vol = r.get("vol_icon", "─")
@@ -177,7 +195,14 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
             if not group_items:
                 continue
             rows_html.append(f'<tr><td colspan="4" class="section-header">{group_label}</td></tr>')
+            _rating_order = ["🟢 极佳买点", "🟡 可参与", "🔴 不参与"]
+            group_items = sorted(group_items, key=lambda r: _rating_order.index(_rating_short(r)) if _rating_short(r) in _rating_order else 99)
+            _current_rating = None
             for r in group_items:
+                _r_rating = _rating_short(r)
+                if _r_rating != _current_rating:
+                    rows_html.append(f'<tr><td colspan="4" class="col-sub">{_r_rating}</td></tr>')
+                    _current_rating = _r_rating
                 pos = r.get("position", {})
                 total_pct = pos.get("total", 0)
                 pos_cls = _pos_color_class(total_pct) if isinstance(total_pct, (int, float)) else "pos-min"
