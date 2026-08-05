@@ -60,11 +60,17 @@ def compute_position_sizing(current_erp, quantiles):
 
 
 def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
-                          exit_level=0, profit_level=0, exit_icon="─", profit_icon="─"):
+                          exit_level=0, profit_level=0, exit_icon="─", profit_icon="─",
+                          current_erp=None):
     """仓位建议区块。触发减仓/止盈信号时不展示常规3+4+3拆分，改为提示已进入对应流程
     （避免"回撤已破防但仪表盘还在建议加仓"这种自相矛盾的观感）。估值分档表格随仓位
-    建议一起展示（分档是仓位拆分的依据），不再单独出现在核心估值决策模块里。"""
+    建议一起展示（分档是仓位拆分的依据），不再单独出现在核心估值决策模块里，
+    并以折叠形式呈现，避免详情页数值堆砌，只留结论文字。"""
+    erp_line = f"**当前 ERP：{current_erp:.2%}**\n" if current_erp is not None else ""
     zone_table = f"""
+<details>
+<summary>查看估值分档表格</summary>
+
 | 估值分档 | ERP阈值 |
 |:--------|--------:|
 | P90 极度低估 | > {quantiles['P90']:.2%} |
@@ -72,13 +78,15 @@ def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
 | P50 中位 | > {quantiles['P50']:.2%} |
 | P25 高估 | > {quantiles['P25']:.2%} |
 | P10 泡沫 | ≤ {quantiles['P10']:.2%} |
+
+</details>
 """
     if exit_level > 0:
         return f"""
 ---
 ### 仓位建议
 
-{exit_icon} 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+{erp_line}{exit_icon} 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
 低估位置参考：P75 = {quantiles['P75']:.2%}（显著低估） / P90 = {quantiles['P90']:.2%}（极度低估）
 {zone_table}"""
     elif profit_level > 0:
@@ -86,7 +94,7 @@ def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
 ---
 ### 仓位建议
 
-{profit_icon} 已触发止盈预警（详见下方「止盈信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
+{erp_line}{profit_icon} 已触发止盈预警（详见下方「止盈信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
 高估位置参考：P25 = {quantiles['P25']:.2%}（进入高估） / P10 = {quantiles['P10']:.2%}（极度高估）
 {zone_table}"""
     else:
@@ -94,7 +102,7 @@ def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
 ---
 ### 仓位建议
 
-**{b_msg}** ({bubble}%)
+{erp_line}**{b_msg}** ({bubble}%)
 **{v_msg}** ({value}%)
 **{t_msg}** ({spec}%)
 {zone_table}"""
@@ -225,6 +233,7 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
         exit_level=exit_summary.get("level", 0), profit_level=profit_summary.get("level", 0),
         exit_icon=exit_summary.get("verdict_icon", "─"), profit_icon=profit_summary.get("verdict_icon", "─"),
+        current_erp=current_erp,
     )
 
     range_stats = compute_range_drawdown_rebound(code, price_series, lookback=120) or {}
