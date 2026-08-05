@@ -332,4 +332,4 @@ def build_trend_block(df, name, erp_series, code, quantiles, ps_df=None):
 
 def build_monthly_trend_ai_block_standalone(name, code, monthly_rows, quantiles):
     """兼容旧调用点：单独暴露的月度AI块（正常应通过 build_trend_block 使用）。"""
-    return build_monthly_trend_ai_block(name, code, monthly_rows, quantiles)。
+    return build_monthly_trend_ai_block(name, code, monthly_rows, quantiles)
