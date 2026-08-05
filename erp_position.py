@@ -62,8 +62,17 @@ def compute_position_sizing(current_erp, quantiles):
 def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
                           exit_level=0, profit_level=0, exit_icon="─", profit_icon="─"):
     """仓位建议区块。触发减仓/止盈信号时不展示常规3+4+3拆分，改为提示已进入对应流程
-    （避免"回撤已破防但仪表盘还在建议加仓"这种自相矛盾的观感）。"""
-    total_pct = bubble + value + spec
+    （避免"回撤已破防但仪表盘还在建议加仓"这种自相矛盾的观感）。估值分档表格随仓位
+    建议一起展示（分档是仓位拆分的依据），不再单独出现在核心估值决策模块里。"""
+    zone_table = f"""
+| 估值分档 | ERP阈值 |
+|:--------|--------:|
+| P90 极度低估 | > {quantiles['P90']:.2%} |
+| P75 显著低估 | > {quantiles['P75']:.2%} |
+| P50 中位 | > {quantiles['P50']:.2%} |
+| P25 高估 | > {quantiles['P25']:.2%} |
+| P10 泡沫 | ≤ {quantiles['P10']:.2%} |
+"""
     if exit_level > 0:
         return f"""
 ---
@@ -71,7 +80,7 @@ def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
 
 {exit_icon} 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
 低估位置参考：P75 = {quantiles['P75']:.2%}（显著低估） / P90 = {quantiles['P90']:.2%}（极度低估）
-"""
+{zone_table}"""
     elif profit_level > 0:
         return f"""
 ---
@@ -79,7 +88,7 @@ def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
 
 {profit_icon} 已触发止盈预警（详见下方「止盈信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
 高估位置参考：P25 = {quantiles['P25']:.2%}（进入高估） / P10 = {quantiles['P10']:.2%}（极度高估）
-"""
+{zone_table}"""
     else:
         return f"""
 ---
@@ -88,9 +97,7 @@ def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
 **{b_msg}** ({bubble}%)
 **{v_msg}** ({value}%)
 **{t_msg}** ({spec}%)
-
-建议总仓位：**{total_pct}%**（泡沫底仓 {bubble}% + 价值主力 {value}% + 投机奇兵 {spec}%）
-"""
+{zone_table}"""
 
 
 def analyze_and_suggest(code, name, prepared_data, summary_list=None):
