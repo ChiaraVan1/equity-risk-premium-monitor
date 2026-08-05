@@ -163,17 +163,17 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         rows_html = []
 
         if stale_list:
-            rows_html.append('<tr><td colspan="4" class="section-header">🕓 数据新鲜度预警</td></tr>')
+            rows_html.append('<tr><td colspan="3" class="section-header">🕓 数据新鲜度预警</td></tr>')
             for r in stale_list:
                 rows_html.append(
                     f'<tr class="alert-row">'
                     f'<td class="col-name">{r["name"]}</td>'
-                    f'<td colspan="3" class="col-action">🕓 {r.get("stale_note", "")}</td>'
+                    f'<td colspan="2" class="col-action">🕓 {r.get("stale_note", "")}</td>'
                     f'</tr>'
                 )
 
         if alerted:
-            rows_html.append('<tr><td colspan="4" class="section-header">🚨 需要处理</td></tr>')
+            rows_html.append('<tr><td colspan="3" class="section-header">🚨 需要处理</td></tr>')
             for r in alerted:
                 badge = "📌 " if r.get("holding") else ""
                 zone_short = r.get("erp_zone", "")
@@ -186,7 +186,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                     f'<tr class="alert-row">'
                     f'<td class="col-name">{badge}{r["name"]}</td>'
                     f'<td class="col-pos">{pos.get("total", "─")}%</td>'
-                    f'<td colspan="2" class="col-action">{lead_icon} {zone_short}｜{combined}</td>'
+                    f'<td class="col-action">{lead_icon} {zone_short}｜{combined}</td>'
                     f'</tr>'
                 )
 
@@ -194,20 +194,18 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
             group_items = [r for r in unalerted if match_fn(r.get("erp_zone", ""))]
             if not group_items:
                 continue
-            rows_html.append(f'<tr><td colspan="4" class="section-header">{group_label}</td></tr>')
+            rows_html.append(f'<tr><td colspan="3" class="section-header">{group_label}</td></tr>')
             _rating_order = ["🟢 极佳买点", "🟡 可参与", "🔴 不参与"]
             group_items = sorted(group_items, key=lambda r: _rating_order.index(_rating_short(r)) if _rating_short(r) in _rating_order else 99)
             _current_rating = None
             for r in group_items:
                 _r_rating = _rating_short(r)
                 if _r_rating != _current_rating:
-                    rows_html.append(f'<tr><td colspan="4" class="col-sub">{_r_rating}</td></tr>')
+                    rows_html.append(f'<tr><td colspan="3" class="col-sub">{_r_rating}</td></tr>')
                     _current_rating = _r_rating
                 pos = r.get("position", {})
                 total_pct = pos.get("total", 0)
                 pos_cls = _pos_color_class(total_pct) if isinstance(total_pct, (int, float)) else "pos-min"
-                vol = r.get("vol_icon", "─")
-                disc = r.get("premium_icon", "─")
                 action = r.get("action_sentence", "")
                 badge = "📌 " if r.get("holding") else ""
                 wo_str = r.get("win_odds_str", "─")
@@ -217,7 +215,6 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                     f'<td class="col-name">{badge}{r["name"]}</td>'
                     f'<td class="col-pos {pos_cls}">{total_pct}%<br>'
                     f'<span class="col-sub">{pos.get("bubble", "─")}+{pos.get("value", "─")}+{pos.get("spec", "─")}</span></td>'
-                    f'<td class="col-sig">波{vol} 折{disc}</td>'
                     f'<td class="col-action">{wo_str} · {range_str} · {action}</td>'
                     f'</tr>'
                 )
@@ -227,7 +224,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                     if obs_line:
                         rows_html.append(
                             f'<tr><td></td>'
-                            f'<td colspan="3" class="col-action" style="color:#8b949e;">{obs_line}</td>'
+                            f'<td colspan="2" class="col-action" style="color:#8b949e;">{obs_line}</td>'
                             f'</tr>'
                         )
         table_html = '<table class="dashboard-table">\n' + "\n".join(rows_html) + "\n</table>"
