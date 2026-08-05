@@ -152,7 +152,7 @@ def build_monthly_trend_ai_block(name, code, monthly_rows, quantiles):
         raw = data["choices"][0]["message"]["content"].strip().replace("```json", "").replace("```", "").strip()
         result = json.loads(raw)
         icon = {"走高": "🟢", "走低": "🔴", "震荡": "🟡"}.get(result.get("direction", ""), "🟡")
-        return f"趋势方向：{icon} **{result.get('trend_summary','')}**", True
+        return f"近10月ERP趋势：{icon} **{result.get('trend_summary','')}**", True
     except Exception as e:
         print(f"⚠️ DashScope AI趋势解读失败（尝试降级到 qnaigc）：{type(e).__name__}: {e}")
 
@@ -174,7 +174,7 @@ def build_monthly_trend_ai_block(name, code, monthly_rows, quantiles):
         raw = "\n".join(text_blocks).strip().replace("```json", "").replace("```", "").strip()
         result = json.loads(raw)
         icon = {"走高": "🟢", "走低": "🔴", "震荡": "🟡"}.get(result.get("direction", ""), "🟡")
-        return f"趋势方向：{icon} **{result.get('trend_summary','')}**", True
+        return f"近10月ERP趋势：{icon} **{result.get('trend_summary','')}**", True
     except Exception as e:
         print(f"⚠️ qnaigc AI趋势解读也失败（已降级到规则法）：{type(e).__name__}: {e}")
         return None, False
@@ -319,11 +319,11 @@ def build_trend_block(df, name, erp_series, code, quantiles, ps_df=None):
             trend_icon = "基本横盘"
         delta = recent['ERP'].iloc[-1] - recent['ERP'].iloc[0]
         delta_str = f"+{delta:.2%}" if delta >= 0 else f"{delta:.2%}"
-        monthly_line = f"趋势方向：**{trend_icon}**，区间变化：**{delta_str}**"
+        monthly_line = f"近10月ERP趋势：**{trend_icon}**，区间变化：**{delta_str}**"
 
     return f"""
 ---
-### 近10月 ERP 趋势
+### ERP趋势方向
 
 > {monthly_line}
 > 📐 近20日斜率信号：{slope_info['signal_icon']} **{slope_info['signal']}** — {slope_info['desc']}
