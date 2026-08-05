@@ -116,6 +116,9 @@ def build_dividend_yield_block(erp_code: str) -> str:
 | 当前股息率 | **{result['cur_dy']:.2f}%** | {source_label} |
 | 历史分位 | **P{result['percentile']*100:.0f}** | **{result['zone']}** |
 
+<details>
+<summary>查看历史股息率分布表格</summary>
+
 | 历史股息率分布 | 数值 |
 |:--------------|-----:|
 | P90（历史股息率高位） | {result['p90']:.2f}% |
@@ -123,6 +126,8 @@ def build_dividend_yield_block(erp_code: str) -> str:
 | P50（中位数） | {result['p50']:.2f}% |
 | P25 | {result['p25']:.2f}% |
 | P10（历史股息率低位） | {result['p10']:.2f}% |
+
+</details>
 """
     return block
 
