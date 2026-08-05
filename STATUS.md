@@ -5,6 +5,7 @@ STATUS.md — 跨 session 运行记忆
 ## TODO
 
 - 加入其他信号指标
+- 定位修复价格数据自8/2起冻结问题（Actions云端抓取失败且无告警传播）；搭建本地 launchd→osascript→fetch_and_push.sh 自动化方案，绕开 py_mini_racer 在 launchd 后台daemon下的崩溃问题；发现云端仍无法抓取价格数据、单标的失败会覆盖旧值、本地重试窗口不够用等后续风险
 - fetch/simple_etf_metrics.py 曾出现超时（>5分钟）未能写入新的 ETF 指标文件，当日折溢价/资金流/波动率数据读取到的是旧缓存；需排查是数据源响应慢还是需要调大子进程 timeout / 调小 MAX_WORKERS
 - HSTECH 报告里估值指标仍标注为"ERP"，应为"PSY"（仅文字标注问题，数值本身正确）
 - feature/pe-band-demo 分支也在用这份代码，main 分支近期的一系列修复/重构还没同步过去，需要评估要不要同步
