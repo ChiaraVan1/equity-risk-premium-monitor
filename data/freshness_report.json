@@ -1,0 +1,347 @@
+{
+  "generated_at": "2026-08-06T11:48:14.535347",
+  "results": [
+    {
+      "label": "QQQ_PE_TODAY",
+      "fresh": true,
+      "last_date": "2026-08-06",
+      "staleness_days": 0,
+      "reason": "",
+      "checked_at": "2026-08-06T11:46:11.251510"
+    },
+    {
+      "label": "ERP-000300",
+      "path": "./data/erp_000300.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:18.343911"
+    },
+    {
+      "label": "PE数值-000300",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:18.350981"
+    },
+    {
+      "label": "ERP-000688",
+      "path": "./data/erp_000688.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:20.259660"
+    },
+    {
+      "label": "PE数值-000688",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:20.265626"
+    },
+    {
+      "label": "ERP-000922",
+      "path": "./data/erp_000922.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:22.707253"
+    },
+    {
+      "label": "PE数值-000922",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:22.713811"
+    },
+    {
+      "label": "ERP-000015",
+      "path": "./data/erp_000015.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:24.592159"
+    },
+    {
+      "label": "PE数值-000015",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:24.598880"
+    },
+    {
+      "label": "ERP-399989",
+      "path": "./data/erp_399989.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:26.345960"
+    },
+    {
+      "label": "PE数值-399989",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:26.353352"
+    },
+    {
+      "label": "ERP-931071",
+      "path": "./data/erp_931071.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:28.194012"
+    },
+    {
+      "label": "PE数值-931071",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:28.200238"
+    },
+    {
+      "label": "ERP-000069",
+      "path": "./data/erp_000069.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:30.049521"
+    },
+    {
+      "label": "PE数值-000069",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:30.055867"
+    },
+    {
+      "label": "ERP-930781",
+      "path": "./data/erp_930781.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:33.424617"
+    },
+    {
+      "label": "PE数值-930781",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:33.430764"
+    },
+    {
+      "label": "ERP-399975",
+      "path": "./data/erp_399975.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:35.859337"
+    },
+    {
+      "label": "PE数值-399975",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:35.865396"
+    },
+    {
+      "label": "ERP-399967",
+      "path": "./data/erp_399967.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:37.773330"
+    },
+    {
+      "label": "PE数值-399967",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:37.779718"
+    },
+    {
+      "label": "ERP-931066",
+      "path": "./data/erp_931066.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:39.840959"
+    },
+    {
+      "label": "PE数值-931066",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:39.847369"
+    },
+    {
+      "label": "ERP-930794",
+      "path": "./data/erp_930794.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:41.434815"
+    },
+    {
+      "label": "PE数值-930794",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:41.441782"
+    },
+    {
+      "label": "ERP-930598",
+      "path": "./data/erp_930598.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:43.130190"
+    },
+    {
+      "label": "PE数值-930598",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:43.136916"
+    },
+    {
+      "label": "ERP-000819",
+      "path": "./data/erp_000819.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:44.702058"
+    },
+    {
+      "label": "PE数值-000819",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:44.708753"
+    },
+    {
+      "label": "ERP-950125",
+      "path": "./data/erp_950125.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:46.296897"
+    },
+    {
+      "label": "PE数值-950125",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:46.304095"
+    },
+    {
+      "label": "ERP-931637",
+      "path": "./data/erp_931637.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:48.992371"
+    },
+    {
+      "label": "PE数值-931637",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:48.998648"
+    },
+    {
+      "label": "ERP-399986",
+      "path": "./data/erp_399986.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:50.544352"
+    },
+    {
+      "label": "PE数值-399986",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:50.550690"
+    },
+    {
+      "label": "ERP-930633",
+      "path": "./data/erp_930633.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:52.186521"
+    },
+    {
+      "label": "PE数值-930633",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:52.192831"
+    },
+    {
+      "label": "ERP-931946",
+      "path": "./data/erp_931946.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
+      "checked_at": "2026-08-06T11:46:53.805308"
+    },
+    {
+      "label": "PE数值-931946",
+      "stale_flag": false,
+      "stale_note": "",
+      "checked_at": "2026-08-06T11:46:53.811480"
+    },
+    {
+      "label": "HSTECH-PS",
+      "path": "./data/ps_HSTECH.csv",
+      "fresh": true,
+      "last_date": "2026-08-06",
+      "staleness_days": 0,
+      "reason": "",
+      "checked_at": "2026-08-06T11:48:11.191542",
+      "reason_prefix": "按文件修改时间校验（无日期列）"
+    },
+    {
+      "label": "Shiller-CAPE",
+      "path": "./data/ie_data.xls",
+      "fresh": true,
+      "last_date": "2026-08-06",
+      "staleness_days": 0,
+      "reason": "",
+      "checked_at": "2026-08-06T11:48:14.534937",
+      "reason_prefix": "按文件修改时间校验（无日期列）"
+    },
+    {
+      "label": "ETF价格序列",
+      "path": "./data/etf_price.csv",
+      "fresh": true,
+      "last_date": "2026-08-06",
+      "staleness_days": 0,
+      "reason": "",
+      "checked_at": "2026-08-06T11:48:14.535146",
+      "reason_prefix": "按文件修改时间校验（无日期列）"
+    },
+    {
+      "label": "ETF净值序列",
+      "path": "./data/etf_nav.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "文件不存在",
+      "checked_at": "2026-08-06T11:48:14.535156"
+    },
+    {
+      "label": "基准指数涨跌幅序列",
+      "path": "./data/index_pct.csv",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "文件不存在",
+      "checked_at": "2026-08-06T11:48:14.535169"
+    }
+  ],
+  "stale_count": 21
+}
