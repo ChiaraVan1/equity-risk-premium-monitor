@@ -16,9 +16,45 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config_loader import BOND_YIELD_CONFIG
 
+# 同目录下的 freshness.py（数据新鲜度校验工具）
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from freshness import (
+    check_date_freshness,
+    check_value_streak,
+    write_freshness_report,
+    print_freshness_summary,
+)
+
 # ── 配置表 ────────────────────────────────────────────────────────────────────
 
 FRED_API_KEY = "a8ce66c09bbcedfb9e33de739a0dcbfb"
+
+# 本次运行收集到的所有新鲜度校验结果，main() 结尾统一汇总打印+落盘
+_freshness_results: list[dict] = []
+
+# QQQ_PE_TODAY 上次成功手动填值的时间戳文件
+_QQQ_PE_STATE_PATH = "./data/_qqq_pe_last_fill.json"
+
+# PE 值 streak 状态持久化文件（记录每个指数连续几天 PE 和前一天完全相同）
+_PE_STREAK_STATE_PATH = "./data/_pe_value_streak.json"
+
+
+def _load_json(path: str) -> dict:
+    import json
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def _save_json(path: str, data: dict):
+    import json
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
 
 BOND_CONFIG = {
     'CN10Y': 'bond_china',
@@ -239,6 +275,15 @@ def update_hstech_ps(cn10y_series=None):
     if pd.notna(current_psy):
         print(f"        PSY = {current_psy:.2%}  (历史{psy_pct*100:.0f}%分位，无风险利率={combined['rf'].iloc[-1]:.2%})")
 
+    _freshness_results.append(
+        check_date_freshness(
+            label="HSTECH-PS",
+            path=ps_path,
+            date_col=None,  # index 就是日期，直接按文件 mtime 校验更省事
+            max_staleness_days=35,  # 月度数据，放宽阈值
+        )
+    )
+
 
 # ── 增量合并保存 ───────────────────────────────────────────────────────────────
 
@@ -289,17 +334,77 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
     valid_now = combined['ERP'].notna().sum()
     print(f"   ✅ {name} {action}！总记录: {len(combined)} 天，有效ERP: {valid_now} 天")
 
+    # ── 新鲜度校验 1：最新一行日期是否够新 ──────────────────────────────────
+    _freshness_results.append(
+        check_date_freshness(
+            label=f"ERP-{code}",
+            path=file_path,
+            date_col="Date",
+            max_staleness_days=3,  # 日频数据，覆盖单个假日
+        )
+    )
+
+    # ── 新鲜度校验 2：今天的 PE 是否和昨天完全相同（怀疑数据源返回旧缓存）──
+    valid_pe = combined[['Date', 'PE']].dropna().sort_values('Date')
+    if len(valid_pe) >= 2:
+        today_row = {"date": str(valid_pe.iloc[-1]['Date']), "PE": float(valid_pe.iloc[-1]['PE'])}
+        yesterday_row = {"date": str(valid_pe.iloc[-2]['Date']), "PE": float(valid_pe.iloc[-2]['PE'])}
+
+        streak_state = _load_json(_PE_STREAK_STATE_PATH)
+        code_state = streak_state.get(code, {})
+
+        pe_result, new_streak = check_value_streak(
+            label=f"PE数值-{code}",
+            current=today_row,
+            previous=yesterday_row,
+            watch_fields=["PE"],
+            streak_state=code_state,
+            streak_threshold=3,
+            advance_gate_field="date",
+        )
+        streak_state[code] = new_streak
+        _save_json(_PE_STREAK_STATE_PATH, streak_state)
+        _freshness_results.append(pe_result)
+
 # ── 主流程 ────────────────────────────────────────────────────────────────────
 
 def main():
+    global _freshness_results
+    _freshness_results = []
+
     os.makedirs('./data', exist_ok=True)
 
     if QQQ_PE_TODAY is None:
         print("⚠️  警告: QQQ_PE_TODAY 未填写，今日 QQQ ERP 将不会更新！")
         print("    请访问 https://www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio")
         print("    查询今日值后填入脚本顶部的 QQQ_PE_TODAY 再运行。\n")
+
+        qqq_state = _load_json(_QQQ_PE_STATE_PATH)
+        days_since = None
+        if qqq_state.get("last_fill"):
+            days_since = (datetime.now() - datetime.fromisoformat(qqq_state["last_fill"])).days
+            if days_since >= 2:
+                print(f"❗❗ QQQ_PE_TODAY 已连续 {days_since} 天未填写，请尽快更新，否则 QQQ 的 ERP 会一直卡在旧值！\n")
+
+        _freshness_results.append({
+            "label": "QQQ_PE_TODAY",
+            "fresh": days_since is not None and days_since < 2,
+            "last_date": qqq_state.get("last_fill", "从未成功填写过")[:10] if qqq_state.get("last_fill") else None,
+            "staleness_days": days_since,
+            "reason": "本次未填写" + (f"，距上次成功填写已 {days_since} 天" if days_since is not None else "，且从未成功填写过"),
+            "checked_at": datetime.now().isoformat(),
+        })
     else:
         print(f"✅ QQQ 今日 PE: {QQQ_PE_TODAY}（来源: GuruFocus TTM）\n")
+        _save_json(_QQQ_PE_STATE_PATH, {"last_fill": datetime.now().isoformat(), "value": QQQ_PE_TODAY})
+        _freshness_results.append({
+            "label": "QQQ_PE_TODAY",
+            "fresh": True,
+            "last_date": datetime.now().strftime("%Y-%m-%d"),
+            "staleness_days": 0,
+            "reason": "",
+            "checked_at": datetime.now().isoformat(),
+        })
 
     print("ℹ️  恒生科技已改用 PS/PSY 口径，不再依赖 HS_TECH_PE_TODAY。\n")
 
@@ -395,6 +500,9 @@ def main():
 
     print("\n" + "=" * 60)
     print("增量同步完成。")
+
+    print_freshness_summary(_freshness_results)
+    write_freshness_report(_freshness_results)
 
 if __name__ == "__main__":
     main()

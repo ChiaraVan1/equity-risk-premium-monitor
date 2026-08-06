@@ -146,3 +146,20 @@ if 'psy' in ps_df.columns and ps_df['psy'].notna().any():
 import os
 os.makedirs("./data", exist_ok=True)
 ps_df.to_csv("./data/ps_HSTECH.csv", index=True, encoding="utf-8-sig")
+
+# ── 新鲜度校验 ────────────────────────────────────────────────────────────
+# 【2026-08-06 说明】本脚本已从 prepare_all_data.py 的每日调度里移除，
+# 每日的 PS/PSY 更新改由 fetch_bond_yield_incremental.py 里的
+# update_hstech_ps() 负责（增量、自带国债数据兜底、有 ffill）。
+# 本脚本保留作为手动全量重算工具（比如怀疑增量结果有累积误差时用）。
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from freshness import check_date_freshness, write_freshness_report, print_freshness_summary
+
+_result = check_date_freshness(
+    label="HSTECH-PS",
+    path="./data/ps_HSTECH.csv",
+    date_col=None,
+    max_staleness_days=35,
+)
+print_freshness_summary([_result])
+write_freshness_report([_result])
