@@ -80,12 +80,17 @@ def load_ps_data():
     return df
 
 
-# ══════════════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════════════════════════════════
 #  ETF 价格序列
 # ══════════════════════════════════════════════════════════════════════
 
 ETF_PRICE_PATH = "./data/etf_price.csv"
 _ETF_PRICE_CACHE = {}
+
+# 【2026-08-06】simple_etf_metrics.py 增量拉取优化新增的两个历史缓存文件，
+# 结构和 etf_price.csv 一样（date为索引的宽表），一并纳入下面的新鲜度校验。
+ETF_NAV_PATH = "./data/etf_nav.csv"
+INDEX_PCT_PATH = "./data/index_pct.csv"
 
 
 def load_etf_price_series(erp_code: str):
@@ -132,7 +137,7 @@ def fetch_em_news_df():
         return None
 
 
-# ══════════════════════════════════════════════════════════════════════
+# ═════════════════════════════════════════════════════════════════════
 #  主准备函数
 # ══════════════════════════════════════════════════════════════════════
 
@@ -256,6 +261,18 @@ def prepare_all_data():
                 label="ETF价格序列",
                 path=ETF_PRICE_PATH,
                 date_col=None,  # 日期是index不是普通列，同样退化为mtime校验
+                max_staleness_days=3,
+            ),
+            check_date_freshness(
+                label="ETF净值序列",
+                path=ETF_NAV_PATH,
+                date_col=None,  # 日期是index不是普通列，退化为mtime校验
+                max_staleness_days=3,
+            ),
+            check_date_freshness(
+                label="基准指数涨跌幅序列",
+                path=INDEX_PCT_PATH,
+                date_col=None,  # 日期是index不是普通列，退化为mtime校验
                 max_staleness_days=3,
             ),
         ]
