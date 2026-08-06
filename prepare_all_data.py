@@ -15,6 +15,7 @@ import numpy as np
 from config_loader import HOLDING_CATEGORY, FUNDAMENTAL_KEYWORDS, INDICES_LIST
 from analysis.etf_quality import load_etf_metrics
 from fetch.dividend_yield_fetch import ensure_dividend_data_fresh
+from fetch.freshness import check_date_freshness, print_freshness_summary, write_freshness_report
 
 # ══════════════════════════════════════════════════════════════════════
 #  Shiller CAPE 长期回报锚模块
@@ -147,10 +148,16 @@ def prepare_all_data():
     # ⚙️  第1步：运行所有数据生成脚本
     print("\n⚙️  第1步：运行所有数据生成脚本...")
 
+    # 【2026-08-06 修复】原来这里还有 ("fetch/fetch_ps.py", "HSTECH PS/PSY 数据")，
+    # 排在 fetch_bond_yield_incremental.py 后面。但 fetch_bond_yield_incremental.py
+    # 的 main() 内部已经会调用 update_hstech_ps()（增量、自带国债兜底、有ffill）
+    # 更新同一个 data/ps_HSTECH.csv；紧接着再跑 fetch_ps.py 会把这个结果整个
+    # 用"从2020年全量重算"的旧逻辑覆盖掉——増量版本白跑了，且被更弱的全量版覆盖。
+    # 现在移除这一项，PS/PSY 数据统一由 update_hstech_ps() 负责。
+    # fetch/fetch_ps.py 文件本身保留，作为手动全量重算工具（怀疑增量结果累积误差时用）。
     scripts = [
         ("fetch/simple_etf_metrics.py", "ETF 指标数据"),
-        ("fetch/fetch_bond_yield_incremental.py", "国债 PE 增量数据"),
-        ("fetch/fetch_ps.py", "HSTECH PS/PSY 数据"),
+        ("fetch/fetch_bond_yield_incremental.py", "国债 PE 增量数据（含 HSTECH PS/PSY）"),
         ("analysis/dividend_yield_analysis.py", "股息率数据"),  # __main__ 入口在这个文件
     ]
 
@@ -232,6 +239,30 @@ def prepare_all_data():
     except Exception as e:
         print(f"   ⚠️  快讯拉取异常: {e}")
         news_df = None
+
+    # 6. 汇总数据新鲜度校验（Shiller / ETF价格 之前一直没人校验，这里补上；
+    #    国债PE/PS/股息率的校验各自在对应脚本里已经做完并写过 data/freshness_report.json，
+    #    这里的 write_freshness_report 会按 label 和它们合并，不会互相覆盖）
+    print("\n6️⃣  汇总数据新鲜度校验...")
+    try:
+        extra_checks = [
+            check_date_freshness(
+                label="Shiller-CAPE",
+                path=SHILLER_PATH,
+                date_col=None,  # xls 没有统一日期列，退化为文件 mtime 校验
+                max_staleness_days=100,  # 季度更新的数据源，放宽阈值
+            ),
+            check_date_freshness(
+                label="ETF价格序列",
+                path=ETF_PRICE_PATH,
+                date_col=None,  # 日期是index不是普通列，同样退化为mtime校验
+                max_staleness_days=3,
+            ),
+        ]
+        print_freshness_summary(extra_checks)
+        write_freshness_report(extra_checks)
+    except Exception as e:
+        print(f"   ⚠️  新鲜度汇总校验异常: {e}")
 
     print("\n" + "=" * 60)
     print("✅ 数据准备完成\n")
