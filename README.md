@@ -16,11 +16,15 @@
         ↓
 
 数据生产层（fetch/）
-├─ simple_etf_metrics.py           → data/simple_etf_metrics.csv
+├─ simple_etf_metrics.py           → data/simple_etf_metrics.csv, data/etf_nav.csv, data/index_pct.csv
 ├─ fetch_bond_yield.py             → data/erp_*.csv（全量）
-├─ fetch_bond_yield_incremental.py → data/erp_*.csv（增量）
-├─ fetch_ps.py                     → data/ps_HSTECH.csv
+├─ fetch_bond_yield_incremental.py → data/erp_*.csv（增量）+ data/ps_HSTECH.csv（HSTECH PS/PSY）
+├─ fetch_ps.py                     → data/ps_HSTECH.csv（手动全量重算备用，不在每日调度里）
+├─ freshness.py                    → 通用新鲜度校验工具（日期口径 + 数值不变口径）
 └─ dividend_yield_fetch.py         → data/dividend_yield/dyr_*.csv
+        ↓（各 fetch 脚本调用 freshness.py，结果合并写入）
+
+data/freshness_report.json         → 全数据源新鲜度体检报告，prepare_all_data.py 汇总打印
         ↓
 
 prepare_all_data.py（聚合所有 CSV，subprocess 跑 fetch/ 脚本 + import ensure_dividend_data_fresh）
@@ -59,6 +63,8 @@ erp_position.py（主入口，根目录）
 ```
 
 **首次使用**须先跑全量脚本 `fetch_bond_yield.py` 建立历史数据，之后每日跑增量脚本即可。
+
+> **约定：新增任何数据源接入 fetch/ 时，必须调用 `freshness.py` 做新鲜度校验，并汇总进 `data/freshness_report.json`。**
 
 ---
 
