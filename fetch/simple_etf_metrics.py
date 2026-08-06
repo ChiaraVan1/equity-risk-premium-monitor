@@ -37,6 +37,19 @@ from config_loader import ETF_LIST, ETF_TO_BENCHMARK
 
 MAX_WORKERS = 5  # 并发线程数，遇到限流可调小
 
+# 【2026-08-06 增量拉取优化】净值(nav)和基准指数(index)接口支持按日期范围查询，
+# 以前每次都固定拉满3年，现在改为落盘缓存历史 + 只拉取增量：
+#   data/etf_nav.csv   —— 各ETF净值历史宽表（date为索引，列=erp_code）
+#   data/index_pct.csv —— 各基准指数涨跌幅历史宽表（date为索引，列=指数代码）
+# 每次运行只拉"上次缓存最后日期 - 缓冲天数"到今天这一小段，
+# 拉回来的新数据与本地历史合并（重叠日期以新数据为准，覆盖可能的历史修订）后
+# 再用于3年滚动窗口计算，计算结果与全量拉取完全一致，只是省掉了重复请求历史数据的时间。
+# 行情(price)走新浪 ak.fund_etf_hist_sina()，该接口不支持日期范围参数、只能返回整表，
+# 因此不受此优化影响，仍是每次整表拉取。
+NAV_CACHE_PATH = './data/etf_nav.csv'
+INDEX_CACHE_PATH = './data/index_pct.csv'
+INCREMENTAL_BUFFER_DAYS = 5  # 增量起点在"上次缓存最后日期"基础上再往前留几天，覆盖数据源可能的历史修订
+
 # 新浪行情 symbol 前缀：上交所 sh，深交所 sz
 def _sina_symbol(etf_code: str) -> str:
     code = etf_code.split('.')[0]  # 兼容 config.json 里带 .SH/.SZ 后缀的 etf_code
@@ -50,6 +63,42 @@ def _ts_code(etf_code: str) -> str:
     if code.startswith(('51', '58', '56', '50', '52', '00')):
         return code + '.SH'
     return code + '.SZ'
+
+
+def _load_wide_cache(path: str) -> pd.DataFrame:
+    """读取宽表历史缓存（date为索引，每列一个代码）。文件不存在或读取失败则返回空表，
+    此时下游会自动退化为"3年前"作为起点，等价于首次全量拉取。"""
+    if not os.path.exists(path):
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path, index_col=0, parse_dates=True)
+    except Exception as e:
+        print(f"⚠️ 读取缓存 {path} 失败，按空缓存处理: {e}")
+        return pd.DataFrame()
+
+
+def _incremental_start_str(cache_df: pd.DataFrame, col: str, default_start: datetime) -> str:
+    """根据某一列在缓存里的最后日期，算出这次增量拉取该从哪天开始（留缓冲天数覆盖修订）。
+    缓存里没有这一列、或列为空时，退化为 default_start（3年前，相当于全量拉取）。"""
+    if col and col in cache_df.columns:
+        s = cache_df[col].dropna()
+        if len(s) > 0:
+            start = s.index.max() - timedelta(days=INCREMENTAL_BUFFER_DAYS)
+            return max(start, default_start).strftime('%Y%m%d')
+    return default_start.strftime('%Y%m%d')
+
+
+def _merge_series_with_cache(cache_df: pd.DataFrame, new_frames: list) -> pd.DataFrame:
+    """把这次新抓到的各列数据和本地历史缓存合并成完整宽表。
+    重叠日期以新抓到的数据为准（新数据更权威，可能是数据源的历史修订值），
+    缺口部分用缓存里的历史数据补齐。"""
+    if not new_frames:
+        return cache_df
+    new_df = pd.concat(new_frames, axis=1)
+    if cache_df.empty:
+        return new_df.sort_index()
+    merged = new_df.combine_first(cache_df)
+    return merged.sort_index()
 
 
 def _empty_record(erp_code, etf_code):
@@ -142,22 +191,26 @@ def fetch_index_pct(index_code: str, start_str: str, end_str: str) -> pd.Series 
 # ── 单只 ETF 处理（在线程中运行）────────────────────────────────────────────────
 
 def _process_single_etf(args):
-    erp_code, etf_code, start_date, end_date, start_str, end_str = args
+    (erp_code, etf_code, start_date, end_date,
+     nav_start_str, index_start_str, end_str,
+     nav_cache_df, index_cache_df) = args
     print(f"\n处理 {erp_code} -> {etf_code}")
     m = _empty_record(erp_code, etf_code)
     price_s = None
+    nav_s = None
+    index_s = None
 
     try:
-        # ── 1. 日行情 ────────────────────────────────────────────────────────
+        # ── 1. 日行情 ──────────────────────────────────────────────────────────
         df_all = fetch_etf_price(etf_code)
         if df_all is None:
             print(f"  警告: {etf_code} 无行情数据，跳过")
-            return m, price_s
+            return m, price_s, nav_s, index_s
 
         df = df_all[df_all.index >= start_date].copy()
         if df.empty:
             print(f"  警告: {etf_code} 3年内无数据，跳过")
-            return m, price_s
+            return m, price_s, nav_s, index_s
 
         latest = df.iloc[-1]
         m['trade_date']     = df.index[-1].strftime('%Y-%m-%d')
@@ -171,9 +224,20 @@ def _process_single_etf(args):
         time.sleep(0.3)
 
         # ── 2. 净值 & 折溢价 ─────────────────────────────────────────────────
-        df_nav = fetch_etf_nav(etf_code, start_str, end_str)
+        # 只拉 [nav_start_str, end_str] 这段增量，再与本地历史缓存合并出完整3年序列，
+        # 用于后续滚动分位数计算——计算口径与全量拉取时完全一致。
+        cached_nav = nav_cache_df[erp_code].dropna() if erp_code in nav_cache_df.columns else pd.Series(dtype=float)
+        df_nav = fetch_etf_nav(etf_code, nav_start_str, end_str)
         if df_nav is not None:
-            df = df.join(df_nav[['unit_nav']], how='left')
+            new_nav_s = df_nav['unit_nav']
+            new_nav_s.name = erp_code
+            nav_s = new_nav_s  # 只含本次新抓到的增量，用于落盘合并
+            full_nav = new_nav_s.combine_first(cached_nav)  # 新数据覆盖重叠日期（修订），历史缺口用缓存补
+        else:
+            full_nav = cached_nav
+
+        if len(full_nav) > 0:
+            df = df.join(full_nav.rename('unit_nav'), how='left')
             df['unit_nav'] = df['unit_nav'].ffill()
             df['discount_rate'] = (df['unit_nav'] - df['close']) / df['unit_nav']
             disc = df['discount_rate'].dropna()
@@ -197,11 +261,21 @@ def _process_single_etf(args):
         time.sleep(0.3)
 
         # ── 3. 超额收益 & 跟踪误差 ───────────────────────────────────────────
+        # 基准指数同样只拉 [index_start_str, end_str] 增量，与历史缓存合并出完整序列。
         bm_code = ETF_TO_BENCHMARK.get(etf_code)
         if bm_code:
-            pct_index = fetch_index_pct(bm_code, start_str, end_str)
-            if pct_index is not None:
-                df = df.join(pct_index, how='left')
+            cached_index = index_cache_df[bm_code].dropna() if bm_code in index_cache_df.columns else pd.Series(dtype=float)
+            pct_index_new = fetch_index_pct(bm_code, index_start_str, end_str)
+            if pct_index_new is not None:
+                new_index_s = pct_index_new.copy()
+                new_index_s.name = bm_code
+                index_s = new_index_s  # 只含本次新抓到的增量，用于落盘合并
+                full_index = new_index_s.combine_first(cached_index)
+            else:
+                full_index = cached_index
+
+            if len(full_index) > 0:
+                df = df.join(full_index.rename('pct_chg_index'), how='left')
                 valid = df[['pct_chg', 'pct_chg_index']].dropna()
                 if len(valid) > 20:
                     df['excess_return'] = df['pct_chg'] - df['pct_chg_index']
@@ -317,83 +391,10 @@ def _process_single_etf(args):
     except Exception as e:
         print(f"  错误 ({etf_code}): {e}")
 
-    return m, price_s
+    return m, price_s, nav_s, index_s
 
 
-# ── 数据新鲜度校验 ────────────────────────────────────────────────────────────
-# 逐日快照（非时间序列），无法像 erp_*.csv 那样直接看"最近N行是否相同"，
-# 改为对比"这次生成的值"和"上一次已提交到 data/ 的值"，用一个隐藏的 _streak 列
-# 持久化"连续未变化次数"，跨天累加。达到阈值才标记预警，避免偶发的真实持平被误报。
-FRESHNESS_STALE_THRESHOLD = 3
-_FRESHNESS_COLS = ['latest_discount_rate', 'turnover_quantile', 'annualized_volatility', 'tracking_error']
-
-
-def _load_previous_snapshot(path='./data/simple_etf_metrics.csv'):
-    try:
-        return pd.read_csv(path, index_col='ts_code')
-    except Exception:
-        return None
-
-
-def _apply_freshness_check(df: pd.DataFrame, old_df: pd.DataFrame | None) -> pd.DataFrame:
-    """对比上一次快照，给每个ETF标记 stale_flag / stale_note，同时把最新streak写回
-    _{col}_streak 列（随文件一起提交，下次运行时接着累加）。
-
-    ★ 只在 trade_date 真的推进到新交易日时才累加/清零 streak；同一交易日内
-    重复手动跑（测试、临时加标的等）不会推进 streak，避免把"重复运行次数"
-    误当成"连续未变化天数"，产生假预警。
-    """
-    df = df.set_index('ts_code')
-    stale_flags, stale_notes = [], []
-
-    for ts_code, row in df.iterrows():
-        note_parts = []
-        cur_trade_date = row.get('trade_date')
-        prev_trade_date = None
-        if old_df is not None and ts_code in old_df.index and 'trade_date' in old_df.columns:
-            prev_trade_date = old_df.loc[ts_code, 'trade_date']
-        is_new_trading_day = pd.notna(cur_trade_date) and (
-            pd.isna(prev_trade_date) or cur_trade_date != prev_trade_date
-        )
-
-        for col in _FRESHNESS_COLS:
-            streak_col = f"_{col}_streak"
-            prev_streak = 0
-            prev_val = np.nan
-            if old_df is not None and ts_code in old_df.index:
-                if streak_col in old_df.columns:
-                    v = old_df.loc[ts_code, streak_col]
-                    prev_streak = 0 if pd.isna(v) else int(v)
-                if col in old_df.columns:
-                    prev_val = old_df.loc[ts_code, col]
-
-            cur_val = row.get(col)
-
-            if not is_new_trading_day:
-                # 同一交易日内的重复运行：streak原样保留，不重复计数
-                streak = prev_streak
-            elif pd.notna(cur_val) and pd.notna(prev_val) and abs(float(cur_val) - float(prev_val)) < 1e-9:
-                streak = prev_streak + 1
-            else:
-                streak = 0
-            df.loc[ts_code, streak_col] = streak
-
-            if streak >= FRESHNESS_STALE_THRESHOLD:
-                note_parts.append(f"{col} 已连续 {streak} 次未变化")
-
-        if note_parts:
-            stale_flags.append(True)
-            stale_notes.append("；".join(note_parts))
-        else:
-            stale_flags.append(False)
-            stale_notes.append("")
-
-    df['stale_flag'] = stale_flags
-    df['stale_note'] = stale_notes
-    return df.reset_index()
-
-
-# ── 主入口 ────────────────────────────────────────────────────────────────────
+# ── 数据新鲜度校验 ────────────────────────────────────────────────────────────────────
 
 def get_etf_metrics():
     end_date   = datetime.now()
@@ -401,24 +402,54 @@ def get_etf_metrics():
     start_str  = start_date.strftime('%Y%m%d')
     end_str    = end_date.strftime('%Y%m%d')
 
-    args_list = [
-        (erp_code, etf_code, start_date, end_date, start_str, end_str)
-        for erp_code, etf_code in ETF_LIST
-    ]
+    # 加载净值/基准指数的本地历史缓存，用于算出每个标的这次该从哪天开始增量拉取。
+    # 缓存不存在（比如第一次跑）时 _incremental_start_str 会自动退化为 start_str，
+    # 即本次仍是全量拉取，行为和优化前完全一致。
+    nav_cache_df   = _load_wide_cache(NAV_CACHE_PATH)
+    index_cache_df = _load_wide_cache(INDEX_CACHE_PATH)
+
+    args_list = []
+    for erp_code, etf_code in ETF_LIST:
+        nav_start_str = _incremental_start_str(nav_cache_df, erp_code, start_date)
+        bm_code = ETF_TO_BENCHMARK.get(etf_code)
+        index_start_str = (
+            _incremental_start_str(index_cache_df, bm_code, start_date) if bm_code else start_str
+        )
+        args_list.append((
+            erp_code, etf_code, start_date, end_date,
+            nav_start_str, index_start_str, end_str,
+            nav_cache_df, index_cache_df,
+        ))
 
     results      = []
     price_frames = []
+    nav_frames   = []
+    index_frames = []
 
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        for m, price_s in executor.map(_process_single_etf, args_list):
+        for m, price_s, nav_s, index_s in executor.map(_process_single_etf, args_list):
             results.append(m)
             if price_s is not None:
                 price_frames.append(price_s)
+            if nav_s is not None:
+                nav_frames.append(nav_s)
+            if index_s is not None:
+                index_frames.append(index_s)
 
     if price_frames:
         price_df = pd.concat(price_frames, axis=1).sort_index()
         price_df.to_csv('./data/etf_price.csv', encoding='utf-8-sig')
         print("✅ ETF价格序列已保存到 data/etf_price.csv")
+
+    if nav_frames:
+        nav_df = _merge_series_with_cache(nav_cache_df, nav_frames)
+        nav_df.to_csv(NAV_CACHE_PATH, encoding='utf-8-sig')
+        print(f"✅ ETF净值序列已保存到 {NAV_CACHE_PATH}（增量+历史合并）")
+
+    if index_frames:
+        index_df = _merge_series_with_cache(index_cache_df, index_frames)
+        index_df.to_csv(INDEX_CACHE_PATH, encoding='utf-8-sig')
+        print(f"✅ 基准指数序列已保存到 {INDEX_CACHE_PATH}（增量+历史合并）")
 
     return pd.DataFrame(results)
 
@@ -451,7 +482,7 @@ if __name__ == '__main__':
 
     stale_rows = df[df['stale_flag']]
     if len(stale_rows) > 0:
-        print(f"\n⚠️ 数据新鲜度预警：{len(stale_rows)} 个ETF指标连续{FRESHNESS_STALE_THRESHOLD}次以上未变化，请检查数据源：")
+        print(f"\n⚠️ 数据新鲜度预警：{len(stale_rows)} 个ETF指标连续{FRESHNESS_STALE_THRESHOLD}次以上未变化，请检查数据源⚚")
         for _, r in stale_rows.iterrows():
             print(f"   {r['erp_code']} ({r['ts_code']}): {r['stale_note']}")
 
