@@ -97,7 +97,7 @@ def _merge_series_with_cache(cache_df: pd.DataFrame, new_frames: list) -> pd.Dat
     缺口部分用缓存里的历史数据补齐。"""
     if not new_frames:
         return cache_df
-    new_df = pd.concat(new_frames, axis=1)
+    new_df = pd.concat(new_frames, axis=1, sort=False)
     if cache_df.empty:
         return new_df.sort_index()
     merged = new_df.combine_first(cache_df)
