@@ -457,6 +457,81 @@ def get_etf_metrics():
     return pd.DataFrame(results)
 
 
+# ── 数据新鲜度校验 ────────────────────────────────────────────────────────────
+# 逐日快照（非时间序列），无法像 erp_*.csv 那样直接看"最近N行是否相同"，
+# 改为对比"这次生成的值"和"上一次已提交到 data/ 的值"，用一个隐藏的 _streak 列
+# 持久化"连续未变化次数"，跨天累加。达到阈值才标记预警，避免偶发的真实持平被误报。
+FRESHNESS_STALE_THRESHOLD = 3
+_FRESHNESS_COLS = ['latest_discount_rate', 'turnover_quantile', 'annualized_volatility', 'tracking_error']
+
+
+def _load_previous_snapshot(path='./data/simple_etf_metrics.csv'):
+    try:
+        return pd.read_csv(path, index_col='ts_code')
+    except Exception:
+        return None
+
+
+def _apply_freshness_check(df: pd.DataFrame, old_df: pd.DataFrame | None) -> pd.DataFrame:
+    """对比上一次快照，给每个ETF标记 stale_flag / stale_note，同时把最新streak写回
+    _{col}_streak 列（随文件一起提交，下次运行时接着累加）。
+
+    ★ 只在 trade_date 真的推进到新交易日时才累加/清零 streak；同一交易日内
+    重复手动跑（测试、临时加标的等）不会推进 streak，避免把"重复运行次数"
+    误当成"连续未变化天数"，产生假预警。
+    """
+    df = df.set_index('ts_code')
+    stale_flags, stale_notes = [], []
+
+    for ts_code, row in df.iterrows():
+        note_parts = []
+        cur_trade_date = row.get('trade_date')
+        prev_trade_date = None
+        if old_df is not None and ts_code in old_df.index and 'trade_date' in old_df.columns:
+            prev_trade_date = old_df.loc[ts_code, 'trade_date']
+        is_new_trading_day = pd.notna(cur_trade_date) and (
+            pd.isna(prev_trade_date) or cur_trade_date != prev_trade_date
+        )
+
+        for col in _FRESHNESS_COLS:
+            streak_col = f"_{col}_streak"
+            prev_streak = 0
+            prev_val = np.nan
+            if old_df is not None and ts_code in old_df.index:
+                if streak_col in old_df.columns:
+                    v = old_df.loc[ts_code, streak_col]
+                    prev_streak = 0 if pd.isna(v) else int(v)
+                if col in old_df.columns:
+                    prev_val = old_df.loc[ts_code, col]
+
+            cur_val = row.get(col)
+
+            if not is_new_trading_day:
+                # 同一交易日内的重复运行：streak原样保留，不重复计数
+                streak = prev_streak
+            elif pd.notna(cur_val) and pd.notna(prev_val) and abs(float(cur_val) - float(prev_val)) < 1e-9:
+                streak = prev_streak + 1
+            else:
+                streak = 0
+            df.loc[ts_code, streak_col] = streak
+
+            if streak >= FRESHNESS_STALE_THRESHOLD:
+                note_parts.append(f"{col} 已连续 {streak} 次未变化")
+
+        if note_parts:
+            stale_flags.append(True)
+            stale_notes.append("；".join(note_parts))
+        else:
+            stale_flags.append(False)
+            stale_notes.append("")
+
+    df['stale_flag'] = stale_flags
+    df['stale_note'] = stale_notes
+    return df.reset_index()
+
+
+# ── 主入口 ────────────────────────────────────────────────────────────────────
+
 if __name__ == '__main__':
     df = get_etf_metrics()
 
