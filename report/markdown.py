@@ -109,9 +109,10 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 combined = "；".join(x for x in (exit_line, profit_line) if x)
                 lead_icon = ("🚨" if r.get("holding") else "🔎") if r.get("exit_level", 0) > 0 else "💰"
                 pos = r.get("position", {})
+                range_str = r.get("range_str", "─")
                 lines.append(
                     f"\n{lead_icon} {badge}{r['name']} · {zone_short} · {pos.get('total', '─')}%\n"
-                    f"　{combined}"
+                    f"　{combined}｜{range_str}"
                 )
 
         for group_label, match_fn in zone_groups:
@@ -182,11 +183,12 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 combined = "；".join(x for x in (exit_line, profit_line) if x)
                 lead_icon = ("🚨" if r.get("holding") else "🔎") if r.get("exit_level", 0) > 0 else "💰"
                 pos = r.get("position", {})
+                range_str = r.get("range_str", "─")
                 rows_html.append(
                     f'<tr class="alert-row">'
                     f'<td class="col-name">{badge}{r["name"]}</td>'
                     f'<td class="col-pos">{pos.get("total", "─")}%</td>'
-                    f'<td class="col-action">{lead_icon} {zone_short}｜{combined}</td>'
+                    f'<td class="col-action">{lead_icon} {zone_short}｜{combined}｜{range_str}</td>'
                     f'</tr>'
                 )
 
