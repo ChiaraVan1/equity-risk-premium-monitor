@@ -35,7 +35,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config_loader import ETF_LIST, ETF_TO_BENCHMARK
 
-MAX_WORKERS = 2  # 并发线程数。【2026-08-06】原为5，本地macOS环境下多线程并发触发
+MAX_WORKERS = 1  # 并发线程数。【2026-08-06】原为5，本地macOS环境下多线程并发触发
                  # py_mini_racer(akshare内部用的V8引擎)的 address_pool_manager 崩溃
                  # （Check failed: !pool->IsInitialized()，属于V8多isolate并发初始化在该环境下的稳定性问题，
                  # 与本次增量拉取改动无关），调小并发可显著降低触发概率。遇到限流可再调小至1（等价串行）。
