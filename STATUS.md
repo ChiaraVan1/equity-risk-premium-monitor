@@ -1,6 +1,6 @@
 STATUS.md — 跨 session 运行记忆
 
-每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。 最后更新：2026-08-06
+每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。 最后更新：2026-08-07
 
 ## TODO
 
@@ -20,6 +20,7 @@ STATUS.md — 跨 session 运行记忆
 
 | 日期 | 变更内容 |
 |---|---|
+| 2026-08-07 | fetch/simple_etf_metrics.py 净值抓取报错修复：ak.fund_etf_fund_info_em() 因东方财富历史净值返回体新增字段，触发 pandas "Length mismatch: Expected axis has 14 elements, new values have 13 elements"，导致 latest_discount_rate / discount_quantile_1y 全部为 NaN。排查确认是 akshare 库版本落后（本地为 1.18.82），akshare 官方 changelog 已记录对应修复，升级到 1.18.83（`python3 -m pip install --upgrade akshare`，务必用脚本实际调用的解释器路径升级，不要用默认 pip）后问题消失，已用 `ak.fund_etf_fund_info_em(fund='510300', start_date='20260101', end_date='20260807')` 单独验证返回6列143行数据正常。另修复本地 fetch_and_push.sh 跑 simple_etf_metrics.py 时偶发 `py_mini_racer` V8 引擎 `address_pool_manager` 崩溃（Check failed: !pool->IsInitialized()），MAX_WORKERS 从 2 降为 1（串行）后未再复现。**下次再遇到 akshare 接口 "Length mismatch" 报错，先查 https://pypi.org/project/akshare/ 是否有新版本 + 查 GitHub akfamily/akshare 仓库 docs/changelog.md 搜报错关键词确认是否已知问题，再考虑升级即可，不必来回调试代码本身。** 涉及文件：fetch/simple_etf_metrics.py |
 | 2026-08-06 | fetch/simple_etf_metrics.py 改为增量拉取：净值(nav)和基准指数(index)接口支持按日期范围查询，此前每次固定拉满3年，现改为落盘缓存历史（新增 data/etf_nav.csv、data/index_pct.csv 两个宽表）+ 只拉取"上次缓存最后日期 - 5天缓冲"到今天的增量，与本地历史合并（重叠日期以新数据为准，覆盖可能的历史修订）后再用于3年滚动窗口计算，计算口径与全量拉取完全一致，减少请求耗时并降低被限流概率。行情(price)因新浪 ak.fund_etf_hist_sina() 接口不支持日期范围参数，仍整表拉取，不受此优化影响。已确认下游 analysis/etf_quality.py、prepare_all_data.py、erp_position.py 均不受影响（输出列结构未变，新增文件无命名冲突，.gitignore 未排除）。涉及文件：fetch/simple_etf_metrics.py |
 | 2026-08-05 | 详情页精简：仓位建议补充当前ERP值展示；减仓/止盈信号表格、估值分档表格、历史股息率分布表格均改为 `<details>` 折叠，默认只留结论；ERP趋势模块标题与文案调整为"ERP趋势方向/近10月ERP趋势"；删除两句多余提示语；修复仪表盘"不参与/可参与"换行丢失问题。涉及文件：erp_position.py、analysis/risk.py、analysis/trend.py、analysis/dividend_yield_analysis.py、report/markdown.py |
 | 2026-08-05 | 精简报告文案：仓位建议区块删除"建议总仓位"重复行（三仓已列出数字，无需再加总）；估值分档表从"核心估值决策"模块移至"仓位建议"模块（分档是仓位拆分的直接依据，放一起更好懂）；核心估值决策的推导过程（历叶均值/胜率/赔率/PE统计）收进 `<details>` 折叠块，默认只展示综合评级一行；删除"止盈信号与减仓/止损信号相互独立"说明句（意思在字段本身已经表达清楚）；删除减仓/止损信号里"基本面暴雷见下方模块"提示（基本面预警已独立展示，无需交叉引用）。减仓/止损盈信号里的"ERP区间"/"估值区间"展示行**予以保留**，因为对应的低估区L1/L2降级、高估区L1/L2升级规则在 risk.py 里确认仍在生效，删除会导致用户看不懂阈值为何变化。涉及文件：analysis/risk.py、analysis/valuation.py、erp_position.py |
