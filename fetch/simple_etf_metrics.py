@@ -6,7 +6,7 @@ simple_etf_metrics.py  —  AKShare 版（无需 Tushare token）
                         字段: date/open/high/low/close/volume/amount
                         symbol格式: sh510300 / sz159696
   pro.fund_nav()     → ak.fund_etf_fund_info_em()       ETF历史净值（东财）
-                        字段: 净值日期/单位净值/累计净值/...
+                        字段: �_�����~j�S�e���N�-�段: 
   pro.index_daily()  → ak.stock_zh_index_hist_csindex() 中证官网（全部走这个）
                         字段: 日期/收盘/涨跌幅/...
 输出字段与原版完全一致，下游 erp_position.py 无需改动。
@@ -35,7 +35,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from config_loader import ETF_LIST, ETF_TO_BENCHMARK
 
-MAX_WORKERS = 5  # 并发线程数，遇到限流可调小
+MAX_WORKERS = 2  # 并发线程数。【2026-08-06】原为5，本地macOS环境下多线程并发触发
+                 # py_mini_racer(akshare内部用的V8引擎)的 address_pool_manager 崩溃
+                 # （Check failed: !pool->IsInitialized()，属于V8多isolate并发初始化在该环境下的稳定性问题，
+                 # 与本次增量拉取改动无关），调小并发可显著降低触发概率。遇到限流可再调小至1（等价串行）。
 
 # 【2026-08-06 增量拉取优化】净值(nav)和基准指数(index)接口支持按日期范围查询，
 # 以前每次都固定拉满3年，现在改为落盘缓存历史 + 只拉取增量：
@@ -301,7 +304,7 @@ def _process_single_etf(args):
 
             time.sleep(0.3)
 
-        # ── 4. 波动率 & 分位 ─────────────────────────────────────────────────
+        # ── 4. 波动率 & 分位 ────────────────────────────────────────────────
         if 'pct_chg' in df.columns:
             df['rolling_vol'] = df['pct_chg'].rolling(20).std() * np.sqrt(250)
             roll_vol = df['rolling_vol'].dropna()
