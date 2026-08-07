@@ -18,18 +18,35 @@ jobs:
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
+      # 1.5 【2026-08-06新增】检查本地是否已在近期成功跑过并推送过数据。
+      #     本地 fetch_and_push.sh 每次推送成功都会打一条 "本地补充 ETF 价格数据 YYYY-MM-DD" 的commit，
+      #     用20小时窗口判断（本地17:00跑、云端17:30跑，间隔仅30分钟，20小时窗口足够覆盖当天、
+      #     又不会跨到前一天的旧提交，避免时区换算带来的日期字符串匹配误差）。
+      #     只对定时触发(schedule)生效，手动触发(workflow_dispatch)不受影响、始终照常运行。
+      - name: Check if local run already succeeded today
+        id: check_local
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && git log --since="20 hours ago" --grep="本地补充 ETF 价格数据" --oneline | grep -q .; then
+            echo "本地已于近20小时内成功跑过并推送，跳过本次云端运行"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       # 2. 设置 Python 环境
       - name: Set up Python
+        if: steps.check_local.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       # 3. 安装依赖
       - name: Install dependencies
+        if: steps.check_local.outputs.skip != 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       # 4. 执行主入口（内部自动调度所有数据准备脚本）
       - name: Prepare Data and Analyze
+        if: steps.check_local.outputs.skip != 'true'
         env:
           QQQ_PE_TODAY: ${{ vars.QQQ_PE_TODAY }}
           SCT_KEY: ${{ secrets.SCT_KEY }}
@@ -41,13 +58,14 @@ jobs:
         run: python erp_position.py
       # 5. 预览模式：上传报告文件供下载查看
       - name: Upload preview report
-        if: ${{ github.event.inputs.dry_run == 'true' }}
+        if: ${{ github.event.inputs.dry_run == 'true' && steps.check_local.outputs.skip != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: report-preview
           path: output_preview.md
       # 6. 将更新后的数据保存回 GitHub 仓库
       - name: Commit and Push data
+        if: steps.check_local.outputs.skip != 'true'
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
@@ -57,7 +75,7 @@ jobs:
           git push
       # 7. 部署 HTML 报告到 gh-pages 分支
       - name: Deploy HTML report to gh-pages
-        if: ${{ github.event.inputs.dry_run != 'true' }}
+        if: ${{ github.event.inputs.dry_run != 'true' && steps.check_local.outputs.skip != 'true' }}
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
