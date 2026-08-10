@@ -49,11 +49,19 @@ def _pos_color_class(pct):
 
 
 def _rating_short(r):
-    """基于胜率/赔率的综合评级（简化三档，用于仪表盘二级分组）。"""
+    """基于胜率/赔率的综合评级，用于仪表盘二级分组。
+    ★ 修复：必须与 analysis/valuation.py::build_unified_valuation_block() 里的
+    4档评级逻辑保持一致——此前这里漏掉了"胜率≥60%+赔率≥2.0 → 极佳机会"这一档，
+    导致胜率89%/赔率68x这类明显优于普通"可参与"门槛的标的，被和刚过及格线
+    （胜率50%+赔率1.0）的标的混在同一档展示，丢失了区分度。"""
     win_rate = r.get("win_rate")
     odds_ratio = r.get("odds_ratio")
     if odds_ratio is None:
         return "🟢 极佳买点"
+    if odds_ratio == 0.0:
+        return "🚨 规避"
+    if win_rate is not None and win_rate == win_rate and win_rate >= 0.60 and odds_ratio >= 2.0:
+        return "🟢 极佳机会"
     if win_rate is not None and win_rate == win_rate and win_rate >= 0.50 and odds_ratio >= 1.0:
         return "🟡 可参与"
     return "🔴 不参与"
@@ -120,7 +128,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
             if not group_items:
                 continue
             lines.append(f"\n**{group_label} ({len(group_items)})**")
-            _rating_order = ["🟢 极佳买点", "🟡 可参与", "🔴 不参与"]
+            _rating_order = ["🟢 极佳买点", "🟢 极佳机会", "🟡 可参与", "🚨 规避", "🔴 不参与"]
             group_items = sorted(group_items, key=lambda r: _rating_order.index(_rating_short(r)) if _rating_short(r) in _rating_order else 99)
             _current_rating = None
             for r in group_items:
@@ -197,7 +205,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
             if not group_items:
                 continue
             rows_html.append(f'<tr><td colspan="3" class="section-header">{group_label}</td></tr>')
-            _rating_order = ["🟢 极佳买点", "🟡 可参与", "🔴 不参与"]
+            _rating_order = ["🟢 极佳买点", "🟢 极佳机会", "🟡 可参与", "🚨 规避", "🔴 不参与"]
             group_items = sorted(group_items, key=lambda r: _rating_order.index(_rating_short(r)) if _rating_short(r) in _rating_order else 99)
             _current_rating = None
             for r in group_items:
