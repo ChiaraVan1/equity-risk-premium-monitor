@@ -295,7 +295,7 @@
       "source": "lixinger",
       "yfinance_ticker": null,
       "holding": false,
-      "keywords": ["旅游"],
+      "keywords": ["旅游", "出行", "景区", "酒店", "免税"],
       "etf_code": "159766.SZ",
       "currency": "CNY",
       "bond_code": "CN10Y",
@@ -313,13 +313,13 @@
       "bond_code": "CN10Y",
       "pe_source": "csindex"
     },
-    {
+   {
       "code": "980032",
       "name": "新能电池",
       "source": "lixinger",
       "yfinance_ticker": null,
       "holding": false,
-      "keywords": [],
+      "keywords": ["新能源电池", "锂电池", "储能", "动力电池", "碳酸锂"],
       "etf_code": "159755.SZ",
       "currency": "CNY",
       "bond_code": "CN10Y",
