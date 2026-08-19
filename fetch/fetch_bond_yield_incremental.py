@@ -430,8 +430,24 @@ def main():
         try:
             bonds[bond_code] = fetch_fred_bond_incremental(series_id, fred_start)
             print(f"   ✓ {bond_code}: {len(bonds[bond_code])} 条")
+            _freshness_results.append({
+                "label": f"FRED-{bond_code}",
+                "fresh": True,
+                "last_date": datetime.now().strftime("%Y-%m-%d"),
+                "staleness_days": 0,
+                "reason": "",
+                "checked_at": datetime.now().isoformat(),
+            })
         except Exception as e:
             print(f"   ❌ {bond_code} 失败: {e}")
+            _freshness_results.append({
+                "label": f"FRED-{bond_code}",
+                "fresh": False,
+                "last_date": None,
+                "staleness_days": None,
+                "reason": f"FRED请求失败: {e}",
+                "checked_at": datetime.now().isoformat(),
+            })
 
     # 2. 今日 PE
     print("\n--- 2. 获取今日 PE ---")
@@ -453,6 +469,14 @@ def main():
     for code, name, currency, bond_code, pe_source in BOND_YIELD_CONFIG:
         if bond_code not in bonds:
             print(f"   ⚠️ [{code}] 国债 {bond_code} 未获取，跳过")
+            _freshness_results.append({
+                "label": f"ERP-{code}",
+                "fresh": False,
+                "last_date": None,
+                "staleness_days": None,
+                "reason": f"国债{bond_code}未获取，本次未更新",
+                "checked_at": datetime.now().isoformat(),
+            })
             continue
         try:
             if pe_source == 'csindex':
