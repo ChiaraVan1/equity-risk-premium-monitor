@@ -14,7 +14,7 @@ from io import StringIO
 # `from config_loader import` 会报 ModuleNotFoundError。
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config_loader import BOND_YIELD_CONFIG, HSTECH_TICKERS
+from config_loader import BOND_YIELD_CONFIG_FULL, HSTECH_TICKERS
 
 # ── 配置表 ────────────────────────────────────────────────────────────────────
 
@@ -318,7 +318,7 @@ def main():
     except Exception as e:
         print(f"   ❌ 恒生科技 PE CSV读取失败: {e}")
 
-    for code, name, currency, bond_code, pe_source in BOND_YIELD_CONFIG:
+    for code, name, currency, bond_code, pe_source in BOND_YIELD_CONFIG_FULL:
         file_path = f"./data/erp_{code}.csv"
         if os.path.exists(file_path):
             print(f"\n   [{code}] {name} — 已有历史数据，跳过（避免覆盖增量脚本积累的真实数据；"
