@@ -295,7 +295,8 @@ if __name__ == "__main__":
     prepared_data = prepare_all_data()
 
     # 第二阶段：分析和生成报告
-    indices = INDICES_LIST
+    # 持仓标的优先展示：先按是否持仓排序，同为持仓/非持仓内部保持原有顺序（stable sort）
+    indices = sorted(INDICES_LIST, key=lambda x: not HOLDING_CATEGORY.get(x[0], False))
     summary_list = []
     report_list = []
 
