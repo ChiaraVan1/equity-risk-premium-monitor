@@ -118,7 +118,8 @@
       "etf_code": "513500.SH",
       "currency": "USD",
       "bond_code": "US10Y",
-      "pe_source": "multpl"
+      "pe_source": "worldpe",
+      "pe_source_full": "multpl"
     },
     {
       "code": "QQQ",
@@ -130,7 +131,8 @@
       "etf_code": "159696.SZ",
       "currency": "USD",
       "bond_code": "US10Y",
-      "pe_source": "gurufocus_csv"
+      "pe_source": "manual",
+      "pe_source_full": "gurufocus_csv"
     },
     {
       "code": "EWQ",
@@ -142,7 +144,8 @@
       "etf_code": "513080.SH",
       "currency": "EUR",
       "bond_code": "FR10Y",
-      "pe_source": "worldpe_ratio"
+      "pe_source": "worldpe",
+      "pe_source_full": "worldpe_ratio"
     },
     {
       "code": "EWG",
@@ -154,7 +157,8 @@
       "etf_code": "159561.SZ",
       "currency": "EUR",
       "bond_code": "DE10Y",
-      "pe_source": "worldpe_ratio"
+      "pe_source": "worldpe",
+      "pe_source_full": "worldpe_ratio"
     },
     {
       "code": "EWJ",
@@ -166,7 +170,8 @@
       "etf_code": "513880.SH",
       "currency": "JPY",
       "bond_code": "JP10Y",
-      "pe_source": "worldpe_ratio"
+      "pe_source": "worldpe",
+      "pe_source_full": "worldpe_ratio"
     },
     {
       "code": "EEM",
@@ -178,7 +183,8 @@
       "etf_code": "520580.SH",
       "currency": "USD",
       "bond_code": "CN10Y",
-      "pe_source": "worldpe_ratio"
+      "pe_source": "worldpe",
+      "pe_source_full": "worldpe_ratio"
     },
     {
       "code": "HSTECH",
@@ -313,7 +319,7 @@
       "bond_code": "CN10Y",
       "pe_source": "csindex"
     },
-   {
+    {
       "code": "980032",
       "name": "新能电池",
       "source": "lixinger",

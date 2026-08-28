@@ -57,7 +57,7 @@ FUNDAMENTAL_KEYWORDS = {
 ERP_TO_ETF = {idx["code"]: idx.get("etf_code") for idx in ALL_INDICES}
 
 # ══════════════════════════════════════════════════════════════════════
-# fetch/fetch_bond_yield.py / fetch/fetch_bond_yield_incremental.py 用
+# fetch/fetch_bond_yield_incremental.py 用
 # ══════════════════════════════════════════════════════════════════════
 # INDEX_CONFIG: (code, name, currency, bond_code, pe_source)
 BOND_YIELD_CONFIG = [
@@ -67,6 +67,20 @@ BOND_YIELD_CONFIG = [
         idx["currency"],
         idx["bond_code"],
         idx["pe_source"],
+    )
+    for idx in ALL_INDICES
+]
+
+# ══════════════════════════════════════════════════════════════════════
+# fetch/fetch_bond_yield.py（全量脚本）专用
+# ══════════════════════════════════════════════════════════════════════
+BOND_YIELD_CONFIG_FULL = [
+    (
+        idx["code"],
+        idx["name"],
+        idx["currency"],
+        idx["bond_code"],
+        idx.get("pe_source_full", idx["pe_source"]),
     )
     for idx in ALL_INDICES
 ]
