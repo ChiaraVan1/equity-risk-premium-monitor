@@ -26,6 +26,7 @@ import os
 import sys
 import time
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from concurrent.futures import ThreadPoolExecutor
 
 # 【2026-08-02 目录重组说明】本文件从仓库根目录挪到了 fetch/ 下，被
@@ -210,7 +211,15 @@ def _process_single_etf(args):
             print(f"  警告: {etf_code} 无行情数据，跳过")
             return m, price_s, nav_s, index_s
 
-        df = df_all[df_all.index >= start_date].copy()
+        # 计算窗口以实际最新交易日为锚点，而不是以脚本运行机器的“当前时间”为锚点。
+        # GitHub Actions 使用 UTC，本地 Mac 使用 Asia/Shanghai；如果直接用 datetime.now()，
+        # 同一批行情可能因为跨时区而让 1 年/3 年窗口相差一天。
+        calculation_end_date = pd.Timestamp(df_all.index.max()).normalize()
+        calculation_start_date = calculation_end_date - timedelta(days=3 * 365)
+        df = df_all[
+            (df_all.index >= calculation_start_date)
+            & (df_all.index <= calculation_end_date)
+        ].copy()
         if df.empty:
             print(f"  警告: {etf_code} 3年内无数据，跳过")
             return m, price_s, nav_s, index_s
@@ -248,11 +257,11 @@ def _process_single_etf(args):
             if len(disc) > 0:
                 m['latest_discount_rate'] = disc.iloc[-1]
 
-                disc_1y = disc[disc.index >= (end_date - timedelta(days=365))]
+                disc_1y = disc[disc.index >= (calculation_end_date - timedelta(days=365))]
                 if len(disc_1y) > 1:
                     m['discount_quantile_1y'] = disc_1y.rank(pct=True).iloc[-1]
 
-                disc_3y = disc[disc.index >= (end_date - timedelta(days=3 * 365))]
+                disc_3y = disc[disc.index >= (calculation_end_date - timedelta(days=3 * 365))]
                 if len(disc_3y) > 1:
                     m['discount_quantile_3y'] = disc_3y.rank(pct=True).iloc[-1]
 
@@ -284,7 +293,7 @@ def _process_single_etf(args):
                     df['excess_return'] = df['pct_chg'] - df['pct_chg_index']
                     ex = df['excess_return'].dropna()
 
-                    ex_3y = ex[ex.index >= (end_date - timedelta(days=3 * 365))]
+                    ex_3y = ex[ex.index >= (calculation_end_date - timedelta(days=3 * 365))]
                     m['excess_return_mean'] = ex_3y.mean()
                     m['tracking_error']     = ex_3y.std() * np.sqrt(250)
 
@@ -312,11 +321,11 @@ def _process_single_etf(args):
             if len(roll_vol) > 0:
                 m['annualized_volatility'] = roll_vol.iloc[-1]
 
-                vol_1y = roll_vol[roll_vol.index >= (end_date - timedelta(days=365))]
+                vol_1y = roll_vol[roll_vol.index >= (calculation_end_date - timedelta(days=365))]
                 if len(vol_1y) > 1:
                     m['volatility_quantile_1y'] = vol_1y.rank(pct=True).iloc[-1]
 
-                vol_3y = roll_vol[roll_vol.index >= (end_date - timedelta(days=3 * 365))]
+                vol_3y = roll_vol[roll_vol.index >= (calculation_end_date - timedelta(days=3 * 365))]
                 if len(vol_3y) > 1:
                     m['volatility_quantile_3y'] = vol_3y.rank(pct=True).iloc[-1]
 
@@ -339,11 +348,11 @@ def _process_single_etf(args):
             roll_dd = df['rolling_dd'].dropna()
 
             if len(roll_dd) > 0:
-                dd_1y = roll_dd[roll_dd.index >= (end_date - timedelta(days=365))]
+                dd_1y = roll_dd[roll_dd.index >= (calculation_end_date - timedelta(days=365))]
                 if len(dd_1y) > 1:
                     m['max_drawdown_quantile_1y'] = dd_1y.rank(pct=True).iloc[-1]
 
-                dd_3y = roll_dd[roll_dd.index >= (end_date - timedelta(days=3 * 365))]
+                dd_3y = roll_dd[roll_dd.index >= (calculation_end_date - timedelta(days=3 * 365))]
                 if len(dd_3y) > 1:
                     m['max_drawdown_quantile_3y'] = dd_3y.rank(pct=True).iloc[-1]
 
@@ -360,7 +369,7 @@ def _process_single_etf(args):
             df_weekly  = df['amount'].resample('W').sum()
             df_monthly = df['amount'].resample('ME').sum()
 
-            amt_1y = df['amount'][df.index >= (end_date - timedelta(days=365))]
+            amt_1y = df['amount'][df.index >= (calculation_end_date - timedelta(days=365))]
             m['turnover_rate'] = amt_1y.mean() if len(amt_1y) > 0 else np.nan
 
             if len(df_weekly) > 0:
@@ -400,8 +409,13 @@ def _process_single_etf(args):
 # ── 数据新鲜度校验 ────────────────────────────────────────────────────────────────────
 
 def get_etf_metrics():
-    end_date   = datetime.now()
-    start_date = end_date - timedelta(days=3 * 365)
+    # 拉取请求统一按中国市场时区生成日期，避免 GitHub UTC 与本地北京时间跨日。
+    # 清零时分秒也避免日期索引（每天 00:00）在窗口边界被意外排除。
+    end_date = datetime.now(ZoneInfo("Asia/Shanghai")).replace(
+        tzinfo=None, hour=0, minute=0, second=0, microsecond=0
+    )
+    # 给首次全量拉取留 7 天安全垫；真正的指标窗口会在单只 ETF 内按最新交易日裁剪。
+    start_date = end_date - timedelta(days=3 * 365 + 7)
     start_str  = start_date.strftime('%Y%m%d')
     end_str    = end_date.strftime('%Y%m%d')
 
