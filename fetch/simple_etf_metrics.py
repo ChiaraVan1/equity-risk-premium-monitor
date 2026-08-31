@@ -52,6 +52,7 @@ MAX_WORKERS = 1  # 并发线程数。【2026-08-06】原为5，本地macOS环境
 # 因此不受此优化影响，仍是每次整表拉取。
 NAV_CACHE_PATH = './data/etf_nav.csv'
 INDEX_CACHE_PATH = './data/index_pct.csv'
+PRICE_CACHE_PATH = './data/etf_price.csv'
 INCREMENTAL_BUFFER_DAYS = 5  # 增量起点在"上次缓存最后日期"基础上再往前留几天，覆盖数据源可能的历史修订
 
 # 新浪行情 symbol 前缀：上交所 sh，深交所 sz
@@ -422,6 +423,7 @@ def get_etf_metrics():
     # 加载净值/基准指数的本地历史缓存，用于算出每个标的这次该从哪天开始增量拉取。
     # 缓存不存在（比如第一次跑）时 _incremental_start_str 会自动退化为 start_str，
     # 即本次仍是全量拉取，行为和优化前完全一致。
+    price_cache_df = _load_wide_cache(PRICE_CACHE_PATH)
     nav_cache_df   = _load_wide_cache(NAV_CACHE_PATH)
     index_cache_df = _load_wide_cache(INDEX_CACHE_PATH)
 
@@ -454,9 +456,10 @@ def get_etf_metrics():
                 index_frames.append(index_s)
 
     if price_frames:
-        price_df = pd.concat(price_frames, axis=1).sort_index()
-        price_df.to_csv('./data/etf_price.csv', encoding='utf-8-sig')
-        print("✅ ETF价格序列已保存到 data/etf_price.csv")
+        # 新浪接口单个标的失败时，保留缓存里的旧列/旧值，不能让整列从宽表中消失。
+        price_df = _merge_series_with_cache(price_cache_df, price_frames)
+        price_df.to_csv(PRICE_CACHE_PATH, encoding='utf-8-sig')
+        print(f"✅ ETF价格序列已保存到 {PRICE_CACHE_PATH}（成功标的更新，失败标的保留缓存）")
 
     if nav_frames:
         nav_df = _merge_series_with_cache(nav_cache_df, nav_frames)
@@ -553,7 +556,8 @@ if __name__ == '__main__':
         print("❌ 未获取到任何数据，请检查网络")
         exit(1)
 
-    empty_count = df['trade_date'].isna().sum()
+    failed_ts_codes = set(df.loc[df['trade_date'].isna(), 'ts_code'])
+    empty_count = len(failed_ts_codes)
     if empty_count > 10:
         print(f"❌ 健全性校验失败：{empty_count} 个标的未获取到行情数据（阈值10），判定本次抓取异常")
         exit(1)
@@ -570,7 +574,32 @@ if __name__ == '__main__':
     print(df[cols].to_string(index=False))
 
     old_df = _load_previous_snapshot()
+
+    # 少量标的临时失败时，保留上一次完整快照，避免用整行空值覆盖有效数据。
+    # 失败数量超过阈值仍在上面整体退出；这里仅处理可容忍的局部失败。
+    if old_df is not None and failed_ts_codes:
+        df = df.set_index('ts_code')
+        for ts_code in failed_ts_codes:
+            if ts_code not in old_df.index:
+                continue
+            for col in df.columns:
+                if col in old_df.columns and col not in ('erp_code', 'name'):
+                    df.loc[ts_code, col] = old_df.loc[ts_code, col]
+        df = df.reset_index()
+        print(f"⚠️ {len(failed_ts_codes)} 个标的本次行情抓取失败，已保留上次有效快照")
+
     df = _apply_freshness_check(df, old_df)
+
+    # 抓取失败是明确的新鲜度风险，即使保留旧值也必须在输出中标记。
+    for ts_code in failed_ts_codes:
+        mask = df['ts_code'] == ts_code
+        if not mask.any():
+            continue
+        previous_note = df.loc[mask, 'stale_note'].fillna('')
+        df.loc[mask, 'stale_flag'] = True
+        df.loc[mask, 'stale_note'] = previous_note.map(
+            lambda note: "本次行情抓取失败，保留上次有效值" + (f"；{note}" if note else "")
+        )
 
     stale_rows = df[df['stale_flag']]
     if len(stale_rows) > 0:

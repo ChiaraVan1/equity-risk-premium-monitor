@@ -1,8 +1,9 @@
 name: Equity Risk Premium Monitor Bot
 on:
   schedule:
-    # 每天 17:30 运行 (北京时间 17:30 = UTC 09:30)
-    - cron: '30 9 * * *'
+    # 每天 18:00 运行（北京时间 18:00 = UTC 10:00）。
+    # 给17:00开始的本地抓取、校验和推送留出完整缓冲窗口。
+    - cron: '0 10 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -18,16 +19,15 @@ jobs:
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
-      # 1.5 【2026-08-06新增】检查本地是否已在近期成功跑过并推送过数据。
-      #     本地 fetch_and_push.sh 每次推送成功都会打一条 "本地补充 ETF 价格数据 YYYY-MM-DD" 的commit，
-      #     用20小时窗口判断（本地17:00跑、云端17:30跑，间隔仅30分钟，20小时窗口足够覆盖当天、
-      #     又不会跨到前一天的旧提交，避免时区换算带来的日期字符串匹配误差）。
+      # 1.5 检查本地是否已于北京时间当天成功抓取并推送数据。
+      #     使用精确日期标记，不再用20小时滑动窗口，避免跨日误判。
       #     只对定时触发(schedule)生效，手动触发(workflow_dispatch)不受影响、始终照常运行。
       - name: Check if local run already succeeded today
         id: check_local
         run: |
-          if [ "${{ github.event_name }}" = "schedule" ] && git log --since="20 hours ago" --grep="本地补充 ETF 价格数据" --oneline | grep -q .; then
-            echo "本地已于近20小时内成功跑过并推送，跳过本次云端运行"
+          TODAY_CST=$(TZ=Asia/Shanghai date +%F)
+          if [ "${{ github.event_name }}" = "schedule" ] && git log --grep="^本地补充 ETF 数据 ${TODAY_CST}$" --format='%s' -1 | grep -q .; then
+            echo "本地已于北京时间 ${TODAY_CST} 成功跑过并推送，跳过本次云端运行"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
