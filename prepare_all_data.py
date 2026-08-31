@@ -160,11 +160,16 @@ def prepare_all_data():
     # 用"从2020年全量重算"的旧逻辑覆盖掉——増量版本白跑了，且被更弱的全量版覆盖。
     # 现在移除这一项，PS/PSY 数据统一由 update_hstech_ps() 负责。
     # fetch/fetch_ps.py 文件本身保留，作为手动全量重算工具（怀疑增量结果累积误差时用）。
-    scripts = [
-        ("fetch/simple_etf_metrics.py", "ETF 指标数据"),
+    scripts = []
+    if os.getenv("SKIP_ETF_METRICS", "false").lower() != "true":
+        scripts.append(("fetch/simple_etf_metrics.py", "ETF 指标数据"))
+    else:
+        print("\n   ⏭️ 本地已完整更新ETF数据：仅跳过 AkShare ETF 抓取，继续更新其他数据和报告")
+
+    scripts.extend([
         ("fetch/fetch_bond_yield_incremental.py", "国债 PE 增量数据（含 HSTECH PS/PSY）"),
         ("analysis/dividend_yield_analysis.py", "股息率数据"),  # __main__ 入口在这个文件
-    ]
+    ])
 
     for script, desc in scripts:
         if os.path.exists(script):

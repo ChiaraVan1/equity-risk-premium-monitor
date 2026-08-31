@@ -1,6 +1,6 @@
 STATUS.md — 跨 session 运行记忆
 
-每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。 最后更新：2026-08-31 14:44:44 CST
+每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。 最后更新：2026-08-31 15:02:00 CST
 
 ## TODO
 
@@ -15,6 +15,7 @@ STATUS.md — 跨 session 运行记忆
 
 | 日期 | 变更内容 |
 |---|---|
+| 2026-08-31 15:02:00 CST | 修正云端兜底粒度：本地完整成功时只跳过 `fetch/simple_etf_metrics.py`，国债/ERP、股息率、分析报告和 gh-pages 部署继续执行；本地存在任一行情失败时改用“部分失败”提交标记，云端不会跳过 AkShare，会继续查漏补缺。失败标的在中间快照中保留旧值并标记 stale，避免空值/删列污染下游。 |
 | 2026-08-31 14:44:44 CST | 稳定本地优先、GitHub兜底的数据更新链路：本地 `fetch_and_push.sh` 改为先拉取干净基线再抓取，并一次提交 `simple_etf_metrics/etf_price/etf_nav/index_pct` 四个关联文件；GitHub定时兜底延后至北京时间18:00，并按北京时间当天的本地成功提交精确判断是否跳过；`simple_etf_metrics.py` 在单标的行情失败时保留 `etf_price` 旧列和上一版指标快照，同时标记 stale，避免局部接口失败把有效数据覆盖为空；忽略 `.DS_Store`。 |
 | 2026-08-28 | ETF 指标请求日期统一使用 Asia/Shanghai |
 | 2026-08-02（补记） | 修复微信推送 send_to_wechat()：此前不检查 requests.post() 响应体，Server酱业务失败（sckey失效/超额度/desp过长被拒等）仍返回HTTP 200，导致"log显示成功但未收到"。现改为校验HTTP状态码+响应体code字段，失败时打印具体原因 |
