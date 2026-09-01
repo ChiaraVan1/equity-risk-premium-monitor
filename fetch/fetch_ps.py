@@ -2,14 +2,17 @@ import akshare as ak
 import yfinance as yf
 import pandas as pd
 import numpy as np
+import os
+import sys
 import time
 
-tickers_hk = ["0700.HK","9988.HK","3690.HK","9618.HK","1810.HK",
-              "9999.HK","2382.HK","0981.HK","9626.HK","0020.HK",
-              "1024.HK","0268.HK","2015.HK","9868.HK","9888.HK",
-              "0241.HK","0285.HK","2518.HK","0522.HK","0780.HK",
-              "0909.HK","2013.HK","9961.HK","6690.HK",
-              "0799.HK","2359.HK","0669.HK","1347.HK","0763.HK"]
+# 【2026-08-02 目录重组说明】本文件从仓库根目录挪到了 fetch/ 下，被
+# prepare_all_data.py 以子进程方式直接运行，手动把仓库根目录加回 sys.path，
+# 否则 `from config_loader import` 会报 ModuleNotFoundError。
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from config_loader import HSTECH_TICKERS
+
 
 def get_quarterly_revenue(code):
     """
@@ -65,7 +68,7 @@ def get_hist_mktcap(ticker):
 all_mktcap = {}
 all_ttm_rev = {}
 
-for t in tickers_hk:
+for t in HSTECH_TICKERS:
     code = t.replace(".HK","").zfill(5)
     try:
         # 营收
@@ -93,7 +96,7 @@ ps_series = []
 for d in date_range:
     total_mc = 0
     total_rev = 0
-    for t in tickers_hk:
+    for t in HSTECH_TICKERS:
         # 市值：取当日或最近一个交易日
         if t in all_mktcap:
             mc_s = all_mktcap[t]
@@ -143,3 +146,20 @@ if 'psy' in ps_df.columns and ps_df['psy'].notna().any():
 import os
 os.makedirs("./data", exist_ok=True)
 ps_df.to_csv("./data/ps_HSTECH.csv", index=True, encoding="utf-8-sig")
+
+# ── 新鲜度校验 ────────────────────────────────────────────────────────────
+# 【2026-08-06 说明】本脚本已从 prepare_all_data.py 的每日调度里移除，
+# 每日的 PS/PSY 更新改由 fetch_bond_yield_incremental.py 里的
+# update_hstech_ps() 负责（增量、自带国债数据兜底、有 ffill）。
+# 本脚本保留作为手动全量重算工具（比如怀疑增量结果有累积误差时用）。
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from freshness import check_date_freshness, write_freshness_report, print_freshness_summary
+
+_result = check_date_freshness(
+    label="HSTECH-PS",
+    path="./data/ps_HSTECH.csv",
+    date_col=None,
+    max_staleness_days=35,
+)
+print_freshness_summary([_result])
+write_freshness_report([_result])

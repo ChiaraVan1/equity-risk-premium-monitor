@@ -21,7 +21,10 @@ from collections import defaultdict
 
 import requests
 
-INDUSTRY_MAP_PATH = Path(__file__).parent / "industry_map.json"
+INDUSTRY_MAP_PATH = Path(__file__).resolve().parent.parent / "industry_map.json"
+# 【2026-08-02 目录重组说明】本文件从仓库根目录挪到了 analysis/ 下，
+# industry_map.json 仍然放在仓库根目录（和 config.json 同级），
+# 所以这里要多退一层 .parent，否则会在 analysis/ 目录下找 industry_map.json 找不到。
 
 # xueqiu_hot 仓库里 master.csv 的 raw 地址。跨仓库读取，不依赖本地文件系统。
 MASTER_CSV_URL = (

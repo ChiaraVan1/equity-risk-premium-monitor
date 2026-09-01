@@ -1,62 +1,149 @@
 """
-etf_metrics.py
-──────────────────────────────────────────────────────────────────────────────
-ETF 执行质量补充模块
+analysis/etf_quality.py
+──────────────────────────────────────────────────────────────────────────────────
+ETF 执行质量分析模块
 数据源: simple_etf_metrics.csv
 补充维度（不替代 ERP 估值判断，仅辅助执行决策）：
   1. 折溢价率   — 当前买入/卖出的执行成本
   2. 换手背离   — 价格走势是否有成交量支撑
   3. 波动/回撤  — 当前风险水位（历史分位）
   4. 超额收益   — ETF 跟踪质量 + 近期相对基准动量
-
-使用方式：
-  在 erp_position.py 中：
-    from etf_metrics import load_etf_metrics, build_etf_metrics_block
-    _etf_df = load_etf_metrics()                          # 启动时加载一次
-    block = build_etf_metrics_block("000688", _etf_df)    # 每个标的调用
 ──────────────────────────────────────────────────────────────────────────────
 """
 
 import os
+import json
+import time
 import pandas as pd
-
-
-# ── ERP code → A股 ETF ts_code 映射 ──────────────────────────────────────────
-# 一个 ERP 标的可能对应多只 ETF，取流动性最好的主力品种
-# EWG/EEM 无对应 A 股 ETF，模块自动跳过
-ERP_TO_ETF = {
-    "000300": "510300.SH",
-    "000688": "588000.SH",
-    "000922": "515180.SH",
-    "000015": "510880.SH",
-    "399989": "512170.SH",
-    "931071": "515980.SH",
-    "HSTECH": "513180.SH",
-    "SPY":    "513500.SH",
-    "QQQ":    "159696.SZ",
-    "EWQ":    "513080.SH",
-    "EWJ":    "513880.SH",
-    "EWG":    "159561.SZ",
-    "EEM":    "520580.SH",   # 新兴亚洲
-    "000069": "510150.SH",
-    "930781": "516620.SH",
-    "399967": "512660.SH",   # 中证军工
-    "931066": "512710.SH",   # 军工龙头
-    "930598": "516150.SH",   # 稀土产业
-    "930794": None,   # 中美互联网，暂无对应ETF
-    "931637": "513770.SH",   # 港股通互联网
-      "000819": "512400.SH",   # 有色金属
-    "950125": "588710.SH",   # 半导体材料设备
-    "399975": "512880.SH",   # 证券公司
-    "399986": "512800.SH",   # 中证银行
-    "930633": "159766.SZ",      #  中证旅游
-    "931946": "159172.SZ",      # 中证畜牧养殖
-}
+import requests
+from config_loader import ERP_TO_ETF
 
 _metrics_cache = {}
 
+# ════════════════════════════════════════════════════════════════════════
+# AI 解读（DashScope 优先 → qnaigc 兜底 → 规则版 build_etf_quality_block 兜底）
+# 与 analysis/trend.py 的三级降级模式保持一致，共用同一节流窗口的思路，
+# 但节流状态各模块独立（不同模块的调用彼此不抢占对方的限流配额）。
+# ══════════════════════════════════════════════════════════════
+
+_API_MAX_RETRIES = 3
+_API_RETRY_BASE_DELAY = 5
+_API_CALL_MIN_INTERVAL = 2
+_last_api_call_ts = {"t": 0.0}
+
+_DASHSCOPE_API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+_QNAIGC_API_URL = "https://api.qnaigc.com/v1/messages"
+
+
+def _throttled_post(url, payload, headers):
+    elapsed = time.time() - _last_api_call_ts["t"]
+    if elapsed < _API_CALL_MIN_INTERVAL:
+        time.sleep(_API_CALL_MIN_INTERVAL - elapsed)
+
+    last_exc = None
+    for attempt in range(_API_MAX_RETRIES):
+        try:
+            resp = requests.post(url, json=payload, headers=headers, timeout=60)
+            _last_api_call_ts["t"] = time.time()
+
+            if resp.status_code == 429:
+                wait = _API_RETRY_BASE_DELAY * (2 ** attempt)
+                retry_after = resp.headers.get("retry-after")
+                if retry_after:
+                    try:
+                        wait = max(wait, float(retry_after))
+                    except ValueError:
+                        pass
+                if attempt < _API_MAX_RETRIES - 1:
+                    time.sleep(wait)
+                    continue
+                resp.raise_for_status()
+
+            resp.raise_for_status()
+            return resp
+
+        except requests.exceptions.HTTPError as e:
+            last_exc = e
+            if e.response is not None and e.response.status_code == 429 and attempt < _API_MAX_RETRIES - 1:
+                continue
+            raise
+        except requests.exceptions.RequestException as e:
+            last_exc = e
+            raise
+
+    raise last_exc
+
+
+def _etf_conclusion_prompt(name, ts_code, conclusions: dict) -> str:
+    """注意：喂给AI的是 A/B/C 规则已经算出来的结论文字，不是原始指标数字——
+    规则计算（折溢价分档/量能背离/风险分位等）仍由本模块负责，AI只负责把
+    这些已有判断组织成一段人话，不重新做判断、不看不到的原始数据。"""
+    lines = "\n".join(f"- {k}: {v}" for k, v in conclusions.items())
+    return f"""你是一名ETF交易执行顾问。以下是「{name}（{ts_code}）」这只ETF今天的执行质量分析结论（已经过规则计算，你不需要重新判断，只需要把这些结论组织成一段人话）：
+
+{lines}
+
+请只给出一段结论性文字（3-5句话，不用列表、不用小标题），直接回答三个问题：
+1. 今天怎么下单（折溢价是否划算，市价/限价/等一等）
+2. 现在建仓要不要分批、量能是否支撑当前走势
+3. 这只ETF长期跟踪质量如何，是否值得继续持有或该考虑换仓
+
+直接给结论，语气像给自己看的交易笔记，不要输出任何多余的开场白或标题，也不要逐条复述上面的结论列表。"""
+
+
+def _build_etf_ai_conclusion(name, ts_code, conclusions: dict) -> str | None:
+    """三级降级：① DashScope（阿里云百炼，国内数据源优先）→ ② qnaigc（七牛云
+    Anthropic 兼容接口，跨境访问更稳）→ ③ 两个AI源都失败返回 None，
+    交由调用方（build_etf_quality_block）展示规则版原文兜底。"""
+    prompt = _etf_conclusion_prompt(name, ts_code, conclusions)
+
+    # ── 第一级：阿里云百炼 DashScope ──────────────────────────────────
+    try:
+        payload = {
+            "model": "deepseek-v4-pro",
+            "max_tokens": 400,
+            "enable_thinking": False,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.getenv('ALIYUN_API_KEY', '')}",
+        }
+        resp = _throttled_post(_DASHSCOPE_API_URL, payload, headers)
+        data = resp.json()
+        conclusion = data["choices"][0]["message"]["content"].strip()
+        if conclusion:
+            return conclusion
+        raise ValueError("空响应")
+    except Exception as e:
+        print(f"⚠️ DashScope ETF执行质量AI解读失败（尝试降级到 qnaigc）：{type(e).__name__}: {e}")
+
+    # ── 第二级：七牛云 Anthropic 兼容接口（qnaigc）───────────────────
+    try:
+        payload = {
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 400,
+            "messages": [{"role": "user", "content": prompt}]
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
+            "anthropic-version": "2023-06-01",
+        }
+        resp = _throttled_post(_QNAIGC_API_URL, payload, headers)
+        data = resp.json()
+        text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
+        conclusion = "\n".join(text_blocks).strip()
+        if conclusion:
+            return conclusion
+        raise ValueError("空响应")
+    except Exception as e:
+        print(f"⚠️ qnaigc ETF执行质量AI解读也失败（已降级到规则版展示）：{type(e).__name__}: {e}")
+        return None
+
 
 def load_etf_metrics() -> pd.DataFrame | None:
+    """加载 ETF 执行质量指标（simple_etf_metrics.csv）"""
     if _metrics_cache:
         return _metrics_cache.get("df")
 
@@ -74,53 +161,7 @@ def load_etf_metrics() -> pd.DataFrame | None:
     return None
 
 
-# ── 单项指标解读辅助 ──────────────────────────────────────────────────────────
-
-def _discount_comment(rate: float, quantile_1y: float) -> tuple[str, str]:
-    """返回 (状态emoji+文字, 操作提示)"""
-    pct = rate * 100
-    q = quantile_1y
-
-    if rate < -0.003:
-        status = f"🟢 折价 {pct:.3f}%（1年{q*100:.0f}%分位低价区）"
-        tip = "折价买入，执行成本占优"
-    elif rate < -0.0005:
-        status = f"🟡 轻微折价 {pct:.3f}%"
-        tip = "小幅折价，正常范围"
-    elif rate < 0.0005:
-        status = f"⚪ 平价 {pct:.3f}%"
-        tip = "平价，无额外成本"
-    elif rate < 0.003:
-        status = f"🟠 轻微溢价 {pct:.3f}%（1年{q*100:.0f}%分位）"
-        tip = "小幅溢价，可接受"
-    else:
-        status = f"🔴 溢价 {pct:.3f}%（1年{q*100:.0f}%分位高溢区）"
-        tip = "⚠️ 溢价偏高，建议等折价或限价委托"
-
-    return status, tip
-
-
-def _turnover_comment(rate: float, quantile: float, divergence: bool) -> str:
-    """换手率 + 背离综合解读"""
-    q_pct = quantile * 100
-    lines = []
-
-    if quantile >= 0.8:
-        lines.append(f"🔥 换手率处于1年 {q_pct:.0f}% 高位，市场高度活跃")
-    elif quantile >= 0.5:
-        lines.append(f"🟡 换手率中等（1年 {q_pct:.0f}% 分位）")
-    else:
-        lines.append(f"🧊 换手率偏低（1年 {q_pct:.0f}% 分位），成交清淡")
-
-    if divergence:
-        lines.append("⚠️ **价格/换手背离**：价格走势缺乏成交量支撑，需警惕假突破或趋势反转")
-    else:
-        lines.append("✅ 价格/换手无背离，走势有量配合")
-
-    return "；".join(lines)
-
-
-def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
+def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     """
     按三个决策场景输出 ETF 执行质量补充块：
       A. 今天怎么下单（折溢价）
@@ -165,7 +206,7 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 
     # ══════════════════════════════════════════════════════
     # A. 今天怎么下单 — 折溢价
-    # ══════════════════════════════════════════════════════
+    # ════════════════════════════════════════════════════
     disc_pct = discount_rate * 100
 
     if discount_rate < -0.003:
@@ -212,7 +253,7 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
         else:
             trend_label = "折溢价近期稳定"
 
-    # ══════════════════════════════════════════════════════
+    # ═════════════════════════════════════════════════════
     # B. 这波量是否真实 — 资金流
     # ══════════════════════════════════════════════════════
     tq_pct = turnover_q * 100
@@ -243,7 +284,7 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 
     # ══════════════════════════════════════════════════════
     # C. 风险水位 / 换只ETF — 波动 + 超额收益
-    # ══════════════════════════════════════════════════════
+    # ═════════════════════════════════════════════════════
     vol_pct = vol_q1y * 100
     if vol_q1y >= 0.85:
         vol_icon, vol_label = "🔴", f"1年{vol_pct:.0f}%分位 — 波动率历史高位，单次建仓量要小，分批进"
@@ -290,6 +331,31 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
         ma_label = "─"
 
     te_label = "⚠️ 偏高，建议关注同类替代品" if tracking_err > 8 else "正常"
+
+    # ══════════════════════════════════════════════════════
+    # AI 解读：把上面 A/B/C 已经算出来的结论（不是原始指标）喂给AI，
+    # 让AI组织成一段交易笔记式的话；三级降级失败才展示规则版原文。
+    # ══════════════════════════════════════════════════════
+    conclusions = {
+        "折溢价": f"{disc_label}（{q_label.split('—')[-1].strip()}），{trend_label}，判断：{disc_action}",
+        "资金活跃度": tq_label.split("—")[-1].strip() if "—" in tq_label else tq_label,
+        "资金加速度": acc_label,
+        "价量背离": div_label,
+        "波动率水位": vol_label,
+        "回撤水位": dd_label,
+        "综合风险结论": risk_conclusion,
+        "超额收益": excess_label,
+        "近期动量": ma_label,
+        "跟踪误差": f"{tracking_err:.2f}% {te_label}",
+    }
+    ai_narrative = _build_etf_ai_conclusion(etf_name, ts_code, conclusions)
+    if ai_narrative:
+        return f"""
+---
+### ETF 执行质量（{ts_code}）· AI 解读
+
+{ai_narrative}
+"""
 
     alerts = []
     if discount_rate > 0.003:
@@ -342,12 +408,12 @@ def build_etf_metrics_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 """
     return block
 
-# ── 本地测试 ──────────────────────────────────────────────────────────────────
+
 if __name__ == "__main__":
     df = load_etf_metrics()
     if df is not None:
         for code in ["000688", "000300", "399989"]:
-            block = build_etf_metrics_block(code, df)
+            block = build_etf_quality_block(code, df)
             if block:
                 print(block)
                 print("\n" + "="*80 + "\n")

@@ -2,9 +2,19 @@ import akshare as ak
 import requests
 import pandas as pd
 import os
+import sys
 import time
 from datetime import datetime
 from io import StringIO
+
+# 【2026-08-02 目录重组说明】本文件从仓库根目录挪到了 fetch/ 下。
+# init_history.yml 会以 `python fetch/fetch_bond_yield.py` 直接运行本文件，
+# 子进程运行时 Python 只把"脚本自己所在目录"(fetch/)加进 sys.path，不会
+# 自动带上仓库根目录——下面这行手动把仓库根目录加回去，否则
+# `from config_loader import` 会报 ModuleNotFoundError。
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from config_loader import BOND_YIELD_CONFIG_FULL, HSTECH_TICKERS
 
 # ── 配置表 ────────────────────────────────────────────────────────────────────
 
@@ -17,36 +27,6 @@ BOND_CONFIG = {
     'DE10Y': 'IRLTLT01DEM156N',
     'JP10Y': 'IRLTLT01JPM156N',
 }
-
-# 指数配置：(code, name, currency, bond_code, pe_source)
-INDEX_CONFIG = [
-    ("000300", "沪深300",        "CNY", "CN10Y", "csindex"),
-    ("000688", "科创50",         "CNY", "CN10Y", "csindex"),
-    ("000922", "中证红利",       "CNY", "CN10Y", "csindex"),
-    ("000015", "上证红利",       "CNY", "CN10Y", "csindex"),
-    ("399989", "中证医疗",       "CNY", "CN10Y", "csindex"),
-    ("931071", "人工智能",       "CNY", "CN10Y", "csindex"),
-    ("SPY",    "S&P 500",       "USD", "US10Y", "multpl"),
-    ("QQQ",    "Nasdaq 100",    "USD", "US10Y", "gurufocus_csv"),
-    ("EWQ",    "MSCI France",   "EUR", "FR10Y", "worldpe_ratio"),
-    ("EWG",    "MSCI Germany",  "EUR", "DE10Y", "worldpe_ratio"),
-    ("EWJ",    "MSCI Japan",    "JPY", "JP10Y", "worldpe_ratio"),
-    ("EEM",    "MSCI Emerging", "USD", "CN10Y", "worldpe_ratio"),
-    # ========== 新增指数 ==========
-    ("HSTECH", "恒生科技指数",   "CNY", "CN10Y", "hstech_csv"),
-    ("000069", "消费80",      "CNY", "CN10Y", "csindex"),
-    ("930781", "中证影视",    "CNY", "CN10Y", "csindex"),
-    ("399967", "中证军工",   "CNY", "CN10Y", "csindex"),
-    ("931066", "军工龙头",   "CNY", "CN10Y", "csindex"),
-    ("930598", "稀土产业",    "CNY", "CN10Y", "csindex"),
-    ("930794", "中美互联网",    "CNY", "CN10Y", "csindex"),
-    ("000819", "有色金属",       "CNY", "CN10Y", "csindex"),
-    ("950125", "半导体材料设备", "CNY", "CN10Y", "csindex"),
-    ("399975", "中证证券公司", "CNY", "CN10Y", "csindex"),
-    ("931637", "港股通互联网", "CNY", "CN10Y", "csindex"),
-    ("399986", "中证银行", "CNY", "CN10Y", "csindex"),
-    ("930633", "中证旅游",       "CNY", "CN10Y", "csindex"),
-]
 
 # ── 手动填入今日 PE（与 QQQ 一致）─────────────────────────────────────────────
 QQQ_PE_TODAY = None          # 每次运行前填写
@@ -338,7 +318,7 @@ def main():
     except Exception as e:
         print(f"   ❌ 恒生科技 PE CSV读取失败: {e}")
 
-    for code, name, currency, bond_code, pe_source in INDEX_CONFIG:
+    for code, name, currency, bond_code, pe_source in BOND_YIELD_CONFIG_FULL:
         file_path = f"./data/erp_{code}.csv"
         if os.path.exists(file_path):
             print(f"\n   [{code}] {name} — 已有历史数据，跳过（避免覆盖增量脚本积累的真实数据；"

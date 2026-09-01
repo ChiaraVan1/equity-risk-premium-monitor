@@ -1,73 +1,77 @@
 # ERP 策略每日监控报告
 
-每日自动计算各主要指数的股权风险溢价（ERP），结合胜率/赔率框架输出仓位建议，并推送微信。
+## 项目状态
 
-## 已完成
-
-- ERP / PSY 历史数据采集（全量 + 增量）
-- 胜率 / 赔率 / 仓位建议框架
-- ETF 执行质量模块（折溢价、换手、波动、超额收益）
-- Shiller CAPE 长期回报锚（仅 SPY）
-- HSTECH PS / PSY 自建数据管道
-- ERP 斜率信号（近20日，五档分类，含恐慌踩踏识别）
-- 三级分级止损（估值分位对趋势信号降级 + 回撤/均线三条件）
-- 三级分级止盈（乖离率过热镜像止损逻辑，MA20/MA60乖离触发，高估区触发条件升级而非豁免）
-- 修复"核心估值决策"区块胜率计算未使用锚定子集的问题（SPY/QQQ/EWQ/EWG/EWJ 报告内胜率口径不一致）
-- 基本面暴雷预警（东方财富快讯粗筛 + AI 二次过滤，仅输出标志位，需人工确认）
-- 决策仪表盘：触发止损标的置顶「需要处理」区，其余按估值区间分组，📌 标记自选持仓
-- HTML 报告自动部署到 GitHub Pages
-- 减仓/止损信号支持「未持仓」场景：不再因未持仓而整条隐藏，改为降级展示为观察提示（🔎），价格结构风险始终可见
-- 减仓摘要新增区间（120日窗口）回撤 / 反弹统计
-- 胜率·赔率展示格式统一优化（如"胜78%·赔1.85x"，赔率趋近无穷大时显示"∞"）
-- 数据新鲜度校验修复：未变化计数仅在真实新交易日推进，避免节假日/非交易日造成误判
-- 标的覆盖补全：新增港股通互联网(931637)，补充上证红利(000015)、中美互联网(930794)展示
-- EWG（德国）、EEM（新兴市场）补上 A股 ETF 映射（此前标记为"无对应ETF"）
-- 修复 000015（上证红利）与 000922（中证红利）ETF 代码重复映射的 bug
-- 持仓状态更新：有色金属(000819)、稀土产业(930598) 已清仓，标记为不持仓
-
-## TODO
-
-- 加入其他信号指标
-- QQQ PE 改为脚本化自动抓取（替代当前 Claude Cowork/Chrome MCP 手动写入 QQQ_PE_TODAY 的方式），测试中；同步加入数据新鲜度校验（识别连续多日取值不变的异常）
-- 排查 SPY 数据异常：有一个本该只手动跑一次的全量重建workflow被反复触发（因为新增关注code），每次都会把每日增量脚本已经写好的真实数据冲掉
-- 港股通互联网(931637) 目前已接入 ETF 执行质量 / 基本面暴雷预警模块，但尚未加入 `fetch_bond_yield_incremental.py` 的 `INDEX_CONFIG` 每日 ERP/PE 抓取管道，暂无历史数据、无法参与胜率/赔率计算
-- 新增标的：指数代码 931994，待接入 ERP 数据抓取及各模块
+项目的 TODO / 已知问题 / 变更日志见 [STATUS.md](./STATUS.md)。
 
 ---
 
 ## 整体执行流程
 
 ```
-每日触发（GitHub Actions）
-│
-├── 1. fetch_bond_yield_incremental.py   ← 增量拉取国债 + PE，更新 erp_*.csv
-│        ├── 中国国债：akshare
-│        ├── 美/法/德/日国债：FRED API
-│        ├── A股PE：中证指数官网（akshare）
-│        ├── 美股PE：worldperatio.com（SPY）/ 手动填入（QQQ）
-│        ├── 欧日新兴PE：worldperatio.com（当日值）
-│        └── HSTECH：yfinance 市值 + akshare 财报 → 自建 PS/PSY/PE/ERP
-│
-├── 2. simple_etf_metrics.py → 写入 data/simple_etf_metrics.csv + data/etf_price.csv
-│        └── 折溢价 / 换手 / 波动 / 超额收益 / 新鲜度校验（stale_flag）
-│
-└── 3. erp_position.py                   ← 生成报告 + 微信推送
-         ├── 读取 erp_*.csv（各指数 ERP 历史）
-         ├── 读取 ps_HSTECH.csv（恒生科技 PS/PSY）
-         ├── 读取 data/simple_etf_metrics.csv（ETF 执行质量）
-         ├── 读取 data/etf_price.csv（ETF 价格序列，用于减仓信号）
-         └── 输出：胜率 / 赔率 / 仓位建议 / ERP斜率信号 / 减仓信号 / 基本面预警 / ETF折溢价
-             → 生成 docs/report.html（gh-pages）+ 微信摘要推送
+配置层
+├─ config.json
+├─ industry_map.json
+└─ config_loader.py → ALL_INDICES / BOND_YIELD_CONFIG / HOLDING_CATEGORY / INDICES_LIST / HSTECH_TICKERS
+        ↓
+
+数据生产层（fetch/）
+├─ simple_etf_metrics.py           → data/simple_etf_metrics.csv, data/etf_nav.csv, data/index_pct.csv
+├─ fetch_bond_yield.py             → data/erp_*.csv（全量）
+├─ fetch_bond_yield_incremental.py → data/erp_*.csv（增量）+ data/ps_HSTECH.csv（HSTECH PS/PSY）
+├─ fetch_ps.py                     → data/ps_HSTECH.csv（手动全量重算备用，不在每日调度里）
+├─ freshness.py                    → 通用新鲜度校验工具（日期口径 + 数值不变口径）
+└─ dividend_yield_fetch.py         → data/dividend_yield/dyr_*.csv
+        ↓（各 fetch 脚本调用 freshness.py，结果合并写入）
+
+data/freshness_report.json         → 全数据源新鲜度体检报告，prepare_all_data.py 汇总打印
+        ↓
+
+prepare_all_data.py（聚合所有 CSV，subprocess 跑 fetch/ 脚本 + import ensure_dividend_data_fresh）
+        ↓
+
+分析层（analysis/）
+├─ valuation.py
+├─ risk.py
+├─ trend.py
+├─ sentiment.py           （调用 popularity_signal.py）
+├─ etf_quality.py
+├─ dividend_yield_analysis.py
+└─ popularity_signal.py
+        ↓
+
+analyze_and_suggest(某个code)
+  ├─ build_shiller_block()            valuation.py
+  ├─ build_unified_valuation_block()  valuation.py
+  ├─ build_trend_block()              trend.py
+  ├─ compute_exit_signal_summary()    risk.py
+  ├─ build_exit_signal_block()        risk.py
+  ├─ compute_profit_signal_summary()  risk.py
+  ├─ build_profit_signal_block()      risk.py
+  ├─ compute_range_drawdown_rebound() risk.py
+  ├─ build_sentiment_block()          sentiment.py
+  ├─ build_dividend_yield_block()     dividend_yield_analysis.py
+  └─ build_etf_quality_block()        etf_quality.py
+        ↓ 拼成单个标的的 Markdown
+
+报告层（report/）
+└─ markdown.py → build_summary_block()（仪表盘）+ markdown_to_html() → HTML
+                 + save_html_report() / send_to_wechat()
+        ↓
+
+erp_position.py（主入口，根目录）
 ```
 
 **首次使用**须先跑全量脚本 `fetch_bond_yield.py` 建立历史数据，之后每日跑增量脚本即可。
+
+> **约定：新增任何数据源接入 fetch/ 时，必须调用 `freshness.py` 做新鲜度校验，并汇总进 `data/freshness_report.json`。**
 
 ---
 
 ## 标的一览
 
 | 指数代码 | 指数名称 | 对应 ETF | PE 数据来源 | 国债 | 更新频率 |
-|---------|---------|----------|----------|------|---------|
+|---------|---------|---------|-----------|------|---------|
 | 000300 | 沪深300 | 510300.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 | 000688 | 科创50 | 588000.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 | 000922 | 中证红利 | 515180.SH | 中证指数官网（akshare） | CN10Y | 日频 |
@@ -83,6 +87,10 @@
 | 930794 | 中美互联网 | ─（暂无对应A股ETF） | 中证指数官网（akshare） | CN10Y | 日频 |
 | 000819 | 有色金属 | 512400.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 | 950125 | 半导体材料设备 | 588710.SH | 中证指数官网（akshare） | CN10Y | 日频 |
+| 399986 | 中证银行 | 512800.SH | 中证指数官网（akshare） | CN10Y | 日频 |
+| 930633 | 中证旅游 | 159766.SZ | 中证指数官网（akshare） | CN10Y | 日频 |
+| 931946 | 畜牧养殖 | 159172.SZ | 中证指数官网（akshare） | CN10Y | 日频 |
+| 980032 | 新能电池 | 159755.SZ | 中证指数官网（akshare） | CN10Y | 日频 |
 | SPY | S&P 500 | 513500.SH | multpl.com（月频历史）+ worldperatio.com（今日） | US10Y | 月频历史 + 日频今日 |
 | QQQ | Nasdaq 100 | 159696.SZ | GuruFocus xlsx（手动下载）+ 手动填入今日值 | US10Y | 手动维护 |
 | EWQ | MSCI France | 513080.SH | worldperatio.com（今日值）× SPY比值估算历史 | FR10Y | 日频今日，历史为估算 |
@@ -90,23 +98,9 @@
 | EWJ | MSCI Japan | 513880.SH | worldperatio.com（今日值）× SPY比值估算历史 | JP10Y | 日频今日，历史为估算 |
 | EEM | MSCI Emerging | 520580.SH | worldperatio.com（今日值）× SPY比值估算历史 | CN10Y | 日频今日，历史为估算 |
 | HSTECH | 恒生科技 | 513180.SH | 自建：yfinance 市值 + akshare 季报营收/净利润 | CN10Y | 月频 |
-| 931637 | 港股通互联网 | 513770.SH | ⚠️ 尚未接入每日抓取，见下方TODO | CN10Y | ─ |
+| 931637 | 港股通互联网 | 513770.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 
 > EWQ/EWG/EWJ/EEM 的**历史 PE 为估算值**：以今日该指数与 SPY 的 PE 比值为固定系数，乘以 SPY 历史 PE 序列反推。今日值为 worldperatio.com 真实数据。
-
----
-
-## 数据文件说明
-
-| 文件 | 生成方式 | 内容 |
-|-----|---------|------|
-| `data/erp_{CODE}.csv` | `fetch_bond_yield_incremental.py` 每日写入 | Date / PE / Bond_Yield_10Y / ERP |
-| `data/ps_HSTECH.csv` | `fetch_bond_yield_incremental.py` 每日写入 | date / ps / psy / pe / erp / rf（月频） |
-| `data/simple_etf_metrics.csv` | `simple_etf_metrics.py` 每日写入，随每日commit一并提交 | ETF 折溢价 / 换手 / 波动 / 超额收益 / 新鲜度校验（日频） |
-| `data/etf_price.csv` | `simple_etf_metrics.py` 每日生成，随每日commit一并提交 | ETF 日收盘价序列，供减仓信号模块使用 |
-| `docs/report.html` | `erp_position.py` 每日生成 | 完整报告，部署到 GitHub Pages |
-
-> ⚠️ `data/erp_HSTECH.csv` 为历史遗留文件：HSTECH 实际估值口径已切换为 PS/PSY（见 `data/ps_HSTECH.csv`），该文件不再被任何脚本读取或写入消费，仅作历史备用保留，不影响任何报告输出或仓位决策。
 
 ---
 
@@ -142,15 +136,15 @@ ERP = 1/PE − 无风险利率（10年期国债收益率）
 
 ### ERP 斜率信号
 
-基于近20日 ERP（或PSY）线性回归斜率，量化当前市场情绪速度：
+基于近20日 ERP（或PSY）线性回归斜率，量化当前市场情绪速度。**阈值为自适应历史分位**（不是固定百分比）：用该标的自己"历史上所有20日变化"的分布来判断当前变化是否极端——ERP=1/PE−rf 是倒数关系，固定阈值对高PE标的可能永远触发不了，改用"当前变化在自身历史分布中的分位"后同一套逻辑对所有标的自适应。历史样本（20日变化）不足60条时退回固定阈值。
 
-| 信号 | 条件（20日ERP绝对变化） | 含义 |
-|------|----------------------|------|
-| 🚨 恐慌踩踏 | ≥ +2% | PE急速压缩，市场抛售，历史上往往是买点临近的前兆 |
-| 🟢 估值快速改善 | +0.8% ~ +2% | 估值持续修复，买入窗口打开 |
-| 🟡 横盘震荡 | -0.8% ~ +0.8% | 无明显趋势，保持既有仓位 |
-| 🟠 估值快速恶化 | -2% ~ -0.8% | 估值向贵漂移，提高警惕 |
-| ⚠️ 情绪过热 | ≤ -2% | 市场情绪快速升温，泡沫化加速，警戒高位 |
+| 信号 | 条件（自适应历史分位，样本充足时） | 固定阈值兜底（样本<60条时） | 含义 |
+|------|----------------------------------|--------------------------|------|
+| 🚨 恐慌踩踏 | ≥ 90分位 | 20日绝对变化 ≥ +2% | PE急速压缩，市场抛售，历史上往往是买点临近的前兆 |
+| 🟢 估值快速改善 | 65~90分位 | +0.8% ~ +2% | 估值持续修复，买入窗口打开 |
+| 🟡 横盘震荡 | 中间区间 | -0.8% ~ +0.8% | 无明显趋势，保持既有仓位 |
+| 🟠 估值快速恶化 | 65~90分位（反向） | -2% ~ -0.8% | 估值向贵漂移，提高警惕 |
+| ⚠️ 情绪过热 | ≥ 90分位（反向） | ≤ -2% | 市场情绪快速升温，泡沫化加速，警戒高位 |
 
 ---
 
@@ -276,16 +270,18 @@ PSY 用于替代 ERP 参与胜率/赔率计算，斜率信号和减仓信号同�
 | `ANTHROPIC_API_KEY` | 七牛云 API Key（Anthropic 兼容接口 `api.qnaigc.com`），供基本面暴雷预警模块调用 | 是 |
 | `SHILLER_PATH` | Shiller CAPE 数据文件路径，默认 `./data/ie_data.xls` | 否 |
 | `GH_PAT` | GitHub Personal Access Token，供 Claude Cowork 通过 Chrome MCP 模拟操作（如写入 Variable） | 是 |
+| `ALIYUN_API_KEY` | DashScope（阿里云）API Key，供近10月趋势 AI 解读 / ETF 执行质量 AI 解读调用 | 是 |
+| `LIXINGER_TOKEN` | 理杏仁 API Token，供 dividend_yield_fetch.py 抓取股息率数据 | 是 |
+| `DRY_RUN` | 非 Secret，普通环境变量：设为 `true` 时进入预览模式，不真实推送微信，改为写入 output_preview.md | 否 |
 
 ## GitHub Actions Variables
 
 | 变量 | 用途 | 更新方式 |
 |-----|------|---------|
-| `QQQ_PE_TODAY` | QQQ 今日 PE | 由 Claude Cowork 通过 Chrome MCP 每日自动写入 |
+| `QQQ_PE_TODAY` | QQQ 今日 PE | 由 Claude Cowork 用 MCP 浏览网页抓取，用 REST API 写入 |
 
 ---
 
 ## 手动维护事项
 
-- **QQQ PE**：每日由 Claude Cowork 通过 Claude Chrome MCP 自动获取，写入 `QQQ_PE_TODAY` 环境变量传入 GitHub Actions。历史文件不再手动下载维护。
 - **Shiller CAPE**：`./data/ie_data.xls` 需从 [Robert Shiller 网站](http://www.econ.yale.edu/~shiller/data.htm) 手动下载，仅用于 SPY 长期回报锚分析，建议每月月初检查更新。

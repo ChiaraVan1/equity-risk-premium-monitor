@@ -1,8 +1,9 @@
 name: Equity Risk Premium Monitor Bot
 on:
   schedule:
-    # 每天 18:30 运行 (北京时间 18:30 = UTC 10:30)
-    - cron: '30 10 * * *'
+    # 每天 18:00 运行（北京时间 18:00 = UTC 10:00）。
+    # 给17:00开始的本地抓取、校验和推送留出完整缓冲窗口。
+    - cron: '0 10 * * *'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -18,6 +19,19 @@ jobs:
       # 1. 检出代码
       - name: Checkout code
         uses: actions/checkout@v4
+      # 1.5 检查本地是否已于北京时间当天完整抓取并推送ETF数据。
+      #     这里只决定是否跳过 AkShare ETF 抓取；其他数据、分析、报告和部署始终执行。
+      #     只对定时触发(schedule)生效，手动触发(workflow_dispatch)始终重新抓取ETF。
+      - name: Check if local run already succeeded today
+        id: check_local
+        run: |
+          TODAY_CST=$(TZ=Asia/Shanghai date +%F)
+          if [ "${{ github.event_name }}" = "schedule" ] && git log --grep="^本地补充 ETF 数据 ${TODAY_CST}$" --format='%s' -1 | grep -q .; then
+            echo "本地已于北京时间 ${TODAY_CST} 完整更新ETF数据，云端只跳过AkShare ETF抓取"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
       # 2. 设置 Python 环境
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,38 +42,35 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      # 4. 运行 ETF 指标计算（生成 simple_etf_metrics.csv 供后续步骤使用）
-      - name: Run ETF Metrics
-        run: python simple_etf_metrics.py
-      # 5. 执行增量抓取数据
-      - name: Fetch Data
+      # 4. 执行主入口（内部自动调度所有数据准备脚本）
+      - name: Prepare Data and Analyze
         env:
+          SKIP_ETF_METRICS: ${{ steps.check_local.outputs.skip }}
           QQQ_PE_TODAY: ${{ vars.QQQ_PE_TODAY }}
-        run: python fetch_bond_yield_incremental.py
-      # 6. 执行分析，生成 HTML 报告 + 推送仪表盘到微信
-      - name: Analyze and Push to WeChat
-        env:
           SCT_KEY: ${{ secrets.SCT_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ALIYUN_API_KEY: ${{ secrets.ALIYUN_API_KEY }}
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
+          LIXINGER_TOKEN: ${{ secrets.LIXINGER_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: python erp_position.py
-      # 7. 预览模式：上传报告文件供下载查看
+      # 5. 预览模式：上传报告文件供下载查看
       - name: Upload preview report
         if: ${{ github.event.inputs.dry_run == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: report-preview
           path: output_preview.md
-      # 8. 将更新后的数据保存回 GitHub 仓库
+      # 6. 将更新后的数据保存回 GitHub 仓库
       - name: Commit and Push data
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add data/
           git commit -m "Auto update ERP data [skip ci]" || exit 0
+          git pull --rebase origin main
           git push
-      # 9. 部署 HTML 报告到 gh-pages 分支
+      # 7. 部署 HTML 报告到 gh-pages 分支
       - name: Deploy HTML report to gh-pages
         if: ${{ github.event.inputs.dry_run != 'true' }}
         uses: peaceiris/actions-gh-pages@v4
