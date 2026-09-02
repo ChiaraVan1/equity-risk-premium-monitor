@@ -6,7 +6,7 @@ on:
       target_branch:
         description: "跑在哪个分支上（脚本和产物都在这个分支）"
         required: true
-        default: "feature/pe-band-demo"
+        default: "main"
 
 permissions:
   contents: write
@@ -30,7 +30,7 @@ jobs:
           fc-cache -f
 
       - name: Install deps
-        run: pip install pandas matplotlib
+        run: pip install pandas matplotlib akshare
 
       - name: Run pe_band.py for all followed codes
         run: python pe_band.py
