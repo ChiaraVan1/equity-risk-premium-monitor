@@ -54,18 +54,23 @@ def discover_codes():
 
 def load_band_df(code):
     """给定code，返回带轨道价格列的df，没有可用数据时返回None"""
-    pe_df = pd.read_csv(f"./data/erp_{code}.csv", parse_dates=["Date"])[["Date", "PE"]].dropna()
+    erp_df = pd.read_csv(f"./data/erp_{code}.csv", parse_dates=["Date"])
+    pe_df = erp_df[["Date", "PE"]].dropna()
     config = get_index_by_code(code)
 
     if config and config.get("pe_source") == "csindex":
-        price_df = ak.stock_zh_index_hist_csindex(
-            symbol=code,
-            start_date=pe_df["Date"].min().strftime("%Y%m%d"),
-            end_date=pe_df["Date"].max().strftime("%Y%m%d"),
-        )[["日期", "收盘"]]
-        price_df.columns = ["Date", "Price"]
-        price_df["Date"] = pd.to_datetime(price_df["Date"])
-        price_df = price_df.dropna(subset=["Date", "Price"])
+        if "IndexClose" in erp_df.columns and erp_df["IndexClose"].notna().any():
+            price_df = erp_df[["Date", "IndexClose"]].dropna()
+            price_df = price_df.rename(columns={"IndexClose": "Price"})
+        else:
+            price_df = ak.stock_zh_index_hist_csindex(
+                symbol=code,
+                start_date=pe_df["Date"].min().strftime("%Y%m%d"),
+                end_date=pe_df["Date"].max().strftime("%Y%m%d"),
+            )[["日期", "收盘"]]
+            price_df.columns = ["Date", "Price"]
+            price_df["Date"] = pd.to_datetime(price_df["Date"])
+            price_df = price_df.dropna(subset=["Date", "Price"])
         df = pd.merge(pe_df, price_df, on="Date", how="inner").sort_values("Date")
     else:
         price_df = pd.read_csv("./data/etf_price.csv", parse_dates=["date"])[["date", code]].dropna()
