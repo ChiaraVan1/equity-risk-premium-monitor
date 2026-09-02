@@ -7,9 +7,10 @@ pe_band.py —— 极简 PE-Band 图（价格 vs 历史PE分位轨道），批�
 
 逻辑：
   1. 扫描 data/erp_{code}.csv，凑出所有有历史PE数据的code
-  2. 和 data/etf_price.csv 的列名取交集（要有价格才能反推EPS）
-  3. 对每个code： EPS = Price / PE（反推），用 PE 历史分位数（P10/P50/P90）
-     算出几条固定PE倍数，乘回逐日EPS得到轨道价格，和真实价格一起画一个子图
+  2. 中证指数直接使用中证接口同一口径的收盘点位和滚动市盈率；
+     其他标的保留 ETF 价格与已有 PE 序列的原逻辑
+  3. 对每个code： Earnings = Price / PE（反推），用 PE 历史分位数（P10/P50/P90）
+     算出几条固定PE倍数，乘回逐日隐含盈利得到轨道价格，和真实价格一起画一个子图
   4. 所有子图竖着按code排序摞在一张图里，输出 docs/pe_band_all.png
      （单个标的模式下输出 docs/pe_band_{code}.png）
 """
@@ -18,10 +19,11 @@ import sys
 import glob
 import os
 import re
+import akshare as ak
 import pandas as pd
 import matplotlib
 import matplotlib.pyplot as plt
-from config_loader import CODE_NAME
+from config_loader import CODE_NAME, get_index_by_code
 
 # 中文字体：CI环境（Ubuntu）默认没装中文字体，会显示成方框。
 for _font in ["WenQuanYi Zen Hei", "Noto Sans CJK SC", "Microsoft YaHei", "SimHei", "PingFang SC"]:
@@ -53,26 +55,38 @@ def discover_codes():
 def load_band_df(code):
     """给定code，返回带轨道价格列的df，没有可用数据时返回None"""
     pe_df = pd.read_csv(f"./data/erp_{code}.csv", parse_dates=["Date"])[["Date", "PE"]].dropna()
-    price_df = pd.read_csv("./data/etf_price.csv", parse_dates=["date"])[["date", code]].dropna()
-    price_df = price_df.rename(columns={"date": "Date", code: "Price"})
+    config = get_index_by_code(code)
 
-    df = pd.merge(pe_df, price_df, on="Date", how="inner").sort_values("Date")
+    if config and config.get("pe_source") == "csindex":
+        index_df = ak.stock_zh_index_hist_csindex(
+            symbol=code,
+            start_date=pe_df["Date"].min().strftime("%Y%m%d"),
+            end_date=pe_df["Date"].max().strftime("%Y%m%d"),
+        )[["日期", "收盘", "滚动市盈率"]]
+        index_df.columns = ["Date", "Price", "PE"]
+        index_df["Date"] = pd.to_datetime(index_df["Date"])
+        df = index_df.dropna(subset=["Date", "Price", "PE"]).sort_values("Date")
+    else:
+        price_df = pd.read_csv("./data/etf_price.csv", parse_dates=["date"])[["date", code]].dropna()
+        price_df = price_df.rename(columns={"date": "Date", code: "Price"})
+        df = pd.merge(pe_df, price_df, on="Date", how="inner").sort_values("Date")
+
     if df.empty:
         return None
 
-    df["EPS"] = df["Price"] / df["PE"]
+    df["Earnings"] = df["Price"] / df["PE"]
     q = {"上轨(P90)": df["PE"].quantile(0.90),
          "中轨(P50)": df["PE"].quantile(0.50),
          "下轨(P10)": df["PE"].quantile(0.10)}
     for label, pe_mult in q.items():
-        df[label] = pe_mult * df["EPS"]
+        df[label] = pe_mult * df["Earnings"]
     return df, q
 
 
 def draw_subplot(ax, code, df, q):
     for label in q:
         ax.plot(df["Date"], df[label], linewidth=1, label=f"{label} {q[label]:.1f}x")
-    ax.plot(df["Date"], df["Price"], color="crimson", linewidth=1.3, label="实际价格/点位")
+    ax.plot(df["Date"], df["Price"], color="crimson", linewidth=1.3, label="指数点位/价格")
     ax.set_title(f"{display_name(code)} PE-Band", fontsize=10)
     ax.legend(loc="upper left", fontsize=7)
     ax.grid(alpha=0.3)
