@@ -235,7 +235,10 @@ def process_and_save(pe_df, bond_df, code, name, currency, bond_code):
     bond_df = bond_df.copy()
     bond_df['Date'] = pd.to_datetime(bond_df['Date'])
 
-    merged = pd.merge(bond_df, pe_df[['Date', 'PE']], on='Date', how='outer').sort_values('Date')
+    pe_columns = ['Date', 'PE']
+    if 'IndexClose' in pe_df.columns:
+        pe_columns.insert(1, 'IndexClose')
+    merged = pd.merge(bond_df, pe_df[pe_columns], on='Date', how='outer').sort_values('Date')
 
     if bond_code in ['FR10Y', 'DE10Y', 'JP10Y']:
         merged['Bond_Yield_10Y'] = merged['Bond_Yield_10Y'].bfill()
@@ -321,9 +324,12 @@ def main():
     for code, name, currency, bond_code, pe_source in BOND_YIELD_CONFIG_FULL:
         file_path = f"./data/erp_{code}.csv"
         if os.path.exists(file_path):
-            print(f"\n   [{code}] {name} — 已有历史数据，跳过（避免覆盖增量脚本积累的真实数据；"
-                  f"如需强制重建请先手动删除 {file_path}）")
-            continue
+            existing_columns = pd.read_csv(file_path, nrows=0).columns
+            if pe_source != 'csindex' or 'IndexClose' in existing_columns:
+                print(f"\n   [{code}] {name} — 已有历史数据，跳过（避免覆盖增量脚本积累的真实数据；"
+                      f"如需强制重建请先手动删除 {file_path}）")
+                continue
+            print(f"\n   [{code}] {name} — 回填中证指数历史收盘点位")
         print(f"\n   [{code}] {name}")
         if bond_code not in bonds:
             print(f"      ⚠️ 国债 {bond_code} 未获取，跳过")
@@ -334,8 +340,8 @@ def main():
                     symbol=code,
                     start_date="20050408",
                     end_date=datetime.now().strftime("%Y%m%d")
-                )[['日期', '滚动市盈率']]
-                pe_df.columns = ['Date', 'PE']
+                )[['日期', '收盘', '滚动市盈率']]
+                pe_df.columns = ['Date', 'IndexClose', 'PE']
                 time.sleep(1)
             elif pe_source == 'multpl':
                 pe_df = spy_pe_df
