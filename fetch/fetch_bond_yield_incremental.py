@@ -302,7 +302,7 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
         action = "增量更新"
     else:
         old_data = pd.DataFrame(
-            columns=['Bond_Yield_10Y', 'PE', 'IndexCode', 'IndexName', 'Currency', 'BondCode']
+            columns=['IndexClose', 'Bond_Yield_10Y', 'PE', 'IndexCode', 'IndexName', 'Currency', 'BondCode']
         )
         old_data.index = pd.DatetimeIndex([], name='Date')
         action = "全新创建"
@@ -311,11 +311,15 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
     # ——避免国债收益率某天被数据源修订时，误将该天已抓到的PE冲成NaN。
     bond_s = new_bond_df.set_index('Date')['Bond_Yield_10Y']
     pe_s = new_pe_df.set_index('Date')['PE']
+    close_s = (new_pe_df.set_index('Date')['IndexClose']
+               if 'IndexClose' in new_pe_df.columns else pd.Series(dtype=float))
 
-    all_dates = old_data.index.union(bond_s.index).union(pe_s.index)
+    all_dates = old_data.index.union(bond_s.index).union(pe_s.index).union(close_s.index)
     combined = old_data.reindex(all_dates).sort_index()
     combined.loc[bond_s.index, 'Bond_Yield_10Y'] = bond_s.values
     combined.loc[pe_s.index, 'PE'] = pe_s.values
+    if not close_s.empty:
+        combined.loc[close_s.index, 'IndexClose'] = close_s.values
 
     combined['IndexCode'] = code
     combined['IndexName'] = name
@@ -480,12 +484,18 @@ def main():
             continue
         try:
             if pe_source == 'csindex':
+                csindex_start = start_date_str
+                erp_path = f"./data/erp_{code}.csv"
+                if os.path.exists(erp_path):
+                    existing = pd.read_csv(erp_path, usecols=lambda c: c in {'Date', 'IndexClose'})
+                    if 'IndexClose' not in existing.columns:
+                        csindex_start = pd.to_datetime(existing['Date']).min().strftime('%Y%m%d')
                 pe_df = ak.stock_zh_index_hist_csindex(
                     symbol=code,
-                    start_date=start_date_str,
+                    start_date=csindex_start,
                     end_date=end_date_str
-                )[['日期', '滚动市盈率']]
-                pe_df.columns = ['Date', 'PE']
+                )[['日期', '收盘', '滚动市盈率']]
+                pe_df.columns = ['Date', 'IndexClose', 'PE']
                 time.sleep(1)
 
             elif pe_source == 'worldpe':
