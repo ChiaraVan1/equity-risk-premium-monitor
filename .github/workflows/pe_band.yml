@@ -2,6 +2,11 @@ name: PE-Band Chart (manual)
 
 on:
   workflow_dispatch:
+    inputs:
+      target_branch:
+        description: "跑在哪个分支上（脚本和产物都在这个分支）"
+        required: true
+        default: "main"
 
 permissions:
   contents: write
@@ -12,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: feature/pe-band-demo
+          ref: ${{ github.event.inputs.target_branch }}
 
       - uses: actions/setup-python@v5
         with:
@@ -30,10 +35,10 @@ jobs:
       - name: Run pe_band.py for all followed codes
         run: python pe_band.py
 
-      - name: Commit chart back to feature branch
+      - name: Commit chart back to target branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/pe_band_all.png
           git diff --cached --quiet || git commit -m "chore: regenerate pe-band chart for all codes"
-          git push origin HEAD:feature/pe-band-demo
+          git push origin HEAD:${{ github.event.inputs.target_branch }}
