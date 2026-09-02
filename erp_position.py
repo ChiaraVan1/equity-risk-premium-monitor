@@ -8,7 +8,7 @@ from datetime import datetime
 import pandas as pd
 
 from config_loader import HOLDING_CATEGORY, INDICES_LIST
-from prepare_all_data import prepare_all_data, load_etf_price_series
+from prepare_all_data import prepare_all_data, load_etf_adjusted_price_series
 from analysis.valuation import build_shiller_block, build_unified_valuation_block, calc_odds, is_holding
 from analysis.risk import (compute_exit_signal_summary, build_exit_signal_block,
                             compute_profit_signal_summary, build_profit_signal_block,
@@ -180,8 +180,8 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     bubble, value, spec, b_msg, v_msg, t_msg = compute_position_sizing(current_erp, quantiles)
     total_pct = bubble + value + spec
 
-    # 加载价格序列
-    price_series = load_etf_price_series(code)
+    # 风险信号必须使用前复权 ETF 价格，避免分红、分拆或份额折算制造假回撤。
+    price_series = load_etf_adjusted_price_series(code)
 
     # 【2026-08-02 恢复】PE/PSY 数据新鲜度校验——check_metric_freshness()/
     # build_freshness_note() 之前只在 import 列表里，从没被实际调用过，导致
