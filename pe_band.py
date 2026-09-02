@@ -58,14 +58,15 @@ def load_band_df(code):
     config = get_index_by_code(code)
 
     if config and config.get("pe_source") == "csindex":
-        index_df = ak.stock_zh_index_hist_csindex(
+        price_df = ak.stock_zh_index_hist_csindex(
             symbol=code,
             start_date=pe_df["Date"].min().strftime("%Y%m%d"),
             end_date=pe_df["Date"].max().strftime("%Y%m%d"),
-        )[["日期", "收盘", "滚动市盈率"]]
-        index_df.columns = ["Date", "Price", "PE"]
-        index_df["Date"] = pd.to_datetime(index_df["Date"])
-        df = index_df.dropna(subset=["Date", "Price", "PE"]).sort_values("Date")
+        )[["日期", "收盘"]]
+        price_df.columns = ["Date", "Price"]
+        price_df["Date"] = pd.to_datetime(price_df["Date"])
+        price_df = price_df.dropna(subset=["Date", "Price"])
+        df = pd.merge(pe_df, price_df, on="Date", how="inner").sort_values("Date")
     else:
         price_df = pd.read_csv("./data/etf_price.csv", parse_dates=["date"])[["date", code]].dropna()
         price_df = price_df.rename(columns={"date": "Date", code: "Price"})
