@@ -484,15 +484,9 @@ def main():
             continue
         try:
             if pe_source == 'csindex':
-                csindex_start = start_date_str
-                erp_path = f"./data/erp_{code}.csv"
-                if os.path.exists(erp_path):
-                    existing = pd.read_csv(erp_path, usecols=lambda c: c in {'Date', 'IndexClose'})
-                    if 'IndexClose' not in existing.columns:
-                        csindex_start = pd.to_datetime(existing['Date']).min().strftime('%Y%m%d')
                 pe_df = ak.stock_zh_index_hist_csindex(
                     symbol=code,
-                    start_date=csindex_start,
+                    start_date=start_date_str,
                     end_date=end_date_str
                 )[['日期', '收盘', '滚动市盈率']]
                 pe_df.columns = ['Date', 'IndexClose', 'PE']
