@@ -25,7 +25,7 @@ jobs:
           fc-cache -f
 
       - name: Install deps
-        run: pip install pandas matplotlib
+        run: pip install pandas matplotlib akshare
 
       - name: Run pe_band.py for all followed codes
         run: python pe_band.py
