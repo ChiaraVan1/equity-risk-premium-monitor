@@ -86,6 +86,8 @@ def load_ps_data():
 
 ETF_PRICE_PATH = "./data/etf_price.csv"
 _ETF_PRICE_CACHE = {}
+ETF_ADJ_PRICE_PATH = "./data/etf_price_adj.csv"
+_ETF_ADJ_PRICE_CACHE = {}
 
 # 【2026-08-06】simple_etf_metrics.py 增量拉取优化新增的两个历史缓存文件，
 # 结构和 etf_price.csv 一样（date为索引的宽表），一并纳入下面的新鲜度校验。
@@ -109,6 +111,34 @@ def load_etf_price_series(erp_code: str):
     if erp_code not in df.columns:
         return None
     return df[erp_code].dropna().sort_index()
+
+
+def load_etf_adjusted_price_series(erp_code: str):
+    """读取前复权 ETF 价格，专供均线、回撤、止盈止损；异常时不降级到原始价。"""
+    global _ETF_ADJ_PRICE_CACHE
+    if "df" not in _ETF_ADJ_PRICE_CACHE:
+        if not os.path.exists(ETF_ADJ_PRICE_PATH):
+            return None
+        try:
+            _ETF_ADJ_PRICE_CACHE["df"] = pd.read_csv(
+                ETF_ADJ_PRICE_PATH, index_col=0, parse_dates=True
+            )
+        except Exception:
+            return None
+
+    df = _ETF_ADJ_PRICE_CACHE["df"]
+    if erp_code not in df.columns:
+        return None
+    series = pd.to_numeric(df[erp_code], errors="coerce").dropna().sort_index()
+
+    # 二次保险：复权接口若仍出现疑似份额折算断层，宁可跳过风险信号，也不用原始价误判。
+    recent = series.iloc[-130:]
+    jumps = recent.pct_change().abs()
+    if (jumps > 0.30).any():
+        bad_date = jumps[jumps > 0.30].index[-1]
+        print(f"⚠️ [{erp_code}] 前复权价格在 {bad_date.date()} 仍有超过30%的跳变，跳过价格风险信号")
+        return None
+    return series
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -167,6 +197,7 @@ def prepare_all_data():
         print("\n   ⏭️ 本地已完整更新ETF数据：仅跳过 AkShare ETF 抓取，继续更新其他数据和报告")
 
     scripts.extend([
+        ("fetch/fetch_etf_adjusted_price.py", "ETF 前复权价格（风险信号专用）"),
         ("fetch/fetch_bond_yield_incremental.py", "国债 PE 增量数据（含 HSTECH PS/PSY）"),
         ("analysis/dividend_yield_analysis.py", "股息率数据"),  # __main__ 入口在这个文件
     ])
@@ -266,6 +297,12 @@ def prepare_all_data():
                 label="ETF价格序列",
                 path=ETF_PRICE_PATH,
                 date_col=None,  # 日期是index不是普通列，同样退化为mtime校验
+                max_staleness_days=3,
+            ),
+            check_date_freshness(
+                label="ETF前复权价格序列",
+                path=ETF_ADJ_PRICE_PATH,
+                date_col=None,
                 max_staleness_days=3,
             ),
             check_date_freshness(
