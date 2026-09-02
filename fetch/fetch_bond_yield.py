@@ -324,12 +324,9 @@ def main():
     for code, name, currency, bond_code, pe_source in BOND_YIELD_CONFIG_FULL:
         file_path = f"./data/erp_{code}.csv"
         if os.path.exists(file_path):
-            existing_columns = pd.read_csv(file_path, nrows=0).columns
-            if pe_source != 'csindex' or 'IndexClose' in existing_columns:
-                print(f"\n   [{code}] {name} — 已有历史数据，跳过（避免覆盖增量脚本积累的真实数据；"
-                      f"如需强制重建请先手动删除 {file_path}）")
-                continue
-            print(f"\n   [{code}] {name} — 回填中证指数历史收盘点位")
+            print(f"\n   [{code}] {name} — 已有历史数据，跳过（避免覆盖增量脚本积累的真实数据；"
+                  f"如需强制重建请先手动删除 {file_path}）")
+            continue
         print(f"\n   [{code}] {name}")
         if bond_code not in bonds:
             print(f"      ⚠️ 国债 {bond_code} 未获取，跳过")
