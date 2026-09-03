@@ -16,7 +16,8 @@
         ↓
 
 数据生产层（fetch/）
-├─ simple_etf_metrics.py           → data/simple_etf_metrics.csv, data/etf_nav.csv, data/index_pct.csv
+├─ simple_etf_metrics.py           → data/simple_etf_metrics.csv, data/etf_price.csv, data/etf_nav.csv, data/index_pct.csv
+├─ fetch_etf_adjusted_price.py     → data/etf_price_adj.csv（QuantDash 前复权价格，仅本地更新）
 ├─ fetch_bond_yield.py             → data/erp_*.csv（全量）
 ├─ fetch_bond_yield_incremental.py → data/erp_*.csv（增量）+ data/ps_HSTECH.csv（HSTECH PS/PSY）
 ├─ fetch_ps.py                     → data/ps_HSTECH.csv（手动全量重算备用，不在每日调度里）
@@ -65,6 +66,22 @@ erp_position.py（主入口，根目录）
 **首次使用**须先跑全量脚本 `fetch_bond_yield.py` 建立历史数据，之后每日跑增量脚本即可。
 
 > **约定：新增任何数据源接入 fetch/ 时，必须调用 `freshness.py` 做新鲜度校验，并汇总进 `data/freshness_report.json`。**
+
+### 每日更新与云端兜底
+
+ETF 数据采用“本地生产、GitHub Actions 兜底”的两层更新方式：
+
+1. 本地定时任务约 17:00 运行仓库外的 `fetch_and_push.sh`：
+   - 使用 AKShare 更新 ETF 原始价格、净值、折溢价和指数涨跌幅；
+   - 使用 QuantDash 更新 ETF 前复权价格；
+   - 提交并推送 `simple_etf_metrics.csv`、`etf_price.csv`、`etf_nav.csv`、`index_pct.csv` 和 `etf_price_adj.csv`。
+2. GitHub Actions 约 18:00 运行：
+   - 若检测到当天本地 ETF 更新成功，则跳过云端 AKShare ETF 抓取；
+   - 若当天本地更新缺失，则由云端补抓原始 ETF 数据；
+   - 无论是否跳过 ETF 抓取，仍继续更新其他数据、生成报告并部署网页。
+3. GitHub Actions **不调用 QuantDash**，只读取仓库中已提交的 `data/etf_price_adj.csv`，避免公开 Key、云端访问失败和重复消耗免费额度。
+
+`fetch_and_push.sh` 属于本机调度配置，不纳入版本管理；QuantDash Key 也只保存在本机仓库外的私有配置或环境变量中。
 
 ---
 
@@ -166,7 +183,7 @@ ERP = 1/PE − 无风险利率（10年期国债收益率）
 
 **QQQ 单日急跌独立信号**（不计入上述三级，并行展示）：单日跌幅≥5%时触发——若当前处于高估区，提示"估值偏贵，建议减仓1/3"；若处于低估区，提示"可能是加仓机会"。
 
-价格数据来源：`etf_price.csv`（由 `simple_etf_metrics.py` 生成）。
+价格数据优先使用 `etf_price_adj.csv`（由本地 `fetch_etf_adjusted_price.py` 通过 QuantDash 生成的前复权价格）；若缓存缺失或对应标的无有效数据，则回退到 `etf_price.csv` 原始价格，并在报告中明确提示。前复权价格用于避免分红、拆分等除权事件被误判为真实暴跌，从而错误触发止盈、减仓或回撤信号。
 
 > ⚠️ 基本面暴雷属于独立预警，见下方模块。价格信号触发后应同步核查基本面再决策。
 
@@ -219,7 +236,7 @@ PSY 用于替代 ERP 参与胜率/赔率计算，斜率信号和减仓信号同�
 - ETF 净值（折溢价用）：`ak.fund_etf_fund_info_em()`（东方财富）
 - 基准指数：`ak.stock_zh_index_hist_csindex()`（中证官网）
 
-`ThreadPoolExecutor(max_workers=5)` 并发处理各 ETF，遇到限流可调小 `MAX_WORKERS`。
+当前使用 `MAX_WORKERS = 1` 串行处理各 ETF，以降低免费数据源的限流和连接失败风险。
 
 | 指标 | 说明 |
 |-----|------|
@@ -262,7 +279,15 @@ PSY 用于替代 ERP 参与胜率/赔率计算，斜率信号和减仓信号同�
 
 ---
 
-## 环境变量（GitHub Actions Secrets）
+## 环境变量
+
+### 仅本机使用
+
+| 变量 | 用途 | 存放要求 |
+|-----|------|---------|
+| `QUANTDASH_API_KEY` | 本地抓取 ETF 前复权价格 | 仅保存于本机环境变量或仓库外私有配置（当前为 `~/.config/equity-risk-premium-monitor/quantdash.env`）；不得提交到仓库，也不配置到 GitHub Actions |
+
+### GitHub Actions Secrets
 
 | 变量 | 用途 | 必填 |
 |-----|------|------|
