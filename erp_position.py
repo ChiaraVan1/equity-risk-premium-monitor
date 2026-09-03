@@ -8,7 +8,11 @@ from datetime import datetime
 import pandas as pd
 
 from config_loader import HOLDING_CATEGORY, INDICES_LIST
-from prepare_all_data import prepare_all_data, load_etf_adjusted_price_series
+from prepare_all_data import (
+    prepare_all_data,
+    load_etf_adjusted_price_series,
+    load_etf_price_series,
+)
 from analysis.valuation import build_shiller_block, build_unified_valuation_block, calc_odds, is_holding
 from analysis.risk import (compute_exit_signal_summary, build_exit_signal_block,
                             compute_profit_signal_summary, build_profit_signal_block,
@@ -180,8 +184,17 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     bubble, value, spec, b_msg, v_msg, t_msg = compute_position_sizing(current_erp, quantiles)
     total_pct = bubble + value + spec
 
-    # 风险信号必须使用前复权 ETF 价格，避免分红、分拆或份额折算制造假回撤。
+    # 优先使用前复权 ETF 价格；首次缓存尚未建成时保留原有价格风险模块，
+    # 但必须在报告里明确披露未复权口径，避免把份额折算误读为真实回撤。
     price_series = load_etf_adjusted_price_series(code)
+    if price_series is None:
+        price_series = load_etf_price_series(code)
+        price_source_note = (
+            "\n> ⚠️ 价格风险信号暂用未复权 ETF 收盘价；分红或份额折算附近的"
+            "回撤、均线及止盈止损信号可能失真。\n"
+        )
+    else:
+        price_source_note = ""
 
     # 【2026-08-02 恢复】PE/PSY 数据新鲜度校验——check_metric_freshness()/
     # build_freshness_note() 之前只在 import 列表里，从没被实际调用过，导致
@@ -204,7 +217,7 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
 
     # 生成各类分析块
     holding = is_holding(code)
-    header_block = f"## {name}（{code}）\n{freshness_note}"
+    header_block = f"## {name}（{code}）\n{freshness_note}{price_source_note}"
 
     shiller_block = build_shiller_block(code, (
         prepared_data.get("shiller_grouped"),

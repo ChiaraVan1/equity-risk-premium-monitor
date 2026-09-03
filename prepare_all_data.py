@@ -129,16 +129,7 @@ def load_etf_adjusted_price_series(erp_code: str):
     df = _ETF_ADJ_PRICE_CACHE["df"]
     if erp_code not in df.columns:
         return None
-    series = pd.to_numeric(df[erp_code], errors="coerce").dropna().sort_index()
-
-    # 二次保险：复权接口若仍出现疑似份额折算断层，宁可跳过风险信号，也不用原始价误判。
-    recent = series.iloc[-130:]
-    jumps = recent.pct_change().abs()
-    if (jumps > 0.30).any():
-        bad_date = jumps[jumps > 0.30].index[-1]
-        print(f"⚠️ [{erp_code}] 前复权价格在 {bad_date.date()} 仍有超过30%的跳变，跳过价格风险信号")
-        return None
-    return series
+    return pd.to_numeric(df[erp_code], errors="coerce").dropna().sort_index()
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -197,7 +188,6 @@ def prepare_all_data():
         print("\n   ⏭️ 本地已完整更新ETF数据：仅跳过 AkShare ETF 抓取，继续更新其他数据和报告")
 
     scripts.extend([
-        ("fetch/fetch_etf_adjusted_price.py", "ETF 前复权价格（风险信号专用）"),
         ("fetch/fetch_bond_yield_incremental.py", "国债 PE 增量数据（含 HSTECH PS/PSY）"),
         ("analysis/dividend_yield_analysis.py", "股息率数据"),  # __main__ 入口在这个文件
     ])
@@ -287,6 +277,7 @@ def prepare_all_data():
     print("\n6️⃣  汇总数据新鲜度校验...")
     try:
         extra_checks = [
+            # 前复权价格由本地 fetch_and_push.sh 获取并提交；云端只消费缓存。
             check_date_freshness(
                 label="Shiller-CAPE",
                 path=SHILLER_PATH,
