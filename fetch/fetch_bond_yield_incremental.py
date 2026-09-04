@@ -333,7 +333,8 @@ def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code)
 
     combined['ERP'] = (1 / combined['PE']) - combined['Bond_Yield_10Y']
 
-    combined = combined.reset_index()
+    # 无 IndexClose 时，空索引参与 union 会丢失 Date 名称；落盘前显式恢复。
+    combined = combined.rename_axis('Date').reset_index()
     combined.to_csv(file_path, index=False, encoding='utf-8-sig')
     valid_now = combined['ERP'].notna().sum()
     print(f"   ✅ {name} {action}！总记录: {len(combined)} 天，有效ERP: {valid_now} 天")
