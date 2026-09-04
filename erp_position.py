@@ -322,7 +322,7 @@ if __name__ == "__main__":
     if report_list:
         date_str = datetime.now().strftime("%Y-%m-%d")
         summary_html = build_summary_block(summary_list, output_format="html")
-        full_md = summary_html + "\n" + "\n".join(report_list)
+        full_md = "\n".join(report_list)
 
         # docs/report.html 照常本地生成——即使是预览模式也生成没关系，
         # 因为 gh-pages 部署那一步在 workflow 里已经用
