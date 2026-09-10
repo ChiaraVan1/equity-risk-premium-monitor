@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-09-09T14:06:19.317636",
+  "generated_at": "2026-09-10T14:00:37.491259",
   "results": [
     {
       "label": "QQQ_PE_TODAY",
       "fresh": true,
-      "last_date": "2026-09-09",
+      "last_date": "2026-09-10",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-09T14:03:50.627222"
+      "checked_at": "2026-09-10T13:58:30.481475"
     },
     {
       "label": "ERP-000300",
@@ -16,13 +16,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:17.584046"
+      "checked_at": "2026-09-10T13:58:37.255656"
     },
     {
       "label": "PE数值-000300",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:17.594171"
+      "checked_at": "2026-09-10T13:58:37.267028"
     },
     {
       "label": "ERP-000688",
@@ -31,13 +31,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:19.461022"
+      "checked_at": "2026-09-10T13:58:39.120906"
     },
     {
       "label": "PE数值-000688",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:19.470146"
+      "checked_at": "2026-09-10T13:58:39.129150"
     },
     {
       "label": "ERP-000922",
@@ -46,13 +46,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:21.385432"
+      "checked_at": "2026-09-10T13:58:41.089365"
     },
     {
       "label": "PE数值-000922",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:21.395104"
+      "checked_at": "2026-09-10T13:58:41.099375"
     },
     {
       "label": "ERP-000015",
@@ -61,13 +61,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:23.562947"
+      "checked_at": "2026-09-10T13:58:43.024114"
     },
     {
       "label": "PE数值-000015",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:23.572649"
+      "checked_at": "2026-09-10T13:58:43.033103"
     },
     {
       "label": "ERP-399989",
@@ -76,13 +76,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:25.633425"
+      "checked_at": "2026-09-10T13:58:45.186823"
     },
     {
       "label": "PE数值-399989",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:25.642966"
+      "checked_at": "2026-09-10T13:58:45.196185"
     },
     {
       "label": "ERP-931071",
@@ -91,13 +91,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:27.476418"
+      "checked_at": "2026-09-10T13:58:47.021820"
     },
     {
       "label": "PE数值-931071",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:27.485755"
+      "checked_at": "2026-09-10T13:58:47.031089"
     },
     {
       "label": "ERP-000069",
@@ -106,13 +106,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:29.369551"
+      "checked_at": "2026-09-10T13:58:48.867015"
     },
     {
       "label": "PE数值-000069",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:29.379364"
+      "checked_at": "2026-09-10T13:58:48.876412"
     },
     {
       "label": "ERP-930781",
@@ -121,13 +121,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:31.433930"
+      "checked_at": "2026-09-10T13:58:51.087811"
     },
     {
       "label": "PE数值-930781",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:31.442917"
+      "checked_at": "2026-09-10T13:58:51.097005"
     },
     {
       "label": "ERP-399975",
@@ -136,13 +136,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:33.763737"
+      "checked_at": "2026-09-10T13:58:53.252654"
     },
     {
       "label": "PE数值-399975",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:33.773299"
+      "checked_at": "2026-09-10T13:58:53.262629"
     },
     {
       "label": "ERP-399967",
@@ -151,13 +151,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:36.706804"
+      "checked_at": "2026-09-10T13:58:56.077110"
     },
     {
       "label": "PE数值-399967",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:36.716486"
+      "checked_at": "2026-09-10T13:58:56.086561"
     },
     {
       "label": "ERP-931066",
@@ -166,13 +166,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:39.410179"
+      "checked_at": "2026-09-10T13:58:57.906884"
     },
     {
       "label": "PE数值-931066",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:39.419438"
+      "checked_at": "2026-09-10T13:58:57.915632"
     },
     {
       "label": "ERP-930794",
@@ -181,13 +181,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:41.854183"
+      "checked_at": "2026-09-10T13:58:59.826193"
     },
     {
       "label": "PE数值-930794",
       "stale_flag": true,
-      "stale_note": "PE 已连续 6 次取值未变化",
-      "checked_at": "2026-09-09T14:04:41.864465"
+      "stale_note": "PE 已连续 7 次取值未变化",
+      "checked_at": "2026-09-10T13:58:59.837924"
     },
     {
       "label": "ERP-930598",
@@ -196,13 +196,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:43.547887"
+      "checked_at": "2026-09-10T13:59:01.728117"
     },
     {
       "label": "PE数值-930598",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:43.557501"
+      "checked_at": "2026-09-10T13:59:01.738593"
     },
     {
       "label": "ERP-000819",
@@ -211,13 +211,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:45.299301"
+      "checked_at": "2026-09-10T13:59:03.586501"
     },
     {
       "label": "PE数值-000819",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:45.309027"
+      "checked_at": "2026-09-10T13:59:03.597027"
     },
     {
       "label": "ERP-950125",
@@ -226,13 +226,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:46.990261"
+      "checked_at": "2026-09-10T13:59:05.426049"
     },
     {
       "label": "PE数值-950125",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:46.999537"
+      "checked_at": "2026-09-10T13:59:05.435859"
     },
     {
       "label": "ERP-931637",
@@ -241,13 +241,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:48.653385"
+      "checked_at": "2026-09-10T13:59:07.544617"
     },
     {
       "label": "PE数值-931637",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:48.662742"
+      "checked_at": "2026-09-10T13:59:07.554720"
     },
     {
       "label": "ERP-399986",
@@ -256,13 +256,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:50.898060"
+      "checked_at": "2026-09-10T13:59:09.680668"
     },
     {
       "label": "PE数值-399986",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:50.907917"
+      "checked_at": "2026-09-10T13:59:09.691237"
     },
     {
       "label": "ERP-930633",
@@ -271,13 +271,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:52.594434"
+      "checked_at": "2026-09-10T13:59:11.746542"
     },
     {
       "label": "PE数值-930633",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:52.603992"
+      "checked_at": "2026-09-10T13:59:11.756426"
     },
     {
       "label": "ERP-931946",
@@ -286,71 +286,71 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:54.380503"
+      "checked_at": "2026-09-10T13:59:14.677248"
     },
     {
       "label": "PE数值-931946",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:54.389311"
+      "checked_at": "2026-09-10T13:59:14.685852"
     },
     {
       "label": "HSTECH-PS",
       "path": "./data/ps_HSTECH.csv",
       "fresh": true,
-      "last_date": "2026-09-09",
+      "last_date": "2026-09-10",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-09T14:06:10.970562",
+      "checked_at": "2026-09-10T14:00:32.546458",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "Shiller-CAPE",
       "path": "./data/ie_data.xls",
       "fresh": true,
-      "last_date": "2026-09-09",
+      "last_date": "2026-09-10",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-09T14:06:19.317080",
+      "checked_at": "2026-09-10T14:00:37.490707",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "ETF价格序列",
       "path": "./data/etf_price.csv",
       "fresh": true,
-      "last_date": "2026-09-09",
+      "last_date": "2026-09-10",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-09T14:06:19.317296",
+      "checked_at": "2026-09-10T14:00:37.490950",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "ETF净值序列",
       "path": "./data/etf_nav.csv",
       "fresh": true,
-      "last_date": "2026-09-09",
+      "last_date": "2026-09-10",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-09T14:06:19.317361",
+      "checked_at": "2026-09-10T14:00:37.490980",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "基准指数涨跌幅序列",
       "path": "./data/index_pct.csv",
       "fresh": true,
-      "last_date": "2026-09-09",
+      "last_date": "2026-09-10",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-09T14:06:19.317373",
+      "checked_at": "2026-09-10T14:00:37.490991",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "FRED-US10Y",
       "fresh": true,
-      "last_date": "2026-09-09",
+      "last_date": "2026-09-10",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-09T14:04:05.301046"
+      "checked_at": "2026-09-10T13:58:33.412627"
     },
     {
       "label": "FRED-FR10Y",
@@ -358,7 +358,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "FRED请求失败: \"None of [Index(['date', 'value'], dtype='object')] are in the [columns]\"",
-      "checked_at": "2026-09-09T14:04:06.939538"
+      "checked_at": "2026-09-10T13:58:33.683917"
     },
     {
       "label": "FRED-DE10Y",
@@ -366,7 +366,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "FRED请求失败: \"None of [Index(['date', 'value'], dtype='object')] are in the [columns]\"",
-      "checked_at": "2026-09-09T14:04:08.406671"
+      "checked_at": "2026-09-10T13:58:33.922703"
     },
     {
       "label": "FRED-JP10Y",
@@ -374,7 +374,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "FRED请求失败: \"None of [Index(['date', 'value'], dtype='object')] are in the [columns]\"",
-      "checked_at": "2026-09-09T14:04:14.905296"
+      "checked_at": "2026-09-10T13:58:34.251460"
     },
     {
       "label": "ERP-SPY",
@@ -383,13 +383,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:33.834440"
+      "checked_at": "2026-09-10T13:58:53.325801"
     },
     {
       "label": "PE数值-SPY",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:33.844836"
+      "checked_at": "2026-09-10T13:58:53.336111"
     },
     {
       "label": "ERP-QQQ",
@@ -398,13 +398,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:33.897235"
+      "checked_at": "2026-09-10T13:58:53.387592"
     },
     {
       "label": "PE数值-QQQ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:33.906811"
+      "checked_at": "2026-09-10T13:58:53.398215"
     },
     {
       "label": "ERP-EWQ",
@@ -412,7 +412,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "国债FR10Y未获取，本次未更新",
-      "checked_at": "2026-09-09T14:04:33.907442"
+      "checked_at": "2026-09-10T13:58:53.398979"
     },
     {
       "label": "PE数值-EWQ",
@@ -426,7 +426,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "国债DE10Y未获取，本次未更新",
-      "checked_at": "2026-09-09T14:04:33.907449"
+      "checked_at": "2026-09-10T13:58:53.398987"
     },
     {
       "label": "PE数值-EWG",
@@ -440,7 +440,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "国债JP10Y未获取，本次未更新",
-      "checked_at": "2026-09-09T14:04:33.907453"
+      "checked_at": "2026-09-10T13:58:53.398990"
     },
     {
       "label": "PE数值-EWJ",
@@ -455,22 +455,22 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-09T14:04:33.968097"
+      "checked_at": "2026-09-10T13:58:53.463144"
     },
     {
       "label": "PE数值-EEM",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-09T14:04:33.978186"
+      "checked_at": "2026-09-10T13:58:53.474094"
     },
     {
       "label": "ETF前复权价格序列",
       "path": "./data/etf_price_adj.csv",
       "fresh": true,
-      "last_date": "2026-09-09",
+      "last_date": "2026-09-10",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-09T14:06:19.317316",
+      "checked_at": "2026-09-10T14:00:37.490968",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     }
   ],
