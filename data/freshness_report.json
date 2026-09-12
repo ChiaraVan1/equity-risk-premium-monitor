@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-09-11T14:00:02.178605",
+  "generated_at": "2026-09-12T13:18:22.576155",
   "results": [
     {
       "label": "QQQ_PE_TODAY",
       "fresh": true,
-      "last_date": "2026-09-11",
+      "last_date": "2026-09-12",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-11T13:57:56.930938"
+      "checked_at": "2026-09-12T13:16:41.617674"
     },
     {
       "label": "ERP-000300",
@@ -298,59 +298,59 @@
       "label": "HSTECH-PS",
       "path": "./data/ps_HSTECH.csv",
       "fresh": true,
-      "last_date": "2026-09-11",
+      "last_date": "2026-09-12",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-11T13:59:54.513350",
+      "checked_at": "2026-09-12T13:18:16.593307",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "Shiller-CAPE",
       "path": "./data/ie_data.xls",
       "fresh": true,
-      "last_date": "2026-09-11",
+      "last_date": "2026-09-12",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-11T14:00:02.178111",
+      "checked_at": "2026-09-12T13:18:22.575686",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "ETF价格序列",
       "path": "./data/etf_price.csv",
       "fresh": true,
-      "last_date": "2026-09-11",
+      "last_date": "2026-09-12",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-11T14:00:02.178313",
+      "checked_at": "2026-09-12T13:18:22.575881",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "ETF净值序列",
       "path": "./data/etf_nav.csv",
       "fresh": true,
-      "last_date": "2026-09-11",
+      "last_date": "2026-09-12",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-11T14:00:02.178341",
+      "checked_at": "2026-09-12T13:18:22.575899",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "基准指数涨跌幅序列",
       "path": "./data/index_pct.csv",
       "fresh": true,
-      "last_date": "2026-09-11",
+      "last_date": "2026-09-12",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-11T14:00:02.178353",
+      "checked_at": "2026-09-12T13:18:22.575906",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "FRED-US10Y",
       "fresh": true,
-      "last_date": "2026-09-11",
+      "last_date": "2026-09-12",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-11T13:57:59.935986"
+      "checked_at": "2026-09-12T13:16:46.104492"
     },
     {
       "label": "FRED-FR10Y",
@@ -358,7 +358,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "FRED请求失败: \"None of [Index(['date', 'value'], dtype='object')] are in the [columns]\"",
-      "checked_at": "2026-09-11T13:58:01.782381"
+      "checked_at": "2026-09-12T13:16:46.344910"
     },
     {
       "label": "FRED-DE10Y",
@@ -366,7 +366,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "FRED请求失败: \"None of [Index(['date', 'value'], dtype='object')] are in the [columns]\"",
-      "checked_at": "2026-09-11T13:58:02.127338"
+      "checked_at": "2026-09-12T13:16:46.605367"
     },
     {
       "label": "FRED-JP10Y",
@@ -374,7 +374,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "FRED请求失败: \"None of [Index(['date', 'value'], dtype='object')] are in the [columns]\"",
-      "checked_at": "2026-09-11T13:58:02.851649"
+      "checked_at": "2026-09-12T13:16:46.844957"
     },
     {
       "label": "ERP-SPY",
@@ -383,13 +383,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-11T13:58:23.171102"
+      "checked_at": "2026-09-12T13:16:55.595060"
     },
     {
       "label": "PE数值-SPY",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-11T13:58:23.180356"
+      "checked_at": "2026-09-12T13:16:55.603439"
     },
     {
       "label": "ERP-QQQ",
@@ -398,13 +398,13 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-11T13:58:23.228460"
+      "checked_at": "2026-09-12T13:16:55.646953"
     },
     {
       "label": "PE数值-QQQ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-11T13:58:23.236466"
+      "checked_at": "2026-09-12T13:16:55.653595"
     },
     {
       "label": "ERP-EWQ",
@@ -412,7 +412,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "国债FR10Y未获取，本次未更新",
-      "checked_at": "2026-09-11T13:58:23.236973"
+      "checked_at": "2026-09-12T13:16:55.654034"
     },
     {
       "label": "PE数值-EWQ",
@@ -426,7 +426,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "国债DE10Y未获取，本次未更新",
-      "checked_at": "2026-09-11T13:58:23.236980"
+      "checked_at": "2026-09-12T13:16:55.654039"
     },
     {
       "label": "PE数值-EWG",
@@ -440,7 +440,7 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "国债JP10Y未获取，本次未更新",
-      "checked_at": "2026-09-11T13:58:23.236983"
+      "checked_at": "2026-09-12T13:16:55.654041"
     },
     {
       "label": "PE数值-EWJ",
@@ -455,22 +455,22 @@
       "last_date": null,
       "staleness_days": null,
       "reason": "校验异常: 'datetime.datetime' object has no attribute 'normalize'",
-      "checked_at": "2026-09-11T13:58:23.293148"
+      "checked_at": "2026-09-12T13:16:55.702176"
     },
     {
       "label": "PE数值-EEM",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-09-11T13:58:23.302193"
+      "checked_at": "2026-09-12T13:16:55.709715"
     },
     {
       "label": "ETF前复权价格序列",
       "path": "./data/etf_price_adj.csv",
       "fresh": true,
-      "last_date": "2026-09-11",
+      "last_date": "2026-09-12",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-09-11T14:00:02.178329",
+      "checked_at": "2026-09-12T13:18:22.575892",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     }
   ],
