@@ -2,84 +2,29 @@
 analysis/sentiment.py
 情绪分析模块：热度信号、基本面预警（东方财富快讯 + AI 两阶段判断）
 
-【2026-08-02 恢复说明】
-build_fundamental_alert_block() 在重构中被替换成了纯本地关键词计数的桩函数——
-完全没有调用 AI，也没有"正常/关注/疑似暴雷"三档判断、置信度、摘要、逐条新闻
-正负面分类、宽基指数跳过判定，等于砍掉了 README 里描述的整套
-"本地粗筛 → AI相关性过滤 → AI最终判断"两阶段AI管道（全文件唯一调用AI做基本面
-判断的模块）。
+【2026-10-08 迁移说明】七牛云 qnaigc（Anthropic 兼容接口）已收费，
+AI 调用统一改走 analysis/llm_client.py（阿里云 DashScope，ALIYUN_API_KEY）。
+失败兜底行为不变：任何一步 AI 调用失败都返回「未知」，不代表基本面正常。
 
-现在从重构前原始 erp_position.py（commit e1b472e，857-1064行 + 相关API重试
-辅助函数）完整取回，只做了一处架构适配：旧版内部自己拉取/缓存东方财富快讯
-（_fetch_em_news_df 全局缓存），新版由 prepare_all_data.py 统一拉取一次后
-通过 news_df 参数传入所有标的复用，避免21个标的各打一次接口；本文件内的
-_em_news_search 相应改为在传入的 news_df 里做本地关键词匹配，而不是自己发请求。
+【2026-08-02 恢复说明】
+build_fundamental_alert_block() 曾被替换成纯本地关键词计数的桩函数，现已从重构前
+原始 erp_position.py（commit e1b472e）取回完整的
+"本地粗筛 → AI相关性过滤 → AI最终判断"两阶段管道。
+新版由 prepare_all_data.py 统一拉取一次东方财富快讯后，通过 news_df 参数传入所有
+标的复用，_em_news_search 在传入的 news_df 里做本地关键词匹配。
 """
-import os
 import json
-import time
 
 import requests
 
+from analysis.llm_client import call_llm
 from analysis.popularity_signal import build_popularity_block, compute_popularity_confirmation
 from config_loader import FUNDAMENTAL_KEYWORDS
 
-# ══════════════════════════════════════════════════════════════════════
-#  AI 调用（Anthropic兼容接口，七牛云 api.qnaigc.com）+ 限流重试
-# ══════════════════════════════════════════════════════════════════════
 
-_ANTHROPIC_API_URL = "https://api.qnaigc.com/v1/messages"
-
-_API_MAX_RETRIES = 3
-_API_RETRY_BASE_DELAY = 5     # 秒，每次重试翻倍：5s, 10s, 20s
-_API_CALL_MIN_INTERVAL = 2    # 秒，连续两次AI调用之间的最小间隔
-_last_api_call_ts = {"t": 0.0}
-
-
-def _call_anthropic_with_retry(payload, headers):
-    """
-    调用 AI 接口，带限流感知的重试 + 间隔控制。
-    - 连续两次调用之间至少间隔 _API_CALL_MIN_INTERVAL 秒（无论上次成功与否）
-    - 遇到 429 时按 _API_RETRY_BASE_DELAY * 2^attempt 退避重试，最多 _API_MAX_RETRIES 次
-    - 优先遵循响应头 Retry-After（如果有）
-    - 重试耗尽后抛出最后一次的异常，交由调用方的 except 块处理
-    """
-    elapsed = time.time() - _last_api_call_ts["t"]
-    if elapsed < _API_CALL_MIN_INTERVAL:
-        time.sleep(_API_CALL_MIN_INTERVAL - elapsed)
-
-    last_exc = None
-    for attempt in range(_API_MAX_RETRIES):
-        try:
-            resp = requests.post(_ANTHROPIC_API_URL, json=payload, headers=headers, timeout=60)
-            _last_api_call_ts["t"] = time.time()
-
-            if resp.status_code == 429:
-                wait = _API_RETRY_BASE_DELAY * (2 ** attempt)
-                retry_after = resp.headers.get("retry-after")
-                if retry_after:
-                    try:
-                        wait = max(wait, float(retry_after))
-                    except ValueError:
-                        pass
-                if attempt < _API_MAX_RETRIES - 1:
-                    time.sleep(wait)
-                    continue
-                resp.raise_for_status()  # 重试耗尽，抛出 429
-
-            resp.raise_for_status()
-            return resp
-
-        except requests.exceptions.HTTPError as e:
-            last_exc = e
-            if e.response is not None and e.response.status_code == 429 and attempt < _API_MAX_RETRIES - 1:
-                continue
-            raise
-        except requests.exceptions.RequestException as e:
-            last_exc = e
-            raise
-
-    raise last_exc
+def _parse_json_reply(raw: str) -> dict:
+    """去掉模型可能包裹的 ```json 围栏后解析 JSON。"""
+    return json.loads(raw.replace("```json", "").replace("```", "").strip())
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -152,9 +97,6 @@ def build_fundamental_alert_block(code: str, name: str, news_df=None) -> tuple:
         )
 
     # ── 第一步：AI 相关性过滤 ──────────────────────────────────────────
-    # 关键词粗筛允许假阳性（如"军工"命中无关新闻），这一步让AI逐条剔除
-    # 真正不相关的新闻，避免"沪深300/监管"这类宽泛关键词把无关新闻带入
-    # 最终判断，拉低判断质量。
     candidates_list_str = "\n".join(
         f"{i+1}. {c['title']}：{c['content']}" for i, c in enumerate(candidates)
     )
@@ -168,26 +110,11 @@ def build_fundamental_alert_block(code: str, name: str, news_df=None) -> tuple:
 {{"relevant_indices": [与"{name}"真正相关的新闻序号列表，如 [1, 3]，如果一条都不相关则为空列表 []]}}"""
 
     try:
-        filter_payload = {
-            "model": "claude-sonnet-4-6",
-            "max_tokens": 500,
-            "messages": [{"role": "user", "content": filter_prompt}]
-        }
-        headers = {
-            "Content-Type": "application/json",
-            "x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
-            "anthropic-version": "2023-06-01",
-        }
-        filter_resp = _call_anthropic_with_retry(filter_payload, headers)
-        filter_data = filter_resp.json()
-        filter_text_blocks = [b["text"] for b in filter_data.get("content", []) if b.get("type") == "text"]
-        filter_raw = "\n".join(filter_text_blocks).strip().replace("```json", "").replace("```", "").strip()
-        filter_result = json.loads(filter_raw)
+        filter_result = _parse_json_reply(call_llm(filter_prompt, max_tokens=500))
         relevant_indices = filter_result.get("relevant_indices", [])
         all_results = [candidates[i - 1] for i in relevant_indices if 1 <= i <= len(candidates)]
     except Exception as e:
-        # 相关性过滤失败：保守起见，不要把未经过滤的粗筛结果直接当作"相关新闻"
-        # 喂给最终判断（会重新引入假阳性问题），明确标记为未知。
+        # 相关性过滤失败：不把未经过滤的粗筛结果直接喂给最终判断，明确标记为未知。
         return (
             {"alert_level": "─", "confidence": "─", "summary": f"相关性过滤失败：{e}"},
             f"\n> ⚠️ 基本面预警：AI相关性过滤步骤发生异常（{e}），跳过本次判断。"
@@ -229,30 +156,14 @@ def build_fundamental_alert_block(code: str, name: str, news_df=None) -> tuple:
 news_sentiment 数组的长度和顺序必须与上面新闻列表一一对应（共{len(all_results)}条）。"""
 
     try:
-        payload = {
-            "model": "claude-sonnet-4-6",
-            "max_tokens": 1000,
-            "messages": [{"role": "user", "content": prompt}]
-        }
-        headers = {
-            "Content-Type": "application/json",
-            "x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
-            "anthropic-version": "2023-06-01",
-        }
-        resp = _call_anthropic_with_retry(payload, headers)
-        data = resp.json()
-
-        text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
-        raw_text = "\n".join(text_blocks).strip().replace("```json", "").replace("```", "").strip()
-        result = json.loads(raw_text)
+        result = _parse_json_reply(call_llm(prompt, max_tokens=1000))
 
         alert_level = result.get("alert_level", "正常")
         confidence = result.get("confidence", "低")
         summary = result.get("summary", "")
         sources = result.get("sources") or sources_from_search[:3]
 
-        # 逐条新闻正负面计数。AI返回数组长度若与新闻数不一致（解析异常/模型未严格遵循格式），
-        # 不强行对齐，计数置为不可用而非猜测性截断/补齐，避免产出虚假的精确数字。
+        # 逐条新闻正负面计数。数组长度与新闻数不一致时不强行对齐，计数置为不可用。
         news_sentiment = result.get("news_sentiment", [])
         if isinstance(news_sentiment, list) and len(news_sentiment) == len(all_results):
             positive_count = sum(1 for s in news_sentiment if s == "positive")
@@ -318,7 +229,7 @@ news_sentiment 数组的长度和顺序必须与上面新闻列表一一对应�
         status = e.response.status_code if e.response is not None else "?"
         return (
             {"alert_level": "─", "confidence": "─", "summary": f"HTTP {status}"},
-            f"\n> ⚠️ 基本面预警：API返回错误（HTTP {status}，已重试{_API_MAX_RETRIES}次），跳过。本次结果为「未知」，不代表基本面正常。\n",
+            f"\n> ⚠️ 基本面预警：API返回错误（HTTP {status}，已重试），跳过。本次结果为「未知」，不代表基本面正常。\n",
         )
     except Exception as e:
         return (
