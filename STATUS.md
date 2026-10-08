@@ -15,6 +15,8 @@ STATUS.md — 跨 session 运行记忆
 
 | 日期 | 变更内容 |
 |---|---|
+| 2026-10-08 | AI 调用统一迁移到 DashScope：七牛云 qnaigc（Anthropic 兼容接口）已收费，移除全部 `ANTHROPIC_API_KEY` / `api.qnaigc.com` 依赖。 |新增 `analysis/llm_client.py`。    |
+
 | 2026-09-08 | QQQ PE 抓取从 Claude Cowork 自带定时任务迁移为 Grok Scheduled Tasks:由 Grok 定时浏览网页获取当日 PE,再通过 GitHub REST API 写入 Actions Variable `QQQ_PE_TODAY`。  |
 | 2026-09-03 14:15:22 CST | ETF 前复权本地链路接入 QuantDash：仅 `fetch/fetch_etf_adjusted_price.py` 使用 QuantDash 日 K `adjust="forward"`，Key 从仓库外私有配置读取；加入 9 次/分钟本地节流以适配账户限流。实跑 26 个 ETF 全部成功，生成 267 个交易日（历史较短标的按实际上市日期保留），报告读取函数核验通过。 |
 | 2026-09-03 10:24:37 CST | 为每日报告恢复价格风险模块的安全回退：优先读取真实前复权 `etf_price_adj.csv`，首次缓存尚未建成时回退现有 `etf_price.csv`，并在每个标的详情中明确提示未复权价可能令分红/份额折算附近的回撤、均线及止盈止损信号失真。000300 实测成功回退到729条原始价格记录；PE-band、ERP/PSY和估值计算不受影响。 |
