@@ -8,70 +8,18 @@ ETF 执行质量分析模块
   2. 换手背离   — 价格走势是否有成交量支撑
   3. 波动/回撤  — 当前风险水位（历史分位）
   4. 超额收益   — ETF 跟踪质量 + 近期相对基准动量
+
+【2026-10-08 迁移说明】七牛云 qnaigc 已收费，AI 解读统一改走 analysis/llm_client.py
+（阿里云 DashScope，ALIYUN_API_KEY）。降级链：AI 解读 → 规则版 build_etf_quality_block 原文。
 ──────────────────────────────────────────────────────────────────────────────
 """
 
-import os
-import json
-import time
 import pandas as pd
-import requests
+
+from analysis.llm_client import call_llm
 from config_loader import ERP_TO_ETF
 
 _metrics_cache = {}
-
-# ════════════════════════════════════════════════════════════════════════
-# AI 解读（DashScope 优先 → qnaigc 兜底 → 规则版 build_etf_quality_block 兜底）
-# 与 analysis/trend.py 的三级降级模式保持一致，共用同一节流窗口的思路，
-# 但节流状态各模块独立（不同模块的调用彼此不抢占对方的限流配额）。
-# ══════════════════════════════════════════════════════════════
-
-_API_MAX_RETRIES = 3
-_API_RETRY_BASE_DELAY = 5
-_API_CALL_MIN_INTERVAL = 2
-_last_api_call_ts = {"t": 0.0}
-
-_DASHSCOPE_API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
-_QNAIGC_API_URL = "https://api.qnaigc.com/v1/messages"
-
-
-def _throttled_post(url, payload, headers):
-    elapsed = time.time() - _last_api_call_ts["t"]
-    if elapsed < _API_CALL_MIN_INTERVAL:
-        time.sleep(_API_CALL_MIN_INTERVAL - elapsed)
-
-    last_exc = None
-    for attempt in range(_API_MAX_RETRIES):
-        try:
-            resp = requests.post(url, json=payload, headers=headers, timeout=60)
-            _last_api_call_ts["t"] = time.time()
-
-            if resp.status_code == 429:
-                wait = _API_RETRY_BASE_DELAY * (2 ** attempt)
-                retry_after = resp.headers.get("retry-after")
-                if retry_after:
-                    try:
-                        wait = max(wait, float(retry_after))
-                    except ValueError:
-                        pass
-                if attempt < _API_MAX_RETRIES - 1:
-                    time.sleep(wait)
-                    continue
-                resp.raise_for_status()
-
-            resp.raise_for_status()
-            return resp
-
-        except requests.exceptions.HTTPError as e:
-            last_exc = e
-            if e.response is not None and e.response.status_code == 429 and attempt < _API_MAX_RETRIES - 1:
-                continue
-            raise
-        except requests.exceptions.RequestException as e:
-            last_exc = e
-            raise
-
-    raise last_exc
 
 
 def _etf_conclusion_prompt(name, ts_code, conclusions: dict) -> str:
@@ -92,53 +40,13 @@ def _etf_conclusion_prompt(name, ts_code, conclusions: dict) -> str:
 
 
 def _build_etf_ai_conclusion(name, ts_code, conclusions: dict) -> str | None:
-    """三级降级：① DashScope（阿里云百炼，国内数据源优先）→ ② qnaigc（七牛云
-    Anthropic 兼容接口，跨境访问更稳）→ ③ 两个AI源都失败返回 None，
+    """两级降级：① DashScope AI 解读 → ② 失败返回 None，
     交由调用方（build_etf_quality_block）展示规则版原文兜底。"""
     prompt = _etf_conclusion_prompt(name, ts_code, conclusions)
-
-    # ── 第一级：阿里云百炼 DashScope ──────────────────────────────────
     try:
-        payload = {
-            "model": "deepseek-v4-pro",
-            "max_tokens": 400,
-            "enable_thinking": False,
-            "messages": [{"role": "user", "content": prompt}]
-        }
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {os.getenv('ALIYUN_API_KEY', '')}",
-        }
-        resp = _throttled_post(_DASHSCOPE_API_URL, payload, headers)
-        data = resp.json()
-        conclusion = data["choices"][0]["message"]["content"].strip()
-        if conclusion:
-            return conclusion
-        raise ValueError("空响应")
+        return call_llm(prompt, max_tokens=400)
     except Exception as e:
-        print(f"⚠️ DashScope ETF执行质量AI解读失败（尝试降级到 qnaigc）：{type(e).__name__}: {e}")
-
-    # ── 第二级：七牛云 Anthropic 兼容接口（qnaigc）───────────────────
-    try:
-        payload = {
-            "model": "claude-sonnet-4-6",
-            "max_tokens": 400,
-            "messages": [{"role": "user", "content": prompt}]
-        }
-        headers = {
-            "Content-Type": "application/json",
-            "x-api-key": os.getenv("ANTHROPIC_API_KEY", ""),
-            "anthropic-version": "2023-06-01",
-        }
-        resp = _throttled_post(_QNAIGC_API_URL, payload, headers)
-        data = resp.json()
-        text_blocks = [b["text"] for b in data.get("content", []) if b.get("type") == "text"]
-        conclusion = "\n".join(text_blocks).strip()
-        if conclusion:
-            return conclusion
-        raise ValueError("空响应")
-    except Exception as e:
-        print(f"⚠️ qnaigc ETF执行质量AI解读也失败（已降级到规则版展示）：{type(e).__name__}: {e}")
+        print(f"⚠️ ETF执行质量AI解读失败（已降级到规则版展示）：{type(e).__name__}: {e}")
         return None
 
 
@@ -206,7 +114,7 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 
     # ══════════════════════════════════════════════════════
     # A. 今天怎么下单 — 折溢价
-    # ════════════════════════════════════════════════════
+    # ══════════════════════════════════════════════════════
     disc_pct = discount_rate * 100
 
     if discount_rate < -0.003:
@@ -253,7 +161,7 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
         else:
             trend_label = "折溢价近期稳定"
 
-    # ═════════════════════════════════════════════════════
+    # ══════════════════════════════════════════════════════
     # B. 这波量是否真实 — 资金流
     # ══════════════════════════════════════════════════════
     tq_pct = turnover_q * 100
@@ -284,7 +192,7 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 
     # ══════════════════════════════════════════════════════
     # C. 风险水位 / 换只ETF — 波动 + 超额收益
-    # ═════════════════════════════════════════════════════
+    # ══════════════════════════════════════════════════════
     vol_pct = vol_q1y * 100
     if vol_q1y >= 0.85:
         vol_icon, vol_label = "🔴", f"1年{vol_pct:.0f}%分位 — 波动率历史高位，单次建仓量要小，分批进"
@@ -334,7 +242,7 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 
     # ══════════════════════════════════════════════════════
     # AI 解读：把上面 A/B/C 已经算出来的结论（不是原始指标）喂给AI，
-    # 让AI组织成一段交易笔记式的话；三级降级失败才展示规则版原文。
+    # 让AI组织成一段交易笔记式的话；AI失败才展示规则版原文。
     # ══════════════════════════════════════════════════════
     conclusions = {
         "折溢价": f"{disc_label}（{q_label.split('—')[-1].strip()}），{trend_label}，判断：{disc_action}",
