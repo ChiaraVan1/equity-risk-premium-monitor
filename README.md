@@ -303,7 +303,7 @@ PSY 用于替代 ERP 参与胜率/赔率计算，斜率信号和减仓信号同�
 
 | 变量 | 用途 | 更新方式 |
 |-----|------|---------|
-| `QQQ_PE_TODAY` | QQQ 今日 PE | 由 Claude Cowork 用 MCP 浏览网页抓取，用 REST API 写入 |
+| `QQQ_PE_TODAY` | QQQ 今日 PE | 由 grok scheduled tasks 浏览网页抓取，用 REST API 写入 |
 
 ---
 
