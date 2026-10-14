@@ -22,6 +22,7 @@ from analysis.sentiment import build_sentiment_block
 from analysis.utils import (check_metric_freshness, build_freshness_note, generate_action_sentence,
                              _format_win_odds, _format_range, safe_action_markers)
 from report.markdown import build_summary_block, save_html_report, send_to_wechat
+from report.erp_chart import build_erp_chart
 from analysis.dividend_yield_analysis import build_dividend_yield_block
 from analysis.popularity_signal import build_popularity_block, compute_popularity_confirmation
 from analysis.etf_quality import build_etf_quality_block
@@ -329,9 +330,18 @@ if __name__ == "__main__":
         # `if: github.event.inputs.dry_run != 'true'` 挡住了，不会真的发布出去。
         save_html_report(full_md, date_str)
 
+        # 生成 ERP 概览条形图到 docs/erp_chart.png（gh-pages 部署后获得稳定 URL）。
+        # 注意：Server酱推送发生在 gh-pages 部署之前，微信正文当天的图 URL 指向的
+        # 是前一天部署的图（滞后一天）；趋势图滞后一天影响可忽略，如需当天精确
+        # 可在 workflow 里把推送挪到部署之后。
+        erp_chart_url = build_erp_chart()
+
         report_url = "https://chiaravan1.github.io/equity-risk-premium-monitor/report.html"
         summary_md = build_summary_block(summary_list, output_format="markdown")
-        wechat_md = f"{summary_md}\n\n📄 [查看完整报告]({report_url})"
+        wechat_md = summary_md
+        if erp_chart_url:
+            wechat_md = f"![各标的ERP概览]({erp_chart_url})\n\n{wechat_md}"
+        wechat_md = f"{wechat_md}\n\n📄 [查看完整报告]({report_url})"
 
         dry_run = os.getenv("DRY_RUN", "").strip().lower() == "true"
         if dry_run:

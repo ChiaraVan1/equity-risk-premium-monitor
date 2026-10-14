@@ -71,6 +71,63 @@ QQQ_PE_TODAY = float(_qqq_pe_env) if _qqq_pe_env else None
 # 【2026-08-04】HS_TECH_PE_TODAY 手动填值机制已删除：HSTECH 改用 PS/PSY 口径
 # （见 fetch/fetch_ps.py、erp_position.py），不再需要人工每日填PE。
 
+# ── 理杏仁（国证指数等 csindex 接口不覆盖的标的）───────────────────────────────
+# 【2026-10-14】980032（新能电池，国证指数）csindex 接口抓不到（该接口只覆盖中证
+#   指数），改用理杏仁 cn/index/fundamental 接口取 PE-TTM（pe_ttm.mcw）+ 收盘点位（cp）。
+LIXINGER_INDEX_URL = "https://open.lixinger.com/api/cn/index/fundamental"
+_LIXINGER_TOKEN_ENV = "LIXINGER_TOKEN"
+_LIXINGER_MAX_RETRIES = 3
+
+def _fetch_lixinger_index_pe(code: str, start_date_str: str, end_date_str: str) -> pd.DataFrame:
+    """从理杏仁拉取国证/中证指数 PE-TTM + 收盘点位。返回 DataFrame[Date, IndexClose, PE]。"""
+    token = os.getenv(_LIXINGER_TOKEN_ENV, "")
+    if not token:
+        raise ValueError(
+            f"未设置环境变量 {_LIXINGER_TOKEN_ENV}，无法从理杏仁获取 {code} 的 PE"
+        )
+    payload = {
+        "token": token,
+        "stockCodes": [code],
+        "startDate": start_date_str,
+        "endDate": end_date_str,
+        "metricsList": ["pe_ttm.mcw", "cp"],
+    }
+    last_exc = None
+    for attempt in range(_LIXINGER_MAX_RETRIES):
+        try:
+            resp = requests.post(LIXINGER_INDEX_URL, json=payload, timeout=30)
+            if resp.status_code == 429:
+                wait = 5 * (2 ** attempt)
+                if attempt < _LIXINGER_MAX_RETRIES - 1:
+                    time.sleep(wait)
+                    continue
+            resp.raise_for_status()
+            data = resp.json().get("data", [])
+            break
+        except Exception as e:
+            last_exc = e
+            if attempt < _LIXINGER_MAX_RETRIES - 1:
+                time.sleep(5 * (2 ** attempt))
+                continue
+            raise ValueError(f"理杏仁接口请求失败（{code}）：{last_exc}") from e
+    if not data:
+        raise ValueError(f"理杏仁未返回 {code} 的 PE 数据（startDate={start_date_str}~{end_date_str}）")
+    rows = []
+    for r in data:
+        pe = r.get("pe_ttm.mcw")
+        cp = r.get("cp")
+        if pe is None:
+            continue
+        rows.append({
+            "Date": pd.to_datetime(r["date"]).tz_localize(None),
+            "IndexClose": cp,
+            "PE": float(pe),
+        })
+    df = pd.DataFrame(rows)
+    if df.empty:
+        raise ValueError(f"理杏仁 {code} 返回记录均为空 PE")
+    return df.drop_duplicates(subset=["Date"], keep="last").sort_values("Date").reset_index(drop=True)
+
 # ── 国债增量获取 ───────────────────────────────────────────────────────────────
 
 def fetch_cn_bond_incremental(start_date, end_date):
@@ -497,6 +554,9 @@ def main():
                 if code not in pe_today_dict:
                     raise ValueError(f"worldperatio 未返回 {code}")
                 pe_df = pd.DataFrame({'Date': [today], 'PE': [pe_today_dict[code]]})
+
+            elif pe_source == 'lixinger':
+                pe_df = _fetch_lixinger_index_pe(code, start_date_str, end_date_str)
 
             elif pe_source == 'manual':
                 if code == 'QQQ':

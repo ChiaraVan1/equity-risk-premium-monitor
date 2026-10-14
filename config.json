@@ -329,7 +329,8 @@
       "etf_code": "159755.SZ",
       "currency": "CNY",
       "bond_code": "CN10Y",
-      "pe_source": "csindex"
+      "pe_source": "lixinger",
+      "pe_source_full": "lixinger"
     }
   ]
 }

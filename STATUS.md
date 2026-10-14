@@ -1,6 +1,6 @@
 STATUS.md — 跨 session 运行记忆
 
-每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。 最后更新：2026-09-03 10:24:37 CST
+每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。 最后更新：2026-10-14 11:00 CST
 
 ## TODO
 
@@ -8,15 +8,17 @@ STATUS.md — 跨 session 运行记忆
 - HSTECH 报告里估值指标仍标注为"ERP"，应为"PSY"（仅文字标注问题，数值本身正确）
 - feature/pe-band-demo 分支也在用这份代码，main 分支近期的一系列修复/重构还没同步过去，需要评估要不要同步
 - 新鲜度校验：已有检测+展示（PE/PSY⚠️标记、08-07新增ETF指标stale_flag/streak），但只是"检测到了，报告没反应"——连续N天未变化时不会降级"极佳买点"等强结论，单标的抓取失败也会直接写NaN覆盖旧值而非保留旧值+标记stale。需补：①降级标记接入报告结论 ②抓取失败保留旧值而非覆盖 ③检测范围扩展到全部标的全部数值列（目前仅PE/PSY手填列+ETF指标列，未覆盖全部数据源）
+- 930794（中美互联网）csindex 接口偶发缺 IndexClose→PE ffill→streak 误报：已重置计数，若再频繁误报可考虑对 930794 单独调大 streak_threshold 或换理杏仁源（注意理杏仁 PE 口径为市值加权≈20，与当前中证口径≈5 差异大，换源会破坏历史一致性，需谨慎）
 - 缺少远程失败通知（目前仅本地）：定时任务本身跑挂时无感知，和新鲜度校验（检测数据是否陈旧）是两回事；QQQ_PE_TODAY 当日未写入会导致 QQQ ERP 沿用旧值
 - EWQ/EWG/EWJ/EEM 历史 PE 为估算值（今日 PE 与 SPY 比值 × SPY 历史序列），历史精度有限，长期看是否有更准确的数据源
 - 迁移ai api 后观察 1-2 天日志：确认无 `AI趋势解读失败` / `ETF执行质量AI解读失败`，且基本面预警「未知」比例没有明显上升；若 `deepseek-v4-pro` 的 JSON 输出不稳定，将 `LLM_MODEL` 换成 `qwen-plus`
+- ERP 图微信推送滞后一天：图 URL 指向 gh-pages，但 Server酱推送在 gh-pages 部署之前执行，微信正文当天显示的图是前一天部署的。趋势图滞后一天影响可忽略；如需当天精确，可在 workflow 里把微信推送挪到 Deploy gh-pages 之后
 
 ## 变更日志
 
 | 日期 | 变更内容 |
 |---|---|
-| 2026-10-08 | AI 调用统一迁移到 DashScope：七牛云 qnaigc（Anthropic 兼容接口）已收费，移除全部 `ANTHROPIC_API_KEY` / `api.qnaigc.com` 依赖。 |新增 `analysis/llm_client.py`。    |
+| 2026-10-14 | ①修复 fetch/freshness.py 新鲜度校验 bug：now 是标准库 datetime 却调用 pandas 的 .normalize()，导致所有 ERP 文件校验抛「校验异常」、fresh 误判 false、last_date 变 null。改为 pd.Timestamp(now).normalize()。②修复 980032（新能电池，国证指数）数据缺失：原 pe_source=csindex 抓不到国证指数（该接口只覆盖中证），改 pe_source=lixinger，fetch/fetch_bond_yield.py 与 fetch/fetch_bond_yield_incremental.py 新增理杏仁 cn/index/fundamental 接口分支（pe_ttm.mcw + cp），待 CI 跑一次回填历史。③诊断 930794 PE streak=8 为误报：csindex 接口对 930794 偶发缺 IndexClose→PE ffill→相邻相同触发 streak，数据本身正确每日在更新，已重置 streak 计数。④新增 report/erp_chart.py：matplotlib 生成各标的 ERP 横向条形图到 docs/erp_chart.png，微信推送 desp 顶部嵌图 URL（gh-pages 部署），requirements.txt 加 matplotlib，workflow 安装 fonts-noto-cjk 中文字体。 |
 | 2026-09-08 | QQQ PE 抓取从 Claude Cowork 自带定时任务迁移为 Grok Scheduled Tasks:由 Grok 定时浏览网页获取当日 PE,再通过 GitHub REST API 写入 Actions Variable `QQQ_PE_TODAY`。  |
 | 2026-09-03 14:15:22 CST | ETF 前复权本地链路接入 QuantDash：仅 `fetch/fetch_etf_adjusted_price.py` 使用 QuantDash 日 K `adjust="forward"`，Key 从仓库外私有配置读取；加入 9 次/分钟本地节流以适配账户限流。实跑 26 个 ETF 全部成功，生成 267 个交易日（历史较短标的按实际上市日期保留），报告读取函数核验通过。 |
 | 2026-09-03 10:24:37 CST | 为每日报告恢复价格风险模块的安全回退：优先读取真实前复权 `etf_price_adj.csv`，首次缓存尚未建成时回退现有 `etf_price.csv`，并在每个标的详情中明确提示未复权价可能令分红/份额折算附近的回撤、均线及止盈止损信号失真。000300 实测成功回退到729条原始价格记录；PE-band、ERP/PSY和估值计算不受影响。 |

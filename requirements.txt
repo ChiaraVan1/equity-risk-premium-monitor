@@ -6,3 +6,4 @@ scipy
 markdown2
 openpyxl
 numpy
+matplotlib

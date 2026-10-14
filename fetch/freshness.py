@@ -79,7 +79,9 @@ def check_date_freshness(
                 result["reason"] = f"{date_col} 列无有效日期"
                 return result
             last_date = dates.max()
-            staleness = (now.normalize() - last_date.normalize()).days
+            # ★ 修复：now 是标准库 datetime，没有 .normalize()（pandas Timestamp 才有）。
+            #   统一转成 pd.Timestamp 再求天数，否则所有 CSV 日期口径校验都抛异常。
+            staleness = (pd.Timestamp(now).normalize() - last_date.normalize()).days
             result["last_date"] = last_date.strftime("%Y-%m-%d")
         else:
             # 无日期列（如 .xls）或未指定 date_col：退化成看文件修改时间

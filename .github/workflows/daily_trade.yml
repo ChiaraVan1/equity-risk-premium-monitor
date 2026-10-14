@@ -40,6 +40,8 @@ jobs:
       # 3. 安装依赖
       - name: Install dependencies
         run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-noto-cjk
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       # 4. 执行主入口（内部自动调度所有数据准备脚本）
