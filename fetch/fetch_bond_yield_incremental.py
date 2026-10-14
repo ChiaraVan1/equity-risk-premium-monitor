@@ -556,7 +556,15 @@ def main():
                 pe_df = pd.DataFrame({'Date': [today], 'PE': [pe_today_dict[code]]})
 
             elif pe_source == 'lixinger':
-                pe_df = _fetch_lixinger_index_pe(code, start_date_str, end_date_str)
+                # 理杏仁源：首次建库时拉全量历史（该标的历史文件不存在），
+                # 之后每次只拉近 30 天增量。否则如 980032 这类首次生成的标的
+                # 只有 30 条历史，ERP 分位点/估值判断会因历史过短而失真。
+                if not os.path.exists(f"./data/erp_{code}.csv"):
+                    full_start = "20050408"  # 与全量脚本 fetch_bond_yield.py 的历史起点一致
+                    pe_df = _fetch_lixinger_index_pe(code, full_start, end_date_str)
+                    print(f"   [lixinger] {code} 首次建库，拉取全量历史 {full_start}~{end_date_str}")
+                else:
+                    pe_df = _fetch_lixinger_index_pe(code, start_date_str, end_date_str)
 
             elif pe_source == 'manual':
                 if code == 'QQQ':
