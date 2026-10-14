@@ -1,6 +1,6 @@
 STATUS.md — 跨 session 运行记忆
 
-每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。 最后更新：2026-10-14 11:00 CST
+每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。 最后更新：2026-10-14 12:00 CST
 
 ## TODO
 
@@ -10,6 +10,7 @@ STATUS.md — 跨 session 运行记忆
 - 新鲜度校验：已有检测+展示（PE/PSY⚠️标记、08-07新增ETF指标stale_flag/streak），但只是"检测到了，报告没反应"——连续N天未变化时不会降级"极佳买点"等强结论，单标的抓取失败也会直接写NaN覆盖旧值而非保留旧值+标记stale。需补：①降级标记接入报告结论 ②抓取失败保留旧值而非覆盖 ③检测范围扩展到全部标的全部数值列（目前仅PE/PSY手填列+ETF指标列，未覆盖全部数据源）
 - 930794（中美互联网）csindex 接口偶发缺 IndexClose→PE ffill→streak 误报：已重置计数，若再频繁误报可考虑对 930794 单独调大 streak_threshold 或换理杏仁源（注意理杏仁 PE 口径为市值加权≈20，与当前中证口径≈5 差异大，换源会破坏历史一致性，需谨慎）
 - 缺少远程失败通知（目前仅本地）：定时任务本身跑挂时无感知，和新鲜度校验（检测数据是否陈旧）是两回事；QQQ_PE_TODAY 当日未写入会导致 QQQ ERP 沿用旧值
+- 【2026-10-14】改为 cron-job.org 定时触发（每天18:00调 workflow_dispatch）：用户已生成 Fine-grained PAT（仅 equity-risk-premium-monitor 的 Actions 权限，30天有效期，填在 cron-job.org），并在 cron-job.org 复制 duty-bot 任务改成 ERP（URL=daily_trade.yml dispatch、body={"ref":"main","inputs":{"dry_run":"false"}}、时间Asia/Shanghai 18:00）。⚠️ 待晚上18:00验证：①Actions是否绿勾 ②data/erp_980032.csv 是否生成（理杏仁首次全量建库是否成功）。⚠️ GitHub 原 schedule 18:00 会与 cron-job.org 撞车（重复跑无害，浪费配额），验证成功后考虑把 GitHub schedule 改19:00兜底或删除。本次不想反复Test run消耗token/配额，故等晚上自动触发。
 - EWQ/EWG/EWJ/EEM 历史 PE 为估算值（今日 PE 与 SPY 比值 × SPY 历史序列），历史精度有限，长期看是否有更准确的数据源
 - 迁移ai api 后观察 1-2 天日志：确认无 `AI趋势解读失败` / `ETF执行质量AI解读失败`，且基本面预警「未知」比例没有明显上升；若 `deepseek-v4-pro` 的 JSON 输出不稳定，将 `LLM_MODEL` 换成 `qwen-plus`
 - ERP 图微信推送滞后一天：图 URL 指向 gh-pages，但 Server酱推送在 gh-pages 部署之前执行，微信正文当天显示的图是前一天部署的。趋势图滞后一天影响可忽略；如需当天精确，可在 workflow 里把微信推送挪到 Deploy gh-pages 之后
