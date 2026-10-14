@@ -69,7 +69,10 @@ jobs:
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add data/
+          # ★ 修复：不仅提交 data/，也要提交 docs/ 里被跟踪的图（erp_chart.png、
+          #   pe_band_*.png）。否则这些图每次运行被更新后处于"未暂存"状态，
+          #   git pull --rebase 会因"有未暂存改动"直接报错，导致推送失败。
+          git add data/ docs/
           git commit -m "Auto update ERP data [skip ci]" || exit 0
           git pull --rebase origin main
           git push
