@@ -206,8 +206,13 @@ def prepare_all_data():
                     print(f"   ✓ {desc} 完成")
                 else:
                     print(f"   ⚠️  {script} 返回码 {result.returncode}")
+                    # 打印子脚本 stdout 尾部，暴露被 capture_output 吞掉的失败细节
+                    # （如 fetch_bond_yield_incremental.py 里 980032 理杏仁拉取失败的原因）
+                    if result.stdout:
+                        _tail = result.stdout[-1500:]
+                        print(f"      [stdout 尾部] …{_tail}")
                     if result.stderr:
-                        print(f"      {result.stderr[:200]}")
+                        print(f"      [stderr] {result.stderr[:300]}")
                     if script == "fetch/simple_etf_metrics.py":
                         print("   ❗ 核心数据源失败，终止流程")
                         sys.exit(1)

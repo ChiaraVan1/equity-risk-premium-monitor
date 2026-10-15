@@ -85,6 +85,19 @@ def _fetch_lixinger_index_pe(code: str, start_date_str: str, end_date_str: str) 
         raise ValueError(
             f"未设置环境变量 {_LIXINGER_TOKEN_ENV}，无法从理杏仁获取 {code} 的 PE"
         )
+
+    # ★ 理杏仁要求日期为 ISO 格式 YYYY-MM-DD；若传入的是 %Y%m%d（YYYYMMDD）则转换。
+    #   此前 980032 首次建库失败正是因 startDate/endDate 传了不带横杠的格式，
+    #   理杏仁返回 ValidationError（"startDate must be in iso format"）。
+    def _to_iso(d: str) -> str:
+        d = d.strip()
+        if len(d) == 8 and d.isdigit():
+            return f"{d[:4]}-{d[4:6]}-{d[6:]}"
+        return d
+
+    start_date_str = _to_iso(start_date_str)
+    end_date_str = _to_iso(end_date_str)
+
     payload = {
         "token": token,
         "stockCodes": [code],
