@@ -65,18 +65,52 @@ def render_chart(items: list[dict], out_path: str = _OUT_PATH) -> bool:
         print("⚠️ 无 ERP 数据，跳过 ERP 图生成")
         return False
 
-    # 中文字体：优先找系统 CJK 字体（CI 需安装 fonts-noto-cjk；本地 macOS 有 PingFang/Heiti）
-    for fname in ["PingFang SC", "Heiti SC", "Noto Sans CJK SC", "Arial Unicode MS",
-                  "STHeiti", "Microsoft YaHei", "WenQuanYi Zen Hei"]:
+    # 中文字体：主动扫描常见字体目录里的 CJK 字体文件并逐个注册，
+    # 不依赖 matplotlib 字体缓存（CI 装 fonts-noto-cjk 后 cache 常未刷新，findfont 会找不到）。
+    _font_files = []
+    _font_dirs = [
+        "/usr/share/fonts", "/usr/local/share/fonts",       # Linux (CI)
+        "/System/Library/Fonts", "/Library/Fonts",           # macOS
+        "C:/Windows/Fonts",                                  # Windows
+    ]
+    for _d in _font_dirs:
+        if os.path.isdir(_d):
+            for _root, _dirs, _files in os.walk(_d):
+                for _fn in _files:
+                    if _fn.lower().endswith((".ttf", ".ttc", ".otf")):
+                        _lp = os.path.join(_root, _fn)
+                        _key = _fn.lower()
+                        if any(k in _key for k in ["pingfang", "heiti", "hiragino", "noto",
+                                                   "yahei", "microsoft yahei", "wenquanyi",
+                                                   "wqy", "arpluming", "uming", "simhei",
+                                                   "simsun", "source han", "droid sans fallback",
+                                                   "arial unicode", "stheiti"]):
+                            _font_files.append(_lp)
+    _chosen = None
+    for _fp in _font_files:
         try:
-            font_manager.findfont(fname, fallback_to_default=False)
-            plt.rcParams["font.sans-serif"] = [fname]
-            break
+            _name = font_manager.fontManager.addfont(_fp)
+            _chosen = _name[0] if isinstance(_name, list) else _name
+            if _chosen:
+                break
         except Exception:
             continue
+    # 兜底：仍按常见字体名尝试
+    if not _chosen:
+        for _fn in ["Noto Sans CJK SC", "PingFang SC", "Heiti SC", "Microsoft YaHei",
+                    "WenQuanYi Zen Hei", "Arial Unicode MS", "STHeiti", "Source Han Sans SC"]:
+            try:
+                font_manager.findfont(_fn, fallback_to_default=False)
+                _chosen = _fn
+                break
+            except Exception:
+                continue
+    if _chosen:
+        plt.rcParams["font.sans-serif"] = [_chosen]
     plt.rcParams["axes.unicode_minus"] = False
 
-    names = [f"{i['name']}\n{i['code']}" for i in items]
+    # y 轴只显示指数中文名（去掉 code），方便一眼认出是谁
+    names = [i["name"] for i in items]
     erps = [i["erp"] for i in items]
 
     fig, ax = plt.subplots(figsize=(9, max(6, 0.35 * len(items))))
