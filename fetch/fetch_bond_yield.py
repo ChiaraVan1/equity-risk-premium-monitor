@@ -59,30 +59,53 @@ def _fetch_lixinger_index_pe_full(code: str, start_date_str: str, end_date_str: 
     start_date_str = _to_iso(start_date_str)
     end_date_str = _to_iso(end_date_str)
 
-    payload = {
-        "token": token,
-        "stockCodes": [code],
-        "startDate": start_date_str,
-        "endDate": end_date_str,
-        "metricsList": ["pe_ttm.mcw", "cp"],
-    }
-    last_exc = None
-    for attempt in range(_LIXINGER_MAX_RETRIES):
-        try:
-            resp = requests.post(LIXINGER_INDEX_URL, json=payload, timeout=30)
-            if resp.status_code == 429:
+    # ★ 理杏仁限制单次请求时间跨度不超过 10 年，超过会返回 ForbiddenError。
+    #   首次全量拉取（如 980032 从 20050408 起）跨度>10年，须按 10 年窗口分段请求再拼接。
+    def _request(start_iso: str, end_iso: str) -> list:
+        payload = {
+            "token": token,
+            "stockCodes": [code],
+            "startDate": start_iso,
+            "endDate": end_iso,
+            "metricsList": ["pe_ttm.mcw", "cp"],
+        }
+        last_exc = None
+        for attempt in range(_LIXINGER_MAX_RETRIES):
+            try:
+                resp = requests.post(LIXINGER_INDEX_URL, json=payload, timeout=30)
+                if resp.status_code == 429:
+                    if attempt < _LIXINGER_MAX_RETRIES - 1:
+                        time.sleep(5 * (2 ** attempt))
+                        continue
+                resp.raise_for_status()
+                return resp.json().get("data", [])
+            except Exception as e:
+                last_exc = e
                 if attempt < _LIXINGER_MAX_RETRIES - 1:
                     time.sleep(5 * (2 ** attempt))
                     continue
-            resp.raise_for_status()
-            data = resp.json().get("data", [])
-            break
-        except Exception as e:
-            last_exc = e
-            if attempt < _LIXINGER_MAX_RETRIES - 1:
-                time.sleep(5 * (2 ** attempt))
-                continue
-            raise ValueError(f"理杏仁接口请求失败（{code}）：{last_exc}") from e
+                raise ValueError(f"理杏仁接口请求失败（{code}）：{last_exc}") from e
+        raise ValueError(f"理杏仁接口请求失败（{code}）：{last_exc}")
+
+    from datetime import datetime as _dt
+    try:
+        _s = _dt.strptime(start_date_str, "%Y-%m-%d")
+        _e = _dt.strptime(end_date_str, "%Y-%m-%d")
+    except Exception:
+        _s = None
+        _e = None
+
+    data = []
+    if _s is not None and _e is not None and (_e - _s).days > 3650:
+        cursor = _s
+        while cursor < _e:
+            seg_end = min(cursor + _dt.timedelta(days=3650 - 1), _e)
+            seg = _request(cursor.strftime("%Y-%m-%d"), seg_end.strftime("%Y-%m-%d"))
+            data.extend(seg)
+            cursor = seg_end + _dt.timedelta(days=1)
+    else:
+        data = _request(start_date_str, end_date_str)
+
     if not data:
         raise ValueError(f"理杏仁未返回 {code} 的 PE 数据")
     rows = []

@@ -65,46 +65,58 @@ def render_chart(items: list[dict], out_path: str = _OUT_PATH) -> bool:
         print("⚠️ 无 ERP 数据，跳过 ERP 图生成")
         return False
 
-    # 中文字体：主动扫描常见字体目录里的 CJK 字体文件并逐个注册，
-    # 不依赖 matplotlib 字体缓存（CI 装 fonts-noto-cjk 后 cache 常未刷新，findfont 会找不到）。
-    _font_files = []
-    _font_dirs = [
-        "/usr/share/fonts", "/usr/local/share/fonts",       # Linux (CI)
-        "/System/Library/Fonts", "/Library/Fonts",           # macOS
-        "C:/Windows/Fonts",                                  # Windows
+    # 中文字体：优先用 findfont 直接定位系统已安装的 CJK 字体（可靠，
+    # 尤其 CI 装 fonts-noto-cjk 后 Noto Sans CJK SC 会被 findfont 命中）。
+    # 之前的实现主用 addfont()，但对 .ttc 集合返回 None，导致 _chosen 恒为 None，
+    # 中文渲染成方块（乱码）。findfont(fallback_to_default=True) 可正确命中。
+    _cjk_names = [
+        "Noto Sans CJK SC", "Noto Sans CJK TC", "Noto Sans CJK JP",
+        "PingFang SC", "Heiti SC", "Microsoft YaHei", "WenQuanYi Zen Hei",
+        "WenQuanYi Micro Hei", "SimHei", "SimSun", "Source Han Sans SC",
+        "Source Han Sans CN", "STHeiti", "Arial Unicode MS", "Droid Sans Fallback",
     ]
-    for _d in _font_dirs:
-        if os.path.isdir(_d):
-            for _root, _dirs, _files in os.walk(_d):
-                for _fn in _files:
-                    if _fn.lower().endswith((".ttf", ".ttc", ".otf")):
-                        _lp = os.path.join(_root, _fn)
-                        _key = _fn.lower()
-                        if any(k in _key for k in ["pingfang", "heiti", "hiragino", "noto",
-                                                   "yahei", "microsoft yahei", "wenquanyi",
-                                                   "wqy", "arpluming", "uming", "simhei",
-                                                   "simsun", "source han", "droid sans fallback",
-                                                   "arial unicode", "stheiti"]):
-                            _font_files.append(_lp)
     _chosen = None
-    for _fp in _font_files:
+    for _fn in _cjk_names:
         try:
-            _name = font_manager.fontManager.addfont(_fp)
-            _chosen = _name[0] if isinstance(_name, list) else _name
-            if _chosen:
+            _p = font_manager.findfont(_fn, fallback_to_default=True)
+            # 确认命中真实 CJK 字体（而非 fallback 到默认的 DejaVu Sans）
+            if _p and not _p.lower().endswith(("dejavusans.ttf", "dejavusansmono.ttf")):
+                _chosen = _fn
                 break
         except Exception:
             continue
-    # 兜底：仍按常见字体名尝试
+
+    # 兜底：主动扫描字体目录注册（仅当 findfont 全部未命中时）
     if not _chosen:
-        for _fn in ["Noto Sans CJK SC", "PingFang SC", "Heiti SC", "Microsoft YaHei",
-                    "WenQuanYi Zen Hei", "Arial Unicode MS", "STHeiti", "Source Han Sans SC"]:
+        _font_files = []
+        _font_dirs = [
+            "/usr/share/fonts", "/usr/local/share/fonts",       # Linux (CI)
+            "/System/Library/Fonts", "/Library/Fonts",           # macOS
+            "C:/Windows/Fonts",                                  # Windows
+        ]
+        for _d in _font_dirs:
+            if os.path.isdir(_d):
+                for _root, _dirs, _files in os.walk(_d):
+                    for _fn in _files:
+                        if _fn.lower().endswith((".ttf", ".ttc", ".otf")):
+                            _lp = os.path.join(_root, _fn)
+                            _key = _fn.lower()
+                            if any(k in _key for k in ["pingfang", "heiti", "hiragino", "noto",
+                                                       "yahei", "microsoft yahei", "wenquanyi",
+                                                       "wqy", "arpluming", "uming", "simhei",
+                                                       "simsun", "source han", "droid sans fallback",
+                                                       "arial unicode", "stheiti"]):
+                                _font_files.append(_lp)
+        for _fp in _font_files:
             try:
-                font_manager.findfont(_fn, fallback_to_default=False)
-                _chosen = _fn
-                break
+                _name = font_manager.fontManager.addfont(_fp)
+                _got = _name[0] if isinstance(_name, list) else _name
+                if _got:
+                    _chosen = _got
+                    break
             except Exception:
                 continue
+
     if _chosen:
         plt.rcParams["font.sans-serif"] = [_chosen]
     plt.rcParams["axes.unicode_minus"] = False
