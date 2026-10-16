@@ -137,10 +137,23 @@ def _fetch_lixinger_index_pe(code: str, start_date_str: str, end_date_str: str) 
         _e = None
 
     data = []
-    if _s is not None and _e is not None and (_e - _s).days > 3650:  # 跨度>10年才分段
+    # 判断是否需要分段：按自然年口径，起止年跨度 >10 个自然年即分段。
+    #   仅按天数(3650)切分在"理杏仁按日历年判断10年"时仍可能超限（如 2005-04~2015-04 跨11年）。
+    _need_seg = (
+        _s is not None and _e is not None
+        and (_e - _s).days > 3650
+        and _e.year - _s.year >= 10
+    )
+    if _need_seg:
+        # 按日历年窗口切分：每段结束年份 = 起始年份 + 9（即段内日历年跨度≤10）
         cursor = _s
         while cursor < _e:
-            seg_end = min(cursor + _dt.timedelta(days=3650 - 1), _e)
+            seg_start_year = cursor.year
+            seg_end_year = min(seg_start_year + 9, _e.year)
+            # 该窗口的结束日期：尽量到窗口最后一年的12-31，但不越过 end
+            seg_end = _dt(seg_end_year, 12, 31)
+            if seg_end > _e:
+                seg_end = _e
             seg = _request(cursor.strftime("%Y-%m-%d"), seg_end.strftime("%Y-%m-%d"))
             data.extend(seg)
             cursor = seg_end + _dt.timedelta(days=1)
