@@ -1,9 +1,8 @@
 name: Equity Risk Premium Monitor Bot
 on:
-  schedule:
-    # 每天 18:00 运行（北京时间 18:00 = UTC 10:00）。
-    # 给17:00开始的本地抓取、校验和推送留出完整缓冲窗口。
-    - cron: '0 10 * * *'
+  # 仅保留 workflow_dispatch，由 cron-job.org 每天 18:00 触发一次。
+  # （原内置 schedule 定时因 GitHub Actions 调度延迟常拖到 22 点后，且与
+  #   cron-job.org 的 dispatch 形成一天两次重复触发，故移除。）
   workflow_dispatch:
     inputs:
       dry_run:
