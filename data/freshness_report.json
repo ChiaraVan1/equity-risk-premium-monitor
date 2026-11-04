@@ -1,481 +1,481 @@
 {
-  "generated_at": "2026-11-03T10:36:26.260299",
+  "generated_at": "2026-11-04T10:35:46.034545",
   "results": [
     {
       "label": "QQQ_PE_TODAY",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:02.955748"
+      "checked_at": "2026-11-04T10:33:23.502669"
     },
     {
       "label": "ERP-000300",
       "path": "./data/erp_000300.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:12.074860"
+      "checked_at": "2026-11-04T10:33:34.957083"
     },
     {
       "label": "PE数值-000300",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:12.085023"
+      "checked_at": "2026-11-04T10:33:34.967067"
     },
     {
       "label": "ERP-000688",
       "path": "./data/erp_000688.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:13.918160"
+      "checked_at": "2026-11-04T10:33:36.760354"
     },
     {
       "label": "PE数值-000688",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-03T10:34:13.926660"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-04T10:33:36.768858"
     },
     {
       "label": "ERP-000922",
       "path": "./data/erp_000922.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:15.800740"
+      "checked_at": "2026-11-04T10:33:38.952825"
     },
     {
       "label": "PE数值-000922",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:15.809746"
+      "checked_at": "2026-11-04T10:33:38.961997"
     },
     {
       "label": "ERP-000015",
       "path": "./data/erp_000015.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:17.635736"
+      "checked_at": "2026-11-04T10:33:41.663425"
     },
     {
       "label": "PE数值-000015",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:17.644670"
+      "checked_at": "2026-11-04T10:33:41.672381"
     },
     {
       "label": "ERP-399989",
       "path": "./data/erp_399989.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:19.442531"
+      "checked_at": "2026-11-04T10:33:44.830743"
     },
     {
       "label": "PE数值-399989",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:19.451434"
+      "checked_at": "2026-11-04T10:33:44.839940"
     },
     {
       "label": "ERP-931071",
       "path": "./data/erp_931071.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:22.726234"
+      "checked_at": "2026-11-04T10:33:47.759184"
     },
     {
       "label": "PE数值-931071",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:22.734610"
+      "checked_at": "2026-11-04T10:33:47.768085"
     },
     {
       "label": "ERP-000069",
       "path": "./data/erp_000069.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:24.615901"
+      "checked_at": "2026-11-04T10:33:50.639463"
     },
     {
       "label": "PE数值-000069",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:24.624743"
+      "checked_at": "2026-11-04T10:33:50.648665"
     },
     {
       "label": "ERP-930781",
       "path": "./data/erp_930781.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:26.476393"
+      "checked_at": "2026-11-04T10:33:53.214074"
     },
     {
       "label": "PE数值-930781",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:26.484805"
+      "checked_at": "2026-11-04T10:33:53.223221"
     },
     {
       "label": "ERP-399975",
       "path": "./data/erp_399975.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:29.820934"
+      "checked_at": "2026-11-04T10:33:55.020006"
     },
     {
       "label": "PE数值-399975",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:29.829372"
+      "checked_at": "2026-11-04T10:33:55.029248"
     },
     {
       "label": "ERP-399967",
       "path": "./data/erp_399967.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:31.937672"
+      "checked_at": "2026-11-04T10:33:57.114912"
     },
     {
       "label": "PE数值-399967",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:31.946247"
+      "checked_at": "2026-11-04T10:33:57.123952"
     },
     {
       "label": "ERP-931066",
       "path": "./data/erp_931066.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:33.778151"
+      "checked_at": "2026-11-04T10:33:58.926944"
     },
     {
       "label": "PE数值-931066",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:33.785613"
+      "checked_at": "2026-11-04T10:33:58.935865"
     },
     {
       "label": "ERP-930794",
       "path": "./data/erp_930794.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:35.662657"
+      "checked_at": "2026-11-04T10:34:00.762783"
     },
     {
       "label": "PE数值-930794",
       "stale_flag": true,
-      "stale_note": "PE 已连续 22 次取值未变化",
-      "checked_at": "2026-11-03T10:34:35.670433"
+      "stale_note": "PE 已连续 23 次取值未变化",
+      "checked_at": "2026-11-04T10:34:00.771823"
     },
     {
       "label": "ERP-930598",
       "path": "./data/erp_930598.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:37.466475"
+      "checked_at": "2026-11-04T10:34:02.609822"
     },
     {
       "label": "PE数值-930598",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:37.474004"
+      "checked_at": "2026-11-04T10:34:02.618851"
     },
     {
       "label": "ERP-000819",
       "path": "./data/erp_000819.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:39.355371"
+      "checked_at": "2026-11-04T10:34:04.718181"
     },
     {
       "label": "PE数值-000819",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:39.363604"
+      "checked_at": "2026-11-04T10:34:04.727499"
     },
     {
       "label": "ERP-950125",
       "path": "./data/erp_950125.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:41.208537"
+      "checked_at": "2026-11-04T10:34:06.813705"
     },
     {
       "label": "PE数值-950125",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:41.216058"
+      "checked_at": "2026-11-04T10:34:06.822266"
     },
     {
       "label": "ERP-931637",
       "path": "./data/erp_931637.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:43.167787"
+      "checked_at": "2026-11-04T10:34:08.644543"
     },
     {
       "label": "PE数值-931637",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:43.176047"
+      "checked_at": "2026-11-04T10:34:08.653087"
     },
     {
       "label": "ERP-399986",
       "path": "./data/erp_399986.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:45.004551"
+      "checked_at": "2026-11-04T10:34:10.452533"
     },
     {
       "label": "PE数值-399986",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:45.013534"
+      "checked_at": "2026-11-04T10:34:10.461342"
     },
     {
       "label": "ERP-930633",
       "path": "./data/erp_930633.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:46.883674"
+      "checked_at": "2026-11-04T10:34:12.251161"
     },
     {
       "label": "PE数值-930633",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:46.892162"
+      "checked_at": "2026-11-04T10:34:12.259966"
     },
     {
       "label": "ERP-931946",
       "path": "./data/erp_931946.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:49.417068"
+      "checked_at": "2026-11-04T10:34:14.034984"
     },
     {
       "label": "PE数值-931946",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:49.425154"
+      "checked_at": "2026-11-04T10:34:14.043307"
     },
     {
       "label": "HSTECH-PS",
       "path": "./data/ps_HSTECH.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:36:07.889325",
+      "checked_at": "2026-11-04T10:35:42.794141",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "Shiller-CAPE",
       "path": "./data/ie_data.xls",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:36:26.259788",
+      "checked_at": "2026-11-04T10:35:46.033949",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "ETF价格序列",
       "path": "./data/etf_price.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:36:26.259985",
+      "checked_at": "2026-11-04T10:35:46.034205",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "ETF净值序列",
       "path": "./data/etf_nav.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:36:26.260013",
+      "checked_at": "2026-11-04T10:35:46.034231",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "基准指数涨跌幅序列",
       "path": "./data/index_pct.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:36:26.260023",
+      "checked_at": "2026-11-04T10:35:46.034241",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
       "label": "FRED-US10Y",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:08.031638"
+      "checked_at": "2026-11-04T10:33:28.498935"
     },
     {
       "label": "FRED-FR10Y",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:08.280026"
+      "checked_at": "2026-11-04T10:33:29.344085"
     },
     {
       "label": "FRED-DE10Y",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:08.516123"
+      "checked_at": "2026-11-04T10:33:29.958753"
     },
     {
       "label": "FRED-JP10Y",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:08.762238"
+      "checked_at": "2026-11-04T10:33:30.382729"
     },
     {
       "label": "ERP-SPY",
       "path": "./data/erp_SPY.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:29.888455"
+      "checked_at": "2026-11-04T10:33:55.090527"
     },
     {
       "label": "PE数值-SPY",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:29.897364"
+      "checked_at": "2026-11-04T10:33:55.100274"
     },
     {
       "label": "ERP-QQQ",
       "path": "./data/erp_QQQ.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:29.946740"
+      "checked_at": "2026-11-04T10:33:55.151232"
     },
     {
       "label": "PE数值-QQQ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:29.954975"
+      "checked_at": "2026-11-04T10:33:55.160330"
     },
     {
       "label": "ERP-EWQ",
       "path": "./data/erp_EWQ.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:29.978287"
+      "checked_at": "2026-11-04T10:33:55.184026"
     },
     {
       "label": "PE数值-EWQ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:29.982524"
+      "checked_at": "2026-11-04T10:33:55.188593"
     },
     {
       "label": "ERP-EWG",
       "path": "./data/erp_EWG.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:30.006531"
+      "checked_at": "2026-11-04T10:33:55.212568"
     },
     {
       "label": "PE数值-EWG",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:30.011244"
+      "checked_at": "2026-11-04T10:33:55.217755"
     },
     {
       "label": "ERP-EWJ",
       "path": "./data/erp_EWJ.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:30.033698"
+      "checked_at": "2026-11-04T10:33:55.240840"
     },
     {
       "label": "PE数值-EWJ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:30.037817"
+      "checked_at": "2026-11-04T10:33:55.245455"
     },
     {
       "label": "ERP-EEM",
       "path": "./data/erp_EEM.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:34:30.094462"
+      "checked_at": "2026-11-04T10:33:55.304060"
     },
     {
       "label": "PE数值-EEM",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-03T10:34:30.103642"
+      "checked_at": "2026-11-04T10:33:55.313767"
     },
     {
       "label": "ETF前复权价格序列",
       "path": "./data/etf_price_adj.csv",
       "fresh": true,
-      "last_date": "2026-11-03",
+      "last_date": "2026-11-04",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-03T10:36:26.260001",
+      "checked_at": "2026-11-04T10:35:46.034220",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     }
   ],
-  "stale_count": 1
+  "stale_count": 2
 }
