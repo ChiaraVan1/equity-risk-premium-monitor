@@ -33,16 +33,29 @@ jobs:
           fi
       # 2. 设置 Python 环境
       - name: Set up Python
+        id: setup_python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          # ★ 2026-11-09：原先指定 '3.10'，但 ubuntu-latest(24.04) 的 tool cache 里没有
+          #   3.10（只有 3.11/3.12/3.13...），setup-python 只能去 GitHub Releases 下载
+          #   python-3.10.22.tar.gz，上游 504 连续重试 3 次后整条 job 失败（run 42471707436）。
+          #   改用镜像自带缓存里的 3.11，命中本地缓存、不再走下载。
+          python-version: '3.11'
+        continue-on-error: true
+      # 2.5 兜底：万一日后镜像缓存变更或上游抖动导致 setup-python 仍失败，
+      #     继续用 runner 自带的 python3，不让环境准备环节卡死整条流水线。
+      - name: Fallback to system Python
+        if: steps.setup_python.outcome == 'failure'
+        run: |
+          echo "setup-python failed, fallback to system python3"
+          python3 --version
       # 3. 安装依赖
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y fonts-noto-cjk
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python3 -m pip install --upgrade pip
+          python3 -m pip install -r requirements.txt
       # 4. 执行主入口（内部自动调度所有数据准备脚本）
       - name: Prepare Data and Analyze
         env:
@@ -55,7 +68,7 @@ jobs:
           TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
           LIXINGER_TOKEN: ${{ secrets.LIXINGER_TOKEN }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
-        run: python erp_position.py
+        run: python3 erp_position.py
       # 5. 预览模式：上传报告文件供下载查看
       - name: Upload preview report
         if: ${{ github.event.inputs.dry_run == 'true' }}

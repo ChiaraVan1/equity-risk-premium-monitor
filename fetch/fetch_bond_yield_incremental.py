@@ -635,6 +635,18 @@ def main():
 
         except Exception as e:
             print(f"   ❌ [{code}] {name} 失败: {e}")
+            # ★ 2026-11-09：单标的更新失败时，把真实原因也写进 freshness 报告。
+            #   此前只 print 到 stdout，而 prepare_all_data.py 用 capture_output 捕获子进程输出、
+            #   且本脚本异常被 catch 后 returncode 仍是 0，CI 日志里完全看不到失败原因
+            #   （980032 连续多天没生成 ERP 文件、却查不到原因，就是这个坑）。
+            _freshness_results.append({
+                "label": f"ERP-{code}",
+                "fresh": False,
+                "last_date": None,
+                "staleness_days": None,
+                "reason": f"更新失败：{e}",
+                "checked_at": datetime.now().isoformat(),
+            })
 
     # 4. 更新 HSTECH PS/PSY
     # update_hstech_ps 现在自己按 calc_start 拉国债，不再依赖这里传入的30天数据
