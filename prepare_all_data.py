@@ -313,7 +313,11 @@ def prepare_all_data():
     print("\n6️⃣  汇总数据新鲜度校验...")
     try:
         extra_checks = [
-            # 前复权价格由本地 fetch_and_push.sh 获取并提交；云端只消费缓存。
+            # 【口径声明】data/etf_price_adj.csv（前复权价）**不是 CI 产出物**：
+            # .github/workflows 里没有任何 adjusted/qfq 抓取步骤，东财接口在 CI 侧经代理会被断开，
+            # 该文件只由本地 fetch_and_push.sh → fetch/fetch_etf_adjusted_price.py（QuantDash）生成。
+            # 因此它只能作为"缓存"使用，不得当一级数据源：一旦内容停更，必须回退到
+            # CI 自己抓的 etf_price.csv，并在报告里标出回退原因（见 erp_position 的 price_gate）。
             check_date_freshness(
                 label="Shiller-CAPE",
                 path=SHILLER_PATH,
