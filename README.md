@@ -55,18 +55,19 @@ erp_position.py（主入口）
 
 ## 接口信心
 
-| 接口 | 本地 | 云端 | 限制 |
-|---|---|---|---|
-| QuantDash `api.quantdash.net` | 可接 | 可接（26/26，约 2 分钟） | 限流 9 次/分钟，需等 59s；失败回落未复权 |
-| 新浪 `fund_etf_hist_sina` | 可接 | 可接 | 日线当天晚间才更新，收盘后立刻跑只拿得到前一日；不支持日期范围，每次整表 |
-| 中证 `stock_zh_index_hist_csindex` | 可接 | 可接 | 偶发缺 `IndexClose`，会致 PE ffill、streak 误报 |
-| 东财 `fund_etf_fund_info_em`（净值） | 可接 | 未验证 | 盘后晚间才发布 |
-| 东财 `fund_etf_hist_em`（K线） | 可接（200 / 80ms） | **不可接**（2026-09-02 直连被断） | 风控限流，批量高频易 403 |
-| 东财 `stock_info_global_em`（快讯） | 可接 | 可接 | 30 分钟缓存 |
-| 理杏仁 `cn/index/fundamental` | 可接 | 可接 | 需 token，失效即整列缺失 |
-| multpl.com / worldperatio.com | 可接 | 未验证 | 网页结构变动即断 |
-| GuruFocus xlsx / `QQQ_PE_TODAY` | 只能人工 | 只能人工 | 断更则沿用旧值 |
-| yfinance（HSTECH 市值） | 可接 | 可接 | 季报口径、市值时点易偏 |
+| 接口 | 接口地址 | 本地 | 云端 | 限制 |
+|---|---|---|---|---|
+| QuantDash | `api.quantdash.net`（quantdash SDK） | 可接 | 可接（26/26，约 2 分钟） | 限流 9 次/分钟，需等 59s；失败回落未复权 |
+| 新浪行情 | `finance.sina.com.cn/realstock/company/{symbol}/hisdata_klc2/klc_kl.js` | 可接 | 可接 | 日线当天晚间才更新，收盘后立刻跑只拿得到前一日；不支持日期范围，每次整表 |
+| 中证指数 | `www.csindex.com.cn/csindex-home/perf/index-perf` | 可接 | 可接 | 偶发缺 `IndexClose`，会致 PE ffill、streak 误报 |
+| 东财净值 | `api.fund.eastmoney.com/f10/lsjz` | 可接 | 未验证 | 盘后晚间才发布 |
+| 东财 K 线 | `push2his.eastmoney.com/api/qt/stock/kline/get` | 可接（200 / 80ms） | **不可接**（2026-09-02 直连被断） | 风控限流，批量高频易 403 |
+| 东财快讯 | `np-weblist.eastmoney.com/comm/web/getFastNewsList` | 可接 | 可接 | 30 分钟缓存 |
+| 理杏仁 | `open.lixinger.com/api/cn/index/fundamental` | 可接 | 可接 | 需 token，失效即整列缺失 |
+| multpl.com | `www.multpl.com/s-p-500-pe-ratio/table/by-month` | 可接 | 未验证 | 网页结构变动即断 |
+| worldperatio.com | `worldperatio.com/major-stock-index-pe-ratios` | 可接 | 未验证 | 网页结构变动即断 |
+| GuruFocus / `QQQ_PE_TODAY` | `www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio` | 只能人工 | 只能人工 | 断更则沿用旧值 |
+| yfinance | `query1.finance.yahoo.com/v8/finance/chart/{symbol}`（SDK 内部） | 可接 | 可接 | 季报口径、市值时点易偏 |
 
 > 本地能不能接 ≠ 云端能不能接；目前唯一已知两边不一致的是东财 K 线接口。其余源"今天没数据"与"今天没更新"无法自证，靠 `freshness_report.json` 兜。
 
