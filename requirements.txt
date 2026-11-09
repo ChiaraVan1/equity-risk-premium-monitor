@@ -7,3 +7,4 @@ markdown2
 openpyxl
 numpy
 matplotlib
+quantdash>=0.1.0

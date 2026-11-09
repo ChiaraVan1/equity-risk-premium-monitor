@@ -17,7 +17,7 @@
 
 数据生产层（fetch/）
 ├─ simple_etf_metrics.py           → data/simple_etf_metrics.csv, data/etf_price.csv, data/etf_nav.csv, data/index_pct.csv
-├─ fetch_etf_adjusted_price.py     → data/etf_price_adj.csv（QuantDash 前复权价格，仅本地更新）
+├─ fetch_etf_adjusted_price.py     → data/etf_price_adj.csv（QuantDash 前复权价格，云端在配置 Key 后自动更新）
 ├─ fetch_bond_yield.py             → data/erp_*.csv（全量）
 ├─ fetch_bond_yield_incremental.py → data/erp_*.csv（增量）+ data/ps_HSTECH.csv（HSTECH PS/PSY）
 ├─ fetch_ps.py                     → data/ps_HSTECH.csv（手动全量重算备用，不在每日调度里）
@@ -79,9 +79,10 @@ ETF 数据采用“本地生产、GitHub Actions 兜底”的两层更新方式�
    - 若检测到当天本地 ETF 更新成功，则跳过云端 AKShare ETF 抓取；
    - 若当天本地更新缺失，则由云端补抓原始 ETF 数据；
    - 无论是否跳过 ETF 抓取，仍继续更新其他数据、生成报告并部署网页。
-3. GitHub Actions **不调用 QuantDash**，只读取仓库中已提交的 `data/etf_price_adj.csv`，避免公开 Key、云端访问失败和重复消耗免费额度。
+3. GitHub Actions **在配置 `QUANTDASH_API_KEY` Secret 后会调用 QuantDash**，抓取并提交 `data/etf_price_adj.csv`；本机不再作为写入方。
+   （2026-11-09 实测：GitHub runner 可直连 `api.quantdash.net`——不带 key 返回 401，带 key 后 26/26 成功、约 2 分钟。原先那句「云端访问失败」的判断已不成立。）
 
-`fetch_and_push.sh` 属于本机调度配置，不纳入版本管理；QuantDash Key 也只保存在本机仓库外的私有配置或环境变量中。
+`fetch_and_push.sh` 属于本机调度配置，不纳入版本管理，且已于 2026-11-09 停用：云端为唯一写入方，避免两条流水线写同一批文件（这正是 2026-09-25 起连续 44 天冲突空转的根因）。
 
 ---
 
@@ -183,7 +184,7 @@ ERP = 1/PE − 无风险利率（10年期国债收益率）
 
 **QQQ 单日急跌独立信号**（不计入上述三级，并行展示）：单日跌幅≥5%时触发——若当前处于高估区，提示"估值偏贵，建议减仓1/3"；若处于低估区，提示"可能是加仓机会"。
 
-价格数据优先使用 `etf_price_adj.csv`（由本地 `fetch_etf_adjusted_price.py` 通过 QuantDash 生成的前复权价格）；若缓存缺失或对应标的无有效数据，则回退到 `etf_price.csv` 原始价格，并在报告中明确提示。前复权价格用于避免分红、拆分等除权事件被误判为真实暴跌，从而错误触发止盈、减仓或回撤信号。
+价格数据优先使用 `etf_price_adj.csv`（由 `fetch/fetch_etf_adjusted_price.py` 通过 QuantDash 生成的前复权价格，云端流水线产出）；若缓存缺失或对应标的无有效数据，则回退到 `etf_price.csv` 原始价格，并在报告中明确提示。前复权价格用于避免分红、拆分等除权事件被误判为真实暴跌，从而错误触发止盈、减仓或回撤信号。
 
 > ⚠️ 基本面暴雷属于独立预警，见下方模块。价格信号触发后应同步核查基本面再决策。
 
@@ -285,7 +286,7 @@ PSY 用于替代 ERP 参与胜率/赔率计算，斜率信号和减仓信号同�
 
 | 变量 | 用途 | 存放要求 |
 |-----|------|---------|
-| `QUANTDASH_API_KEY` | 本地抓取 ETF 前复权价格 | 仅保存于本机环境变量或仓库外私有配置（当前为 `~/.config/equity-risk-premium-monitor/quantdash.env`）；不得提交到仓库，也不配置到 GitHub Actions |
+| `QUANTDASH_API_KEY` | 云端抓取 ETF 前复权价格 | 存于 GitHub Actions Secrets（repo secret `QUANTDASH_API_KEY`），由 workflow 注入；仍不得写进任何提交到仓库的文件。本机 `~/.config/equity-risk-premium-monitor/quantdash.env` 仅作手动补数备用 |
 
 ### GitHub Actions Secrets
 

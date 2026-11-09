@@ -218,6 +218,13 @@ def prepare_all_data():
     else:
         print("\n   ⏭️ 本地已完整更新ETF数据：仅跳过 AkShare ETF 抓取，继续更新其他数据和报告")
 
+    # 【2026-11-09】前复权（QuantDash）改为云端可产出：
+    # 只要环境里配置了 QUANTDASH_API_KEY（GitHub Secrets）就调度它；没配则保持旧行为（只读仓库里的缓存）。
+    # 实测依据：api.quantdash.net 从 GitHub runner 网络可达（不带 key 返回 401），
+    # 带上 key 后 26 只全部成功、耗时约 2 分钟（含两次 59 秒节流等待）。
+    if os.getenv("QUANTDASH_API_KEY", "").strip():
+        scripts.append(("fetch/fetch_etf_adjusted_price.py", "前复权 ETF 价格（QuantDash）"))
+
     scripts.extend([
         ("fetch/fetch_bond_yield_incremental.py", "国债 PE 增量数据（含 HSTECH PS/PSY）"),
         ("analysis/dividend_yield_analysis.py", "股息率数据"),  # __main__ 入口在这个文件
@@ -244,6 +251,9 @@ def prepare_all_data():
                         print(f"      [stdout 尾部] …{_tail}")
                     if result.stderr:
                         print(f"      [stderr] {result.stderr[:300]}")
+                    if script == "fetch/fetch_etf_adjusted_price.py":
+                        print("   ❌ 前复权抓取失败：data/etf_price_adj.csv 今天不会新增行；"
+                              "报告会按 price_gate 回退未复权价并在表头标注")
                     if script == "fetch/simple_etf_metrics.py":
                         print("   ❗ 核心数据源失败，终止流程")
                         sys.exit(1)
@@ -313,11 +323,12 @@ def prepare_all_data():
     print("\n6️⃣  汇总数据新鲜度校验...")
     try:
         extra_checks = [
-            # 【口径声明】data/etf_price_adj.csv（前复权价）**不是 CI 产出物**：
-            # .github/workflows 里没有任何 adjusted/qfq 抓取步骤，东财接口在 CI 侧经代理会被断开，
-            # 该文件只由本地 fetch_and_push.sh → fetch/fetch_etf_adjusted_price.py（QuantDash）生成。
-            # 因此它只能作为"缓存"使用，不得当一级数据源：一旦内容停更，必须回退到
-            # CI 自己抓的 etf_price.csv，并在报告里标出回退原因（见 erp_position 的 price_gate）。
+            # 【口径声明 2026-11-09 更新】data/etf_price_adj.csv（前复权价）**现在是 CI 产出物**：
+            # 配置了 QUANTDASH_API_KEY（GitHub Secrets）时，prepare_all_data 会调度
+            # fetch/fetch_etf_adjusted_price.py 由 QuantDash 生成该文件（云端实测 26/26 成功）。
+            # 但它仍只当"价格源"而不是"一级数据源"：一旦内容停更（超过 MAX_PRICE_LAG_TRADING_DAYS），
+            # 必须回退到 CI 自己抓的 etf_price.csv，并在报告里标出回退原因（见 erp_position 的 price_gate）。
+            # 注意：本地 fetch_and_push.sh 已停用，云端是唯一写入方，避免两条流水线写同一批文件。
             check_date_freshness(
                 label="Shiller-CAPE",
                 path=SHILLER_PATH,
