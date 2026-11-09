@@ -477,14 +477,6 @@
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
-      "label": "ERP-HSTECH",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：未知 pe_source: hstech_csv",
-      "checked_at": "2026-11-09T02:56:21.371958"
-    },
-    {
       "label": "ERP-980032",
       "path": "./data/erp_980032.csv",
       "fresh": true,
@@ -500,5 +492,5 @@
       "checked_at": "2026-11-09T03:11:19.888862"
     }
   ],
-  "stale_count": 1
+  "stale_count": 0
 }
