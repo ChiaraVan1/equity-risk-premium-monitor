@@ -55,22 +55,20 @@ erp_position.py（主入口）
 
 ## 接口信心
 
-同一接口在本地和云端不是同一个命运：本地能连 ≠ Actions 能连。下表按"出错时能不能被自己发现"排。
+| 接口 | 本地 | 云端 | 限制 |
+|---|---|---|---|
+| QuantDash `api.quantdash.net` | 可接 | 可接（26/26，约 2 分钟） | 限流 9 次/分钟，需等 59s；失败回落未复权 |
+| 新浪 `fund_etf_hist_sina` | 可接 | 可接 | 日线当天晚间才更新，收盘后立刻跑只拿得到前一日；不支持日期范围，每次整表 |
+| 中证 `stock_zh_index_hist_csindex` | 可接 | 可接 | 偶发缺 `IndexClose`，会致 PE ffill、streak 误报 |
+| 东财 `fund_etf_fund_info_em`（净值） | 可接 | 未验证 | 盘后晚间才发布 |
+| 东财 `fund_etf_hist_em`（K线） | 可接（200 / 80ms） | **不可接**（2026-09-02 直连被断） | 风控限流，批量高频易 403 |
+| 东财 `stock_info_global_em`（快讯） | 可接 | 可接 | 30 分钟缓存 |
+| 理杏仁 `cn/index/fundamental` | 可接 | 可接 | 需 token，失效即整列缺失 |
+| multpl.com / worldperatio.com | 可接 | 未验证 | 网页结构变动即断 |
+| GuruFocus xlsx / `QQQ_PE_TODAY` | 只能人工 | 只能人工 | 断更则沿用旧值 |
+| yfinance（HSTECH 市值） | 可接 | 可接 | 季报口径、市值时点易偏 |
 
-| 接口 | 用途 | 本地 | Actions | 已知失败模式 | 信心 |
-|---|---|---|---|---|---|
-| `api.quantdash.net` | ETF 前复权 | ✅ | ✅ 26/26，约 2 分钟 | 限流 9 次/分钟，需 59s 等待；失败会打印 ❌ 并回落未复权 | 高 |
-| `fund_etf_hist_sina`（新浪） | 未复权行情 | ✅ | ✅ | **日线当天晚间才更新**，收盘后立刻跑只能拿到前一日；整表返回无日期参数 | 中 |
-| `stock_zh_index_hist_csindex`（中证） | 基准指数、PE/PSY | ✅ | ✅ | 偶发缺 `IndexClose` → PE ffill → streak 误报（930794 见过） | 中 |
-| `fund_etf_fund_info_em`（东财净值） | 折溢价率用净值 | ✅ | 未单独验证 | 盘后晚间才发布 | 中 |
-| `fund_etf_hist_em`（东财K线） | 曾用于前复权 qfq | ✅ 直连 200 / 80ms | ⚠️ 2026-09-02 直连被断开 | 风控限流，批量高频易 403 | 本地高／云端低 |
-| `stock_info_global_em`（东财快讯） | 基本面暴雷预警 | ✅ | ✅ | 30 分钟缓存，无 key 限制 | 中 |
-| 理杏仁 `cn/index/fundamental` | 980032 PE | ✅ | ✅ | token 失效即整列缺失 | 中 |
-| multpl.com / worldperatio.com | SPY、EWQ/EWG/EWJ/EEM 今日 PE | 人工/抓取 | 人工/抓取 | 网页结构变动即断；EWQ 等历史为估算 | 低 |
-| GuruFocus xlsx | QQQ PE | 手动 | 手动 | 完全依赖人工更新 | 低 |
-| yfinance + 中证季报 | HSTECH PS/PSY | ✅ | ✅ | 季报口径、市值时点易偏 | 中 |
-
-> 只有 QuantDash 与新鲜度报告能自证失败。其余源的"今天没数据"和"今天没更新"看起来一样，靠 `freshness_report.json` 兜——所以那个文件本身必须有守卫（见 `check_freshness_report_health()`）。
+> 本地能不能接 ≠ 云端能不能接；目前唯一已知两边不一致的是东财 K 线接口。其余源"今天没数据"与"今天没更新"无法自证，靠 `freshness_report.json` 兜。
 
 ---
 
