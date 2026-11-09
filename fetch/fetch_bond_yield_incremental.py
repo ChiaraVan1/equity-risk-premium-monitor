@@ -128,7 +128,7 @@ def _fetch_lixinger_index_pe(code: str, start_date_str: str, end_date_str: str) 
                 raise ValueError(f"理杏仁接口请求失败（{code}）：{last_exc}") from e
         raise ValueError(f"理杏仁接口请求失败（{code}）：{last_exc}")
 
-    from datetime import datetime as _dt
+    from datetime import datetime as _dt, timedelta as _td
     try:
         _s = _dt.strptime(start_date_str, "%Y-%m-%d")
         _e = _dt.strptime(end_date_str, "%Y-%m-%d")
@@ -156,7 +156,7 @@ def _fetch_lixinger_index_pe(code: str, start_date_str: str, end_date_str: str) 
                 seg_end = _e
             seg = _request(cursor.strftime("%Y-%m-%d"), seg_end.strftime("%Y-%m-%d"))
             data.extend(seg)
-            cursor = seg_end + _dt.timedelta(days=1)
+            cursor = seg_end + _td(days=1)
     else:
         data = _request(start_date_str, end_date_str)
 
@@ -627,6 +627,11 @@ def main():
                     continue
                 else:
                     raise ValueError(f"未知 manual 指数: {code}")
+
+            elif pe_source == 'hstech_csv':
+                # HSTECH 的 PE 已废弃，改用 PS/PSY 口径（由 update_hstech_ps 维护），
+                # 这里直接跳过，不要再按"未知 pe_source"报错。
+                continue
 
             else:
                 raise ValueError(f"未知 pe_source: {pe_source}")
