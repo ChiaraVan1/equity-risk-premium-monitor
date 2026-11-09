@@ -2,7 +2,7 @@
 
 ## 项目状态
 
-项目的 TODO / 已知问题 / 变更日志见 [STATUS.md](./STATUS.md)。
+TODO / 已知问题 / 变更日志见 [STATUS.md](./STATUS.md)。
 
 ---
 
@@ -10,79 +10,67 @@
 
 ```
 配置层
-├─ config.json
-├─ industry_map.json
+├─ config.json / industry_map.json
 └─ config_loader.py → ALL_INDICES / BOND_YIELD_CONFIG / HOLDING_CATEGORY / INDICES_LIST / HSTECH_TICKERS
         ↓
 
 数据生产层（fetch/）
-├─ simple_etf_metrics.py           → data/simple_etf_metrics.csv, data/etf_price.csv, data/etf_nav.csv, data/index_pct.csv
-├─ fetch_etf_adjusted_price.py     → data/etf_price_adj.csv（QuantDash 前复权价格，云端在配置 Key 后自动更新）
-├─ fetch_bond_yield.py             → data/erp_*.csv（全量）
-├─ fetch_bond_yield_incremental.py → data/erp_*.csv（增量）+ data/ps_HSTECH.csv（HSTECH PS/PSY）
-├─ fetch_ps.py                     → data/ps_HSTECH.csv（手动全量重算备用，不在每日调度里）
-├─ freshness.py                    → 通用新鲜度校验工具（日期口径 + 数值不变口径）
-└─ dividend_yield_fetch.py         → data/dividend_yield/dyr_*.csv
-        ↓（各 fetch 脚本调用 freshness.py，结果合并写入）
-
-data/freshness_report.json         → 全数据源新鲜度体检报告，prepare_all_data.py 汇总打印
+├─ simple_etf_metrics.py           → etf_price.csv, etf_nav.csv, index_pct.csv, simple_etf_metrics.csv
+├─ fetch_etf_adjusted_price.py     → etf_price_adj.csv（QuantDash 前复权）
+├─ fetch_bond_yield.py             → erp_*.csv（全量，首次建库）
+├─ fetch_bond_yield_incremental.py → erp_*.csv（增量）+ ps_HSTECH.csv
+├─ fetch_ps.py                     → ps_HSTECH.csv（手动全量重算，不在每日调度）
+├─ dividend_yield_fetch.py         → dividend_yield/dyr_*.csv
+└─ freshness.py                    → 统一新鲜度校验
+        ↓
+data/freshness_report.json → prepare_all_data.py 汇总打印
         ↓
 
-prepare_all_data.py（聚合所有 CSV，subprocess 跑 fetch/ 脚本 + import ensure_dividend_data_fresh）
+prepare_all_data.py（subprocess 跑 fetch/ 脚本 + 聚合所有 CSV）
         ↓
 
 分析层（analysis/）
-├─ valuation.py
-├─ risk.py
-├─ trend.py
-├─ sentiment.py           （调用 popularity_signal.py）
-├─ etf_quality.py
-├─ dividend_yield_analysis.py
-└─ popularity_signal.py
+├─ valuation.py  risk.py  trend.py  sentiment.py
+├─ etf_quality.py  dividend_yield_analysis.py  popularity_signal.py
+        ↓
+analyze_and_suggest(code) → 拼成单标的 Markdown
         ↓
 
-analyze_and_suggest(某个code)
-  ├─ build_shiller_block()            valuation.py
-  ├─ build_unified_valuation_block()  valuation.py
-  ├─ build_trend_block()              trend.py
-  ├─ compute_exit_signal_summary()    risk.py
-  ├─ build_exit_signal_block()        risk.py
-  ├─ compute_profit_signal_summary()  risk.py
-  ├─ build_profit_signal_block()      risk.py
-  ├─ compute_range_drawdown_rebound() risk.py
-  ├─ build_sentiment_block()          sentiment.py
-  ├─ build_dividend_yield_block()     dividend_yield_analysis.py
-  └─ build_etf_quality_block()        etf_quality.py
-        ↓ 拼成单个标的的 Markdown
-
-报告层（report/）
-└─ markdown.py → build_summary_block()（仪表盘）+ markdown_to_html() → HTML
-                 + save_html_report() / send_to_wechat()
+报告层（report/）markdown.py → 仪表盘 + HTML → docs/report.html → gh-pages
         ↓
-
-erp_position.py（主入口，根目录）
+erp_position.py（主入口）
 ```
 
-**首次使用**须先跑全量脚本 `fetch_bond_yield.py` 建立历史数据，之后每日跑增量脚本即可。
+首次使用先跑 `fetch_bond_yield.py` 建历史，之后每日跑增量。
 
-> **约定：新增任何数据源接入 fetch/ 时，必须调用 `freshness.py` 做新鲜度校验，并汇总进 `data/freshness_report.json`。**
+> 新增任何数据源接入 `fetch/`，必须调用 `freshness.py` 并把结果汇总进 `data/freshness_report.json`。
 
-### 每日更新与云端兜底
+### 每日更新链路
 
-ETF 数据采用“本地生产、GitHub Actions 兜底”的两层更新方式：
+1. cron-job.org 每天 18:30 CST 触发 `workflow_dispatch`（GitHub 原 schedule 未删，会重复跑一次，无害）。
+2. 云端是唯一写入方：ETF 指标 → 前复权（QuantDash）→ 国债 PE → 股息率 → 报告 → gh-pages → 微信推送。
+3. 本机 `fetch_and_push.sh` 已于 2026-11-09 停用、不入库，避免两条流水线写同一批文件。
 
-1. 本地定时任务约 17:00 运行仓库外的 `fetch_and_push.sh`：
-   - 使用 AKShare 更新 ETF 原始价格、净值、折溢价和指数涨跌幅；
-   - 使用 QuantDash 更新 ETF 前复权价格；
-   - 提交并推送 `simple_etf_metrics.csv`、`etf_price.csv`、`etf_nav.csv`、`index_pct.csv` 和 `etf_price_adj.csv`。
-2. GitHub Actions 约 18:00 运行：
-   - 若检测到当天本地 ETF 更新成功，则跳过云端 AKShare ETF 抓取；
-   - 若当天本地更新缺失，则由云端补抓原始 ETF 数据；
-   - 无论是否跳过 ETF 抓取，仍继续更新其他数据、生成报告并部署网页。
-3. GitHub Actions **在配置 `QUANTDASH_API_KEY` Secret 后会调用 QuantDash**，抓取并提交 `data/etf_price_adj.csv`；本机不再作为写入方。
-   （2026-11-09 实测：GitHub runner 可直连 `api.quantdash.net`——不带 key 返回 401，带 key 后 26/26 成功、约 2 分钟。原先那句「云端访问失败」的判断已不成立。）
+---
 
-`fetch_and_push.sh` 属于本机调度配置，不纳入版本管理，且已于 2026-11-09 停用：云端为唯一写入方，避免两条流水线写同一批文件（这正是 2026-09-25 起连续 44 天冲突空转的根因）。
+## 接口信心
+
+同一接口在本地和云端不是同一个命运：本地能连 ≠ Actions 能连。下表按"出错时能不能被自己发现"排。
+
+| 接口 | 用途 | 本地 | Actions | 已知失败模式 | 信心 |
+|---|---|---|---|---|---|
+| `api.quantdash.net` | ETF 前复权 | ✅ | ✅ 26/26，约 2 分钟 | 限流 9 次/分钟，需 59s 等待；失败会打印 ❌ 并回落未复权 | 高 |
+| `fund_etf_hist_sina`（新浪） | 未复权行情 | ✅ | ✅ | **日线当天晚间才更新**，收盘后立刻跑只能拿到前一日；整表返回无日期参数 | 中 |
+| `stock_zh_index_hist_csindex`（中证） | 基准指数、PE/PSY | ✅ | ✅ | 偶发缺 `IndexClose` → PE ffill → streak 误报（930794 见过） | 中 |
+| `fund_etf_fund_info_em`（东财净值） | 折溢价率用净值 | ✅ | 未单独验证 | 盘后晚间才发布 | 中 |
+| `fund_etf_hist_em`（东财K线） | 曾用于前复权 qfq | ✅ 直连 200 / 80ms | ⚠️ 2026-09-02 直连被断开 | 风控限流，批量高频易 403 | 本地高／云端低 |
+| `stock_info_global_em`（东财快讯） | 基本面暴雷预警 | ✅ | ✅ | 30 分钟缓存，无 key 限制 | 中 |
+| 理杏仁 `cn/index/fundamental` | 980032 PE | ✅ | ✅ | token 失效即整列缺失 | 中 |
+| multpl.com / worldperatio.com | SPY、EWQ/EWG/EWJ/EEM 今日 PE | 人工/抓取 | 人工/抓取 | 网页结构变动即断；EWQ 等历史为估算 | 低 |
+| GuruFocus xlsx | QQQ PE | 手动 | 手动 | 完全依赖人工更新 | 低 |
+| yfinance + 中证季报 | HSTECH PS/PSY | ✅ | ✅ | 季报口径、市值时点易偏 | 中 |
+
+> 只有 QuantDash 与新鲜度报告能自证失败。其余源的"今天没数据"和"今天没更新"看起来一样，靠 `freshness_report.json` 兜——所以那个文件本身必须有守卫（见 `check_freshness_report_health()`）。
 
 ---
 
@@ -102,23 +90,23 @@ ETF 数据采用“本地生产、GitHub Actions 兜底”的两层更新方式�
 | 399967 | 中证军工 | 512660.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 | 931066 | 军工龙头 | 512710.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 | 930598 | 稀土产业 | 516150.SH | 中证指数官网（akshare） | CN10Y | 日频 |
-| 930794 | 中美互联网 | ─（暂无对应A股ETF） | 中证指数官网（akshare） | CN10Y | 日频 |
+| 930794 | 中美互联网 | ─（无对应A股ETF） | 中证指数官网（akshare） | CN10Y | 日频 |
 | 000819 | 有色金属 | 512400.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 | 950125 | 半导体材料设备 | 588710.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 | 399986 | 中证银行 | 512800.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 | 930633 | 中证旅游 | 159766.SZ | 中证指数官网（akshare） | CN10Y | 日频 |
 | 931946 | 畜牧养殖 | 159172.SZ | 中证指数官网（akshare） | CN10Y | 日频 |
-| 980032 | 新能电池 | 159755.SZ | 中证指数官网（akshare） | CN10Y | 日频 |
-| SPY | S&P 500 | 513500.SH | multpl.com（月频历史）+ worldperatio.com（今日） | US10Y | 月频历史 + 日频今日 |
-| QQQ | Nasdaq 100 | 159696.SZ | GuruFocus xlsx（手动下载）+ 手动填入今日值 | US10Y | 手动维护 |
-| EWQ | MSCI France | 513080.SH | worldperatio.com（今日值）× SPY比值估算历史 | FR10Y | 日频今日，历史为估算 |
-| EWG | MSCI Germany | 159561.SZ | worldperatio.com（今日值）× SPY比值估算历史 | DE10Y | 日频今日，历史为估算 |
-| EWJ | MSCI Japan | 513880.SH | worldperatio.com（今日值）× SPY比值估算历史 | JP10Y | 日频今日，历史为估算 |
-| EEM | MSCI Emerging | 520580.SH | worldperatio.com（今日值）× SPY比值估算历史 | CN10Y | 日频今日，历史为估算 |
-| HSTECH | 恒生科技 | 513180.SH | 自建：yfinance 市值 + akshare 季报营收/净利润 | CN10Y | 月频 |
+| 980032 | 新能电池 | 159755.SZ | 理杏仁 | CN10Y | 日频 |
+| SPY | S&P 500 | 513500.SH | multpl.com（历史）+ worldperatio.com（今日） | US10Y | 月频+日频 |
+| QQQ | Nasdaq 100 | 159696.SZ | GuruFocus xlsx（手动）+ 今日值手填 | US10Y | 手动 |
+| EWQ | MSCI France | 513080.SH | worldperatio.com 今日 × SPY 比值估历史 | FR10Y | 日频，历史估算 |
+| EWG | MSCI Germany | 159561.SZ | 同上 | DE10Y | 日频，历史估算 |
+| EWJ | MSCI Japan | 513880.SH | 同上 | JP10Y | 日频，历史估算 |
+| EEM | MSCI Emerging | 520580.SH | 同上 | CN10Y | 日频，历史估算 |
+| HSTECH | 恒生科技 | 513180.SH | 自建：yfinance 市值 + akshare 季报 | CN10Y | 月频 |
 | 931637 | 港股通互联网 | 513770.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 
-> EWQ/EWG/EWJ/EEM 的**历史 PE 为估算值**：以今日该指数与 SPY 的 PE 比值为固定系数，乘以 SPY 历史 PE 序列反推。今日值为 worldperatio.com 真实数据。
+> EWQ/EWG/EWJ/EEM 历史 PE 为估算值（今日 PE 与 SPY 比值 × SPY 历史序列），长期精度有限。
 
 ---
 
@@ -127,117 +115,75 @@ ETF 数据采用“本地生产、GitHub Actions 兜底”的两层更新方式�
 ### ERP（股权风险溢价）
 
 ```
-ERP = 1/PE − 无风险利率（10年期国债收益率）
+ERP  = 1/PE − 无风险利率（10Y 国债收益率）
+胜率 = 历史 ERP 中 < 当前 ERP 的样本数 / 总样本数
+赔率 = (当前ERP − P10) / (P90 − 当前ERP)
+    P90 − ERP ≤ 0 → ∞（极度低估）；ERP − P10 ≤ 0 → 0（极度高估）
 ```
 
-- ERP 越高：股票相对债券越便宜
-- ERP 越低（乃至为负）：估值越贵
-
-**胜率** = 当前 ERP 在历史序列中的分位数
-
-```
-胜率 = (历史ERP中 < 当前ERP 的数量) / 总样本数
-```
-
-历史分位越高 → 当前越便宜 → 胜率越高。
-
-**赔率** = (当前ERP − P10) / (P90 − 当前ERP)（ERP 绝对值法）
-
-```
-若 P90 − 当前ERP ≤ 0（已超P90极度低估） → 赔率视为"极高"（展示为 ∞）
-若 当前ERP − P10 ≤ 0（已跌破P10极度高估） → 赔率 = 0
-```
-
-**欧美日锚定区间**：EWQ/EWG/EWJ/SPY/QQQ 使用 2022年1月1日以后的数据作为分位锚。
-
----
+欧美日锚定区间：EWQ/EWG/EWJ/SPY/QQQ 只用 2022-01-01 以后的数据算分位。
 
 ### ERP 斜率信号
 
-基于近20日 ERP（或PSY）线性回归斜率，量化当前市场情绪速度。**阈值为自适应历史分位**（不是固定百分比）：用该标的自己"历史上所有20日变化"的分布来判断当前变化是否极端——ERP=1/PE−rf 是倒数关系，固定阈值对高PE标的可能永远触发不了，改用"当前变化在自身历史分布中的分位"后同一套逻辑对所有标的自适应。历史样本（20日变化）不足60条时退回固定阈值。
+近 20 日 ERP（或 PSY）线性回归斜率，阈值取**该标的自身历史变化的分位**（不固定百分比，否则高 PE 标的永不触发）；历史样本不足 60 条退回固定阈值。
 
-| 信号 | 条件（自适应历史分位，样本充足时） | 固定阈值兜底（样本<60条时） | 含义 |
-|------|----------------------------------|--------------------------|------|
-| 🚨 恐慌踩踏 | ≥ 90分位 | 20日绝对变化 ≥ +2% | PE急速压缩，市场抛售，历史上往往是买点临近的前兆 |
-| 🟢 估值快速改善 | 65~90分位 | +0.8% ~ +2% | 估值持续修复，买入窗口打开 |
-| 🟡 横盘震荡 | 中间区间 | -0.8% ~ +0.8% | 无明显趋势，保持既有仓位 |
-| 🟠 估值快速恶化 | 65~90分位（反向） | -2% ~ -0.8% | 估值向贵漂移，提高警惕 |
-| ⚠️ 情绪过热 | ≥ 90分位（反向） | ≤ -2% | 市场情绪快速升温，泡沫化加速，警戒高位 |
-
----
+| 信号 | 自适应分位 | 固定阈值兜底 | 含义 |
+|------|-----------|-------------|------|
+| 🚨 恐慌踩踏 | ≥90 | ≥ +2% | PE 急速压缩，常是买点前兆 |
+| 🟢 估值快速改善 | 65~90 | +0.8%~+2% | 修复中，窗口打开 |
+| 🟡 横盘震荡 | 中间区间 | -0.8%~+0.8% | 保持仓位 |
+| 🟠 估值快速恶化 | 65~90（反向） | -2%~-0.8% | 向贵漂移，提高警惕 |
+| ⚠️ 情绪过热 | ≥90（反向） | ≤ -2% | 泡沫化加速 |
 
 ### 减仓 / 清仓信号
 
-**设计原则：ERP框架（逆向估值）与均线/回撤（趋势跟踪）冲突时，用估值分位对趋势信号做"降级"而非简单屏蔽。**
+原则：估值（逆向）与趋势（均线/回撤）冲突时，用估值分位对趋势信号**降级**，不屏蔽。
 
-三级回撤止损：
+| 级别 | 触发 | 高估区（ERP<P50） | 低估区（ERP≥P50） |
+|-----|------|------------------|------------------|
+| L1 | 回撤≥10% 且破 MA20 | ⚠️ 减持 1/3 | 🛡️ 降级为观察 |
+| L2 | 回撤≥15% 且破 MA60 | 🔴 减至底仓（留 30% 泡沫仓） | ⚠️ 同样减至底仓，按 L1 展示 |
+| L3 | 回撤≥20% | 🚨 强制全清 | 🚨 同样全清，低估区无豁免 |
 
-| 级别 | 触发条件 | 高估区（ERP<P50）动作 | 低估区（ERP≥P50）动作 |
-|-----|---------|---------------------|---------------------|
-| L1 | 回撤≥10% 且跌破MA20 | ⚠️ 减持1/3仓位 | 🛡️ 降级为观察提示，不减仓 |
-| L2 | 回撤≥15% 且跌破MA60 | 🔴 减至底仓（保留泡沫仓30%） | ⚠️ 降级：同样减至底仓，但展示为L1级别 |
-| L3 | 回撤≥20% | 🚨 强制全清，止损优先 | 🚨 同样全清，**低估区无豁免**（20%是硬止损线） |
+- **未持仓**：照常算，文案降级为「🔎 观察提示」，不让信号消失。
+- **QQQ 单日急跌 ≥5%**：独立并行信号——高估区提示减 1/3，低估区提示可能是加仓机会。
+- **120 日区间回撤/反弹**：峰值之后找谷值（谷值须晚于峰值），回撤=(谷−峰)/峰，反弹=(现价−谷)/谷；仍在创新低时反弹显示 0%。
+- **价格源**：优先 `etf_price_adj.csv`（前复权）；缺失或滞后超 5 交易日则回退 `etf_price.csv` 并在报告标出原因。价格过期时信号降为「⛔ 信号暂停」，不输出减仓/止盈/清仓。
 
-**未持仓标的**：以上判断照常计算是否触线，但文案从"建议操作"降级为"🔎 观察提示"——没有仓位可减，只是提醒你该标的价格结构已经很差，避免信号因未持仓而整条消失。
-
-**摘要新增**：120日窗口内的区间回撤/反弹统计——先定位窗口内峰值，再在峰值**之后**的区间找谷值（谷值必须晚于峰值，否则衡量的是涨幅而非回撤，方向会反），回撤=（谷值-峰值）/峰值，反弹=（现价-谷值）/谷值，帮助判断当前价格处于回撤后的哪个阶段。若价格仍在创新低（尚未探底），谷值等于现价，反弹会显示为0%，属正常现象。
-
-**QQQ 单日急跌独立信号**（不计入上述三级，并行展示）：单日跌幅≥5%时触发——若当前处于高估区，提示"估值偏贵，建议减仓1/3"；若处于低估区，提示"可能是加仓机会"。
-
-价格数据优先使用 `etf_price_adj.csv`（由 `fetch/fetch_etf_adjusted_price.py` 通过 QuantDash 生成的前复权价格，云端流水线产出）；若缓存缺失或对应标的无有效数据，则回退到 `etf_price.csv` 原始价格，并在报告中明确提示。前复权价格用于避免分红、拆分等除权事件被误判为真实暴跌，从而错误触发止盈、减仓或回撤信号。
-
-> ⚠️ 基本面暴雷属于独立预警，见下方模块。价格信号触发后应同步核查基本面再决策。
-
----
+> 基本面暴雷是独立预警，价格信号触发后应同步核查。
 
 ### 基本面暴雷预警
 
-数据源：东方财富全球财经快讯（`ak.stock_info_global_em`，免key，30分钟内复用缓存）。
+数据源：`ak.stock_info_global_em`（东财全球快讯，免 key，30 分钟缓存）。
 
 ```
-本地关键词粗筛（命中才继续，未命中直接判定"未知"，不用AI脑补）
-   → AI 相关性过滤（剔除关键词撞车但实际不相关的新闻，如"军工"误中无关快讯）
-   → AI 最终判断：疑似暴雷/关注/正常 + 置信度 + 摘要 + 逐条新闻正负面分类
+本地关键词粗筛（未命中直接判「未知」，不让 AI 脑补）
+  → AI 相关性过滤（剔关键词撞车）
+  → AI 定级：疑似暴雷 / 关注 / 正常 + 置信度 + 摘要
 ```
 
-| 预警等级 | 含义 | 处理方式 |
-|---------|------|---------|
-| ✅ 正常 | 近期无重大基本面异常 | 无需操作 |
-| ⚠️ 关注 | 存在值得注意的信息 | 持续关注，暂不操作 |
-| 🚨 疑似暴雷 | 检测到重大负面事件 | **需人工确认后才可触发减仓/清仓** |
+| 等级 | 含义 | 处理 |
+|-----|------|------|
+| ✅ 正常 | 无重大异常 | 无需操作 |
+| ⚠️ 关注 | 有值得注意的信息 | 观察 |
+| 🚨 疑似暴雷 | 重大负面事件 | **人工确认后**才可触发减仓/清仓 |
 
-宽基/国别指数（`000300` `000688` `SPY` `QQQ` `EWQ` `EWG` `EWJ` `EEM`）成分股高度分散，本模块不适用，直接跳过。其余标的（含红利、医疗、军工、稀土、半导体、有色金属、互联网等主题指数）各有专属关键词表，用于本地粗筛。
-
-**重要设计约束：本模块仅输出置信度预警标志位，不接任何自动交易执行链**，"疑似暴雷"必须人工核实。
-
-调用 AI 接口带限流感知重试（429 时按 5s→10s→20s 退避，最多重试3次；连续两次调用间隔至少2秒）。
-
----
+宽基/国别指数（000300/000688/SPY/QQQ/EWQ/EWG/EWJ/EEM）成分分散，直接跳过；其余主题指数各有关键词表。**只输出标志位，不接任何自动交易链。** AI 调用带 429 退避（5s→10s→20s，最多 3 次），间隔≥2s。
 
 ### HSTECH 专属：PS / PSY
 
-恒生科技成分股多为早期高增长亏损公司，PE 因净利润为负而失真，改用营收口径：
+成分股多为亏损期高增长公司，PE 失真，改营收口径：
 
 ```
-PS  = 月末总市值 / TTM总营收
+PS  = 月末总市值 / TTM 总营收
 PSY = 1/PS − CN10Y
 ```
 
-PSY 用于替代 ERP 参与胜率/赔率计算，斜率信号和减仓信号同样适用。
+PSY 替代 ERP 参与胜率/赔率、斜率、减仓信号。
 
----
+### ETF 执行质量
 
-### ETF 执行质量指标
-
-`data/simple_etf_metrics.csv` 每日生成并随commit写回本仓库。数据源已从 Tushare 切换为纯 AKShare（不再需要 `TUSHARE_TOKEN`）：
-
-> ⚠️ 新增新鲜度校验：对比前一日快照，折溢价率/换手分位/波动率/跟踪误差任一字段连续 3 次未变化，会在 `stale_flag`/`stale_note` 列标记预警（逻辑与 `erp_position.py` 里 PE/PSY 的新鲜度校验平行，互不覆盖）。
-
-- ETF 行情：`ak.fund_etf_hist_sina()`（新浪）
-- ETF 净值（折溢价用）：`ak.fund_etf_fund_info_em()`（东方财富）
-- 基准指数：`ak.stock_zh_index_hist_csindex()`（中证官网）
-
-当前使用 `MAX_WORKERS = 1` 串行处理各 ETF，以降低免费数据源的限流和连接失败风险。
+数据源：行情 `fund_etf_hist_sina`（新浪）｜净值 `fund_etf_fund_info_em`（东财）｜基准 `stock_zh_index_hist_csindex`（中证）。`MAX_WORKERS = 1` 串行，压限流风险。折溢价/换手分位/波动/跟踪误差连续 3 次不变 → `stale_flag` 预警。
 
 | 指标 | 说明 |
 |-----|------|
@@ -245,69 +191,46 @@ PSY 用于替代 ERP 参与胜率/赔率计算，斜率信号和减仓信号同�
 | 换手率分位 | 资金活跃度，配合价格方向判断真实性 |
 | 价格/换手背离 | 量价不配合，警惕假突破 |
 | 年化波动率/回撤分位 | 当前风险水位 |
-| 超额收益均值 | ETF 跟踪质量，长期负值考虑换标的 |
-
----
+| 超额收益均值 | 跟踪质量，长期负值考虑换标的 |
 
 ### 决策仪表盘
 
-- 触发止损/清仓的标的单独置顶「🚨 需要处理」区，不与正常估值区间条目混排
-- 其余标的按估值区间分组展示（极度低估 → 显著低估 → 合理偏低 → 合理区间 → 高估/规避）
-- 📌 标记自选持仓标的（`HOLDING_CATEGORY` 配置）
-- 每条自动生成一句执行动作建议（结合折溢价/换手背离/波动率综合判断）
-- 微信只推仪表盘摘要 + 完整报告链接，完整版在 `docs/report.html`（gh-pages）查看
+- 止损/清仓标的置顶「🚨 需要处理」，不与估值分组混排
+- 其余按估值区间分组（极度低估 → 显著低估 → 合理偏低 → 合理 → 高估/规避）
+- 📌 标自选持仓（`HOLDING_CATEGORY`）；每条给一句执行建议
+- 微信只推摘要 + 报告链接，完整版在 `docs/report.html`
 
 ---
 
 ## 仓位框架
 
-三仓结构，各自独立触发：
-
 | 仓位 | 触发条件 | 比例 |
 |-----|---------|------|
-| **泡沫底仓** | ERP ≥ P25 | 30% |
-| | ERP < P25 | 5% |
-| **价值主力** | ERP ≥ P75 | 40% |
-| | ERP ≥ P50 | 35% |
-| | ERP ≥ P25 | 10% |
-| | ERP < P25 | 0% |
-| **投机奇兵** | ERP ≥ P95 | 30% |
-| | ERP ≥ P90 | 20% |
-| | ERP ≥ P50 | 10% |
-| | ERP < P50 | 5% |
+| **泡沫底仓** | ERP ≥ P25 / < P25 | 30% / 5% |
+| **价值主力** | ERP ≥ P75 / ≥ P50 / ≥ P25 / < P25 | 40% / 35% / 10% / 0% |
+| **投机奇兵** | ERP ≥ P95 / ≥ P90 / ≥ P50 / < P50 | 30% / 20% / 10% / 5% |
 
-> 触发减仓/清仓信号（`exit_level > 0`）时，不展示常规三仓拆分，改为提示已进入止损流程。
+> 触发减仓/清仓（`exit_level > 0`）时不出三仓拆分，改提示已进入止损流程。
 
 ---
 
 ## 环境变量
 
-### 仅本机使用
-
-| 变量 | 用途 | 存放要求 |
-|-----|------|---------|
-| `QUANTDASH_API_KEY` | 云端抓取 ETF 前复权价格 | 存于 GitHub Actions Secrets（repo secret `QUANTDASH_API_KEY`），由 workflow 注入；仍不得写进任何提交到仓库的文件。本机 `~/.config/equity-risk-premium-monitor/quantdash.env` 仅作手动补数备用 |
-
-### GitHub Actions Secrets
-
-| 变量 | 用途 | 必填 |
+| 变量 | 用途 | 位置 |
 |-----|------|------|
-| `SCT_KEY` | ServerChan 微信推送 Key | 是 |
-| `ANTHROPIC_API_KEY` | 七牛云 API Key（Anthropic 兼容接口 `api.qnaigc.com`），供基本面暴雷预警模块调用 | 是 |
-| `SHILLER_PATH` | Shiller CAPE 数据文件路径，默认 `./data/ie_data.xls` | 否 |
-| `GH_PAT` | GitHub Personal Access Token，供 Claude Cowork 通过 Chrome MCP 模拟操作（如写入 Variable） | 是 |
-| `ALIYUN_API_KEY` | DashScope（阿里云）API Key，供近10月趋势 AI 解读 / ETF 执行质量 AI 解读调用 | 是 |
-| `LIXINGER_TOKEN` | 理杏仁 API Token，供 dividend_yield_fetch.py 抓取股息率数据 | 是 |
-| `DRY_RUN` | 非 Secret，普通环境变量：设为 `true` 时进入预览模式，不真实推送微信，改为写入 output_preview.md | 否 |
-
-## GitHub Actions Variables
-
-| 变量 | 用途 | 更新方式 |
-|-----|------|---------|
-| `QQQ_PE_TODAY` | QQQ 今日 PE | 由 grok scheduled tasks 浏览网页抓取，用 REST API 写入 |
+| `QUANTDASH_API_KEY` | 云端抓 ETF 前复权 | GitHub Secrets；本机 `~/.config/equity-risk-premium-monitor/quantdash.env` 仅手动补数用 |
+| `SCT_KEY` | ServerChan 微信推送 | Secrets，必填 |
+| `ALIYUN_API_KEY` | DashScope，趋势/ETF 质量 AI 解读 | Secrets，必填 |
+| `ANTHROPIC_API_KEY` | 七牛云（Anthropic 兼容）基本面预警 | Secrets，必填 |
+| `LIXINGER_TOKEN` | 理杏仁股息率与 980032 PE | Secrets，必填 |
+| `GH_PAT` | 写 Variable 等管理操作 | Secrets，必填 |
+| `SHILLER_PATH` | Shiller CAPE 文件路径，默认 `./data/ie_data.xls` | 选填 |
+| `DRY_RUN` | `true` 时预览不推送，写 `output_preview.md` | 普通变量，选填 |
+| `QQQ_PE_TODAY` | QQQ 今日 PE | Actions Variable，由 Grok 定时任务写入 |
 
 ---
 
 ## 手动维护事项
 
-- **Shiller CAPE**：`./data/ie_data.xls` 需从 [Robert Shiller 网站](http://www.econ.yale.edu/~shiller/data.htm) 手动下载，仅用于 SPY 长期回报锚分析，建议每月月初检查更新。
+- **Shiller CAPE**：`data/ie_data.xls` 从 Shiller 官网手动下载，仅 SPY 用，建议月初检查。
+- **QQQ PE**：GuruFocus xlsx + `QQQ_PE_TODAY` 手填，断更则 QQQ ERP 沿用旧值。

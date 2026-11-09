@@ -1,82 +1,50 @@
 STATUS.md — 跨 session 运行记忆
 
-每次 Claude 完成工作后必须更新此文件（直接更新，无需确认）。每条记录需带精确时间。 最后更新：2026-10-14 12:00 CST
+每次完成工作后更新此文件（直接更新，无需确认）。每条记录带精确时间，只写一句话结论，不写过程。最后更新：2026-11-09 CST
 
 ## TODO
 
 - 加入其他信号指标
-- HSTECH 报告里估值指标仍标注为"ERP"，应为"PSY"（仅文字标注问题，数值本身正确）
-- feature/pe-band-demo 分支也在用这份代码，main 分支近期的一系列修复/重构还没同步过去，需要评估要不要同步
-- 新鲜度校验：已有检测+展示（PE/PSY⚠️标记、08-07新增ETF指标stale_flag/streak），但只是"检测到了，报告没反应"——连续N天未变化时不会降级"极佳买点"等强结论，单标的抓取失败也会直接写NaN覆盖旧值而非保留旧值+标记stale。需补：①降级标记接入报告结论 ②抓取失败保留旧值而非覆盖 ③检测范围扩展到全部标的全部数值列（目前仅PE/PSY手填列+ETF指标列，未覆盖全部数据源）
-- 930794（中美互联网）csindex 接口偶发缺 IndexClose→PE ffill→streak 误报：已重置计数，若再频繁误报可考虑对 930794 单独调大 streak_threshold 或换理杏仁源（注意理杏仁 PE 口径为市值加权≈20，与当前中证口径≈5 差异大，换源会破坏历史一致性，需谨慎）
-- 缺少远程失败通知（目前仅本地）：定时任务本身跑挂时无感知，和新鲜度校验（检测数据是否陈旧）是两回事；QQQ_PE_TODAY 当日未写入会导致 QQQ ERP 沿用旧值
-- 【2026-10-14】改为 cron-job.org 定时触发（每天18:00调 workflow_dispatch）：用户已生成 Fine-grained PAT（仅 equity-risk-premium-monitor 的 Actions 权限，30天有效期，填在 cron-job.org），并在 cron-job.org 复制 duty-bot 任务改成 ERP（URL=daily_trade.yml dispatch、body={"ref":"main","inputs":{"dry_run":"false"}}、时间Asia/Shanghai 18:00）。⚠️ 待晚上18:00验证：①Actions是否绿勾 ②data/erp_980032.csv 是否生成（理杏仁首次全量建库是否成功）。⚠️ GitHub 原 schedule 18:00 会与 cron-job.org 撞车（重复跑无害，浪费配额），验证成功后考虑把 GitHub schedule 改19:00兜底或删除。本次不想反复Test run消耗token/配额，故等晚上自动触发。
-- EWQ/EWG/EWJ/EEM 历史 PE 为估算值（今日 PE 与 SPY 比值 × SPY 历史序列），历史精度有限，长期看是否有更准确的数据源
-- 迁移ai api 后观察 1-2 天日志：确认无 `AI趋势解读失败` / `ETF执行质量AI解读失败`，且基本面预警「未知」比例没有明显上升；若 `deepseek-v4-pro` 的 JSON 输出不稳定，将 `LLM_MODEL` 换成 `qwen-plus`
-- ERP 图微信推送滞后一天：图 URL 指向 gh-pages，但 Server酱推送在 gh-pages 部署之前执行，微信正文当天显示的图是前一天部署的。趋势图滞后一天影响可忽略；如需当天精确，可在 workflow 里把微信推送挪到 Deploy gh-pages 之后
+- HSTECH 报告里估值指标仍标注为「ERP」，应为「PSY」（仅文案，数值正确）
+- feature/pe-band-demo 分支未同步 main 的近期修复，待评估
+- 新鲜度校验：能检测但未影响结论；抓取失败会覆盖旧值；覆盖面仅部分列
+- 930794 偶发缺 IndexClose → PE ffill → streak 误报（已重置，频繁再发再考虑换源）
+- 无远程失败通知；QQQ_PE_TODAY 当日未写入会沿用旧值
+- cron-job.org 每天 18:30 CST 触发 workflow_dispatch；GitHub 原 schedule 与其撞车
+- EWQ/EWG/EWJ/EEM 历史 PE 为估算值，长期需更准数据源
+- 迁移 AI API 后观察 1-2 天日志，确认无解读失败
+- ERP 图微信推送滞后一天（推送早于 gh-pages 部署）
 
 ## 变更日志
 
 | 日期 | 变更内容 |
 |---|---|
-| 2026-11-09 14:55 CST | **前复权（QuantDash）从本机搬到云端，本机链路停用**：①实测确认 GitHub runner 可直连 api.quantdash.net（DNS→Cloudflare 5 IP，TCP443 OK，**不带 key** 调 `/v1/klines` 返回 HTTP/2 401、0.57s，说明网络与接口都通，只缺认证）；带 key 实跑 run 42575508886：**26/26 成功、0 失败、耗时 2 分钟**（含两次 59s 节流等待），data/etf_price_adj.csv 从停在 2026-09-23 补齐到最后一行 2026-11-09（diff +294/−267）。②根因纠正：云端此前**根本没有 `QUANTDASH_API_KEY`** 这个 secret，`requirements.txt` 里也没有 quantdash 包——所谓「云端不产出该文件」是实现缺口，不是网络不通。已写入 repo Secrets（值不落任何文件）。③requirements.txt 新增 `quantdash>=0.1.0`。④prepare_all_data.py 新增条件调度：环境存在 QUANTDASH_API_KEY 时自动跑 `fetch/fetch_etf_adjusted_price.py`，不存在则保持旧行为（只读缓存）；抓取失败改为打印 ❌「今天不会新增行，报告将按 price_gate 回退未复权价并标注」，不再静默继续。⑤daily_trade.yml 的 Prepare Data 步骤注入该 secret。⑥README 四处口径同步（原「GitHub Actions 不调用 QuantDash / 不配置到 GitHub Actions」已作废），写明本机 fetch_and_push.sh 停用、云端为唯一写入方——根治 2026-09-25 起两条流水线写同一批文件导致的 44 天冲突空转。⑦清理：探测分支 probe-quantdash-net、probe-adj-cloud 已删除，远端仅剩 13f / feature-futu-ps-data / feature-pe-band-demo / gh-pages / main。 |
-| 2026-11-09 13:10 CST | 修两个系统级缺陷：①**陈旧前复权价被"文件存在即优先"的回退判据掩盖**——data/etf_price_adj.csv 内容停在 2026-09-23，但因 erp_position.py 原逻辑「前复权有这只标的就用」永远赢过更新到 11-06 的 etf_price.csv，报告里"科创50 回撤 −25.1%、🚨强制全清"全部基于 9/23 旧价。改为按**新鲜度**选源：前复权滞后 > MAX_PRICE_LAG_TRADING_DAYS(5 交易日) 强制回退未复权价并写明原因；价格过期时 exit/profit 直接降到 level=-2「⛔ 信号暂停」，不再输出减仓/止盈/强制清仓；报告头与每个标的分组都并列「价格数据日期」与「生成时间」。②**新鲜度守卫长期假绿**——四个价格类校验此前全部传 date_col=None，退化成按文件 mtime 校验，而 CI checkout 每次都把 mtime 重置成"今天"，于是内容停摆 44 天的文件天天报 fresh=True。改为 date_is_index（按首列内容日期校验），并把 error(校验异常/文件缺失) 与 warn(数据陈旧) 拆两级；新增 check_freshness_report_health()——守卫自己超 26 小时没跑也报 error。③**本地脚本把失败写成成功**：~/equity-risk-premium-monitor/fetch_and_push.sh 遇脏工作区/网络不通/pull 失败时改为 ❌ 措辞 + PushPlus 告警，删除"GitHub 云端将兜底"（云端 grep adjusted 零命中，根本不产出该文件）。④本地坏 clone（detached HEAD + 4 个 UU 冲突）已按"以远端为准"清理，备份在 ~/erp_conflict_backup_20261109/。⑤验证：dry_run 42564279785 全绿；报告实际输出「📅 价格数据日期：2026-11-06（未复权，滞后 0 个交易日）」+「⚠️ 前复权价已过期：最新只到 2026-09-23（滞后 26 个交易日，阈值 5），已回退」；freshness 由「假绿 ok」变为 `ETF前复权价格序列 warn 2026-09-23 47天`，其余价格项 ok 2026-11-06；守卫自检 ok。 |
-| 2026-11-09 11:20 CST | ①修复 11-08 run 42471707436 全流程失败：setup-python 指定 '3.10'，但 ubuntu-24.04 tool cache 无 3.10，被迫去 GitHub Releases 下载 python-3.10.22.tar.gz，上游连续 504 三次后 job 失败（与业务代码无关）。workflow 改用镜像缓存内的 '3.11'，并加 continue-on-error + system python3 兜底，安装/运行统一改用 python3。②fetch_bond_yield_incremental.py 的 per-index except 补记 freshness 记录（此前异常只 print 到 stdout，被 prepare_all_data 的 capture_output 吞掉且脚本 returncode 仍为 0，980032 连续多天失败查不到原因）。③据新日志查出 980032 真正报错 `type object 'datetime.datetime' has no attribute 'timedelta'`（函数内 `from datetime import datetime as _dt` 后调用 `_dt.timedelta`），改为导入 timedelta；HSTECH 的 hstech_csv 源改为显式跳过（HSTECH 用 PS/PSY，不再报未知源）。④验证：两次 dry_run（42553354795、42554682152）均绿；data/erp_980032.csv 已生成 1430 行（2005-04-08~2026-11-06，最新 PE 17.49、ERP 4.13%），freshness stale_count 归零。 |
-| 2026-10-14 | ①修复 fetch/freshness.py 新鲜度校验 bug：now 是标准库 datetime 却调用 pandas 的 .normalize()，导致所有 ERP 文件校验抛「校验异常」、fresh 误判 false、last_date 变 null。改为 pd.Timestamp(now).normalize()。②修复 980032（新能电池，国证指数）数据缺失：原 pe_source=csindex 抓不到国证指数（该接口只覆盖中证），改 pe_source=lixinger，fetch/fetch_bond_yield.py 与 fetch/fetch_bond_yield_incremental.py 新增理杏仁 cn/index/fundamental 接口分支（pe_ttm.mcw + cp），待 CI 跑一次回填历史。③诊断 930794 PE streak=8 为误报：csindex 接口对 930794 偶发缺 IndexClose→PE ffill→相邻相同触发 streak，数据本身正确每日在更新，已重置 streak 计数。④新增 report/erp_chart.py：matplotlib 生成各标的 ERP 横向条形图到 docs/erp_chart.png，微信推送 desp 顶部嵌图 URL（gh-pages 部署），requirements.txt 加 matplotlib，workflow 安装 fonts-noto-cjk 中文字体。 |
-| 2026-09-08 | QQQ PE 抓取从 Claude Cowork 自带定时任务迁移为 Grok Scheduled Tasks:由 Grok 定时浏览网页获取当日 PE,再通过 GitHub REST API 写入 Actions Variable `QQQ_PE_TODAY`。  |
-| 2026-09-03 14:15:22 CST | ETF 前复权本地链路接入 QuantDash：仅 `fetch/fetch_etf_adjusted_price.py` 使用 QuantDash 日 K `adjust="forward"`，Key 从仓库外私有配置读取；加入 9 次/分钟本地节流以适配账户限流。实跑 26 个 ETF 全部成功，生成 267 个交易日（历史较短标的按实际上市日期保留），报告读取函数核验通过。 |
-| 2026-09-03 10:24:37 CST | 为每日报告恢复价格风险模块的安全回退：优先读取真实前复权 `etf_price_adj.csv`，首次缓存尚未建成时回退现有 `etf_price.csv`，并在每个标的详情中明确提示未复权价可能令分红/份额折算附近的回撤、均线及止盈止损信号失真。000300 实测成功回退到729条原始价格记录；PE-band、ERP/PSY和估值计算不受影响。 |
-| 2026-09-02 16:17:23 CST | 修正 ETF 前复权数据链路：仅由本地 `fetch_and_push.sh` 调用 AKShare `fund_etf_hist_em(adjust="qfq")`（东方财富），生成 `data/etf_price_adj.csv` 并与原4个ETF文件一并提交；云端 `prepare_all_data.py` 只消费缓存，不再主动连接行情源；删除会在 GitHub Actions 直连东财的手动回填 workflow。首次建库缺任一列时拒绝落盘，不回退未复权价，不使用跳变阈值或比例推算复权。曾评估 `stock_zh_a_daily(adjust="qfq")`（新浪）作为备用，但实测其股票流通股本步骤不支持ETF，已明确弃用。2026-09-02 东财请求经代理被断开，因此未生成、未提交数据文件。 |
-| 2026-08-31 15:02:00 CST | 修正云端兜底粒度：本地完整成功时只跳过 `fetch/simple_etf_metrics.py`，国债/ERP、股息率、分析报告和 gh-pages 部署继续执行；本地存在任一行情失败时改用“部分失败”提交标记，云端不会跳过 AkShare，会继续查漏补缺。失败标的在中间快照中保留旧值并标记 stale，避免空值/删列污染下游。 |
-| 2026-08-31 14:44:44 CST | 稳定本地优先、GitHub兜底的数据更新链路：本地 `fetch_and_push.sh` 改为先拉取干净基线再抓取，并一次提交 `simple_etf_metrics/etf_price/etf_nav/index_pct` 四个关联文件；GitHub定时兜底延后至北京时间18:00，并按北京时间当天的本地成功提交精确判断是否跳过；`simple_etf_metrics.py` 在单标的行情失败时保留 `etf_price` 旧列和上一版指标快照，同时标记 stale，避免局部接口失败把有效数据覆盖为空；忽略 `.DS_Store`。 |
-| 2026-08-28 | ETF 指标请求日期统一使用 Asia/Shanghai |
-| 2026-08-02（补记） | 修复微信推送 send_to_wechat()：此前不检查 requests.post() 响应体，Server酱业务失败（sckey失效/超额度/desp过长被拒等）仍返回HTTP 200，导致"log显示成功但未收到"。现改为校验HTTP状态码+响应体code字段，失败时打印具体原因 |
-| 2026-08-07 | fetch_and_push.sh改为本地抓取优先，网络失败不阻塞；修复MAX_WORKERS并发崩溃(改1)及akshare版本过旧致净值报错(升1.18.83)。云端已有本地成功则跳过机制(daily_trade.yml) |
-| 2026-08-06 | 净值/基准指数改增量拉取（本地缓存+近5天缓冲，口径与全量一致），减少请求耗时；行情因新浪接口限制仍全量拉取。涉及：fetch/simple_etf_metrics.py |
-| 2026-08-05 | 详情页精简：仓位建议加ERP值展示；多个表格改折叠默认收起；修复换行丢失bug。涉及：erp_position.py等5个文件 |
-| 2026-08-05 | 精简报告文案：删除重复仓位说明；估值分档表移至仓位建议模块；推导过程收进折叠块。涉及：risk.py/valuation.py/erp_position.py |
-| 2026-08-05 | 决策仪表盘加二级分组：估值分档下按胜率×赔率细分标签（极佳买点/可参与/不参与） |
-| 2026-08-04 | 修复ETF价格数据8/2起冻结问题；08-06起云端Actions定时运行恢复正常（见#226） |
-| 2026-08-04 | 修复 HSTECH 估值信号失真 bug：估值计算口径从 PE-ERP 切换为 PS/PSY，删除 HS_TECH_PE_TODAY 手动填值机制 |
-| 2026-08-02 | 代码目录重组：数据获取脚本迁移至 fetch/，分析类模块统一收进 analysis/ |
-| 2026-07-06 | 移除已废弃的 pi-mobile host 相关记录（不再使用）；QQQ PE 抓取从本地 launchd+AppleScript 方案迁移为 Claude Cowork 自带定时任务；确认 simple_etf_metrics.py 无重复、FRED_API_KEY 硬编码非问题，从"已知问题"中移除；数据覆盖指数从23个更正为21个（000989/931139/931946 已彻底下线，此前数字把它们也算进去了） |
-| 2026-07-02 | Claude Cowork 新增2只指数：有色金属（000819→512400.SH）、半导体材料设备（950125→588710.SH）。同步更新 fetch_bond_yield_incremental.py / fetch_bond_yield.py 的 INDEX_CONFIG，erp_position.py 的 indices / HOLDING_CATEGORY / 基本面预警关键词，etf_metrics.py 的 ERP_TO_ETF；已手动触发 init_history.yml 回填历史 PE |
-| 2026-06-10 18:00 | 删除 com.chiaravan.update-pe.plist（update_pe.py 不存在，每日报错）；gh auth login 完成（ChiaraVan1）；update_pe_trigger.sh prompt 第二步改为 gh variable set QQQ_PE_TODAY 替代浏览器导航 GitHub settings（更稳定，不依赖 Chrome 登录状态） |
-| 2026-06-08 17:10 | 修复 update_pe_trigger.sh：改用 AppleScript 内部设置剪贴板 + keystroke "v" using {command down} 粘贴完整 prompt，解决 Cmd+V 无效问题 |
-| 2026-06-08 17:00 | launchd 触发时间改为 17:00（CST） |
-| 2026-06-08 16:41 | 修复 plist 时间：launchd 用本地时间，Hour 改为 16，Minute 改为 30（之前错误地设成 UTC 08:30） |
-| 2026-06-08 16:30 | 配置 launchd 定时任务（com.chiaravan.updatepe），每日北京时间触发 update_pe_trigger.sh，日志输出到 ~/update_pe.log |
-| 2026-06-08 | 初始化 CLAUDE.md / STATUS.md / ../shared/KEYS.md，读取并记录全项目结构；同步创建 ETF_data_project 的 CLAUDE.md / STATUS.md |
-| 2025 | 添加持仓分类映射（HOLDING_CATEGORY）到 erp_position.py |
-| 2025 | 新增稀土产业（930598）、中美互联网（930794）等指数 |
-| 2025 | HSTECH 改用 PSY 口径，update_hstech_ps() 修复国债覆盖范围 bug |
-| （早期，无精确日期） | ERP / PSY 历史数据采集（全量 + 增量） |
-| （早期，无精确日期） | 排查 SPY 数据异常：有一个本该只手动跑一次的全量重建 workflow 被反复触发（因为新增关注 code），每次都会把每日增量脚本已经写好的真实数据冲掉 |
-| （早期，无精确日期） | 胜率 / 赔率 / 仓位建议框架 |
-| （早期，无精确日期） | ETF 执行质量模块（折溢价、换手、波动、超额收益） |
-| （早期，无精确日期） | Shiller CAPE 长期回报锚（仅 SPY） |
-| （早期，无精确日期） | HSTECH PS / PSY 自建数据管道 |
-| （早期，无精确日期） | ERP 斜率信号（近20日，五档分类，含恐慌踩踏识别） |
-| （早期，无精确日期） | 三级分级止损（估值分位对趋势信号降级 + 回撤/均线三条件） |
-| （早期，无精确日期） | 三级分级止盈（乖离率过热镜像止损逻辑，MA20/MA60乖离触发，高估区触发条件升级而非豁免） |
-| （早期，无精确日期） | 修复"核心估值决策"区块胜率计算未使用锚定子集的问题（SPY/QQQ/EWQ/EWG/EWJ 报告内胜率口径不一致） |
-| （早期，无精确日期） | 基本面暴雷预警（东方财富快讯粗筛 + AI 二次过滤，仅输出标志位，需人工确认） |
-| （早期，无精确日期） | 决策仪表盘结构 |
-| （早期，无精确日期） | HTML 报告自动部署到 GitHub Pages |
-| （早期，无精确日期） | 减仓/止损信号支持「未持仓」场景：不再因未持仓而整条隐藏，改为降级展示为观察提示（🔎），价格结构风险始终可见 |
-| （早期，无精确日期） | 减仓摘要新增区间（120日窗口）回撤 / 反弹统计 |
-| （早期，无精确日期） | 胜率·赔率展示格式统一优化（如"胜78%·赔1.85x"，赔率趋近无穷大时显示"∞"） |
-| （早期，无精确日期） | 数据新鲜度校验修复：未变化计数仅在真实新交易日推进，避免节假日/非交易日造成误判 |
-| （早期，无精确日期） | EWG（德国）、EEM（新兴市场）补上 A股 ETF 映射（此前标记为"无对应ETF"） |
-| （早期，无精确日期） | 修复 000015（上证红利）与 000922（中证红利）ETF 代码重复映射的 bug |
-| （早期，无精确日期） | 修复胜率/历史分位计算未剔除空值样本导致系统性偏低的 bug（如000300一度从真实56%显示成40%） |
-| （早期，无精确日期） | 止损/止盈完整分级逻辑（低估区L1/L2降级、高估区止盈L1/L2升级、QQQ单日急跌独立信号） |
-| （早期，无精确日期） | 「仓位建议」文字说明区块 |
-| （早期，无精确日期） | 「核心估值决策」里综合评级、历史均值、PE历史统计 |
-| （早期，无精确日期） | 止盈信号接入仪表盘「需要处理」置顶判定 |
-| （早期，无精确日期） | QQQ PE 写入方式从模拟网页表单操作改为 GitHub REST API 直接写入，抓取仍由 Claude Cowork + Chrome MCP 完成 |
-| （早期，无精确日期） | 近10月趋势 AI 解读（DashScope 生成一句话走势总结，双数据源降级：DashScope → qnaigc → 规则法兜底，规则法基于分位数五档判断） |
-| （早期，无精确日期） | ETF 行情抓取健全性校验：simple_etf_metrics.py 中 trade_date 缺失标的超过10个时判定为抓取异常并 exit(1)，prepare_all_data.py 将其传播为流程终止，避免数据全空但 CI 显示成功的情况 |
-| （早期，无精确日期） | ETF 执行质量加入 AI 解读 |
+| 2026-11-09 14:55 CST | 前复权改由云端产出：入 `QUANTDASH_API_KEY`、加 quantdash 依赖、prepare_all_data 条件调度；`data/etf_price_adj.csv` 由 9-23 补齐到 11-09；本机 `fetch_and_push.sh` 停用，云端成唯一写入方 |
+| 2026-11-09 13:10 CST | 价格源改为按新鲜度选（前复权滞后 >5 交易日回退未复权并标注）；价格过期时减仓/止盈/清仓降为「信号暂停」；报告并列价格数据日期；新鲜度改按内容日期校验、error/warn 两级、新增守卫自检 |
+| 2026-11-09 11:20 CST | CI 改用 python 3.11（3.10 不在 runner 缓存，下载遇 504）；修 980032 `timedelta` 报错；单标的异常写入 freshness |
+| 2026-10-14 | 修 freshness `.normalize()` 异常；980032 改理杏仁源；930794 streak 误报重置；新增 ERP 条形图并嵌入微信推送 |
+| 2026-09-08 | QQQ PE 抓取改由 Grok 定时任务写入 Actions Variable `QQQ_PE_TODAY` |
+| 2026-09-03 14:15 CST | 前复权链路接入 QuantDash（`adjust=forward`，Key 在仓库外私有配置，本地节流 9 次/分钟） |
+| 2026-09-03 10:24 CST | 价格风险模块加安全回退：无前复权缓存时用未复权价并提示信号失真风险 |
+| 2026-09-02 16:17 CST | 前复权改由本地 `fund_etf_hist_em(adjust=qfq)` 产出，云端只消费缓存；删除 Actions 直连东财的回填 workflow |
+| 2026-08-31 15:02 CST | 云端兜底粒度：本地完整成功只跳过 `simple_etf_metrics`，其余照跑；下行失败标的保留旧值并标 stale |
+| 2026-08-31 14:44 CST | 定下「本地优先、云端兜底」：先拉干净基线再抓取，四个文件一次提交；云端延后至 18:00 并按当日提交跳过 |
+| 2026-08-28 | ETF 指标请求日期统一 Asia/Shanghai |
+| 2026-08-07 | `fetch_and_push.sh` 改本地优先；修并发崩溃（MAX_WORKERS=1）与 akshare 版本过低 |
+| 2026-08-06 | 净值/指数改增量拉取（缓存 + 5 天缓冲）；行情受新浪接口限制仍全量 |
+| 2026-08-05 | 报告精简：仓位建议加 ERP 值、表格折叠、换行修复；文案去重 |
+| 2026-08-05 | 决策仪表盘估值分档下加「胜率×赔率」二级标签 |
+| 2026-08-04 | 修 ETF 价格 8/2 起冻结；云端定时恢复正常 |
+| 2026-08-04 | HSTECH 估值口径由 PE-ERP 改 PS/PSY，删除手动填值机制 |
+| 2026-08-02 | 修微信推送不校验响应体（HTTP 200 但实际未送达） |
+| 2026-08-02 | 目录重组：抓取入 `fetch/`，分析入 `analysis/` |
+| 2026-07-06 | 弃用 pi-mobile；QQQ PE 改 Claude Cowork 定时；指数数 21 个口径修正 |
+| 2026-07-02 | 新增有色（512400.SH）、半导体材料设备（588710.SH）；同步各模块配置并回填历史 |
+| 2026-06-10 | 删无效 plist；`gh auth login` 完成；QQQ PE 改 `gh variable set` 写入 |
+| 2026-06-08 | launchd 方案上线：17:00 CST 触发 `update_pe_trigger.sh`（后续已废弃） |
+| 2026-06-08 | 初始化 CLAUDE.md / STATUS.md / KEYS.md，记录项目结构 |
+| 2025 | 持仓分类映射、稀土/中美互联网等指数、HSTECH PSY 口径、ERP 历史采集 |
+| （早期，无精确日期） | 胜率赔率仓位框架、ETF 执行质量模块、Shiller CAPE、ERP 斜率信号、三级止损/止盈、基本面暴雷预警、决策仪表盘、Pages 自动部署、AI 趋势解读 |
+| （早期，无精确日期） | 修 SPY 全量重建 workflow 被反复触发冲掉增量数据；修胜率历史分位未剔空值导致偏低；修红利两只 ETF 代码重复映射 |
 
-> 2026-06-08 及更早关于 launchd/plist 的历史记录保留作为审计轨迹，不代表当前仍在使用（本地 launchd + AppleScript 方案已废弃，现由 Claude Cowork 自带定时任务负责 QQQ PE 抓取）。
+> 2026-06-08 及更早的 launchd/plist 记录仅作审计轨迹，当前不再使用。
