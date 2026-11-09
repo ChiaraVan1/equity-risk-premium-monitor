@@ -64,6 +64,7 @@ erp_position.py（主入口）
 | 东财 K 线 | `push2his.eastmoney.com/api/qt/stock/kline/get` | 可接（200 / 80ms） | **不可接**（2026-09-02 直连被断） | 风控限流，批量高频易 403 |
 | 东财快讯 | `np-weblist.eastmoney.com/comm/web/getFastNewsList` | 可接 | 可接 | 30 分钟缓存 |
 | 理杏仁 | `open.lixinger.com/api/cn/index/fundamental` | 可接 | 可接 | 需 token，失效即整列缺失 |
+| FRED（国债收益率） | `api.stlouisfed.org/fred/series/observations` | 可接 | 可接 | 需 api_key（明文写在 `fetch_bond_yield*.py` 里，非 Secret）；免费额度 120 次/分钟；增量只拉近 60 天 |
 | multpl.com | `www.multpl.com/s-p-500-pe-ratio/table/by-month` | 可接 | 未验证 | 网页结构变动即断 |
 | worldperatio.com | `worldperatio.com/major-stock-index-pe-ratios` | 可接 | 未验证 | 网页结构变动即断 |
 | GuruFocus / `QQQ_PE_TODAY` | `www.gurufocus.com/economic_indicators/6778/nasdaq-100-pe-ratio` | 只能人工 | 只能人工 | 断更则沿用旧值 |
