@@ -36,6 +36,7 @@ def check_date_freshness(
     date_col: str | None = None,
     max_staleness_days: int = 3,
     skip_weekends: bool = True,
+    date_is_index: bool = False,
 ) -> dict:
     """
     校验一个数据文件的"最新日期"是否新鲜。
@@ -47,10 +48,17 @@ def check_date_freshness(
         max_staleness_days:  允许的最大过期自然日数（已经把周末/节假日缓冲考虑进阈值里，
                               不用再单独调用方处理"今天是周几"）
         skip_weekends:       True 时，若当前是周一，允许的过期天数额外+2（覆盖周末休市）
+        date_is_index:       True 时表示日期是 CSV 的**第一列**（宽表 date 作 index）。
+                             【2026-11-09】此前这类宽表调用方一律传 date_col=None，
+                             于是退化成按文件 mtime 校验；而 git checkout 会把 mtime
+                             重置成"今天"，导致内容停更 44 天的 etf_price_adj.csv
+                             永远报 fresh=True（假绿）。改为按首列真实日期校验。
 
     返回：
-        {label, fresh, last_date/mtime, staleness_days, reason, checked_at}
+        {label, fresh, level, kind, last_date/mtime, staleness_days, reason, checked_at}
         文件不存在也返回 fresh=False，而不是抛异常。
+        level: "error"（校验本身失败/文件缺失） / "warn"（数据陈旧） / "ok"
+        kind:  "校验异常" / "数据陈旧" / "文件缺失" / ""
     """
     now = datetime.now()
     threshold = max_staleness_days
@@ -61,6 +69,8 @@ def check_date_freshness(
         "label": label,
         "path": path,
         "fresh": False,
+        "level": "ok",       # error=校验/文件级故障  warn=数据陈旧  ok=正常
+        "kind": "",          # 校验异常 / 数据陈旧 / 文件缺失
         "last_date": None,
         "staleness_days": None,
         "reason": "",
@@ -69,14 +79,30 @@ def check_date_freshness(
 
     if not os.path.exists(path):
         result["reason"] = "文件不存在"
+        result["level"] = "error"
+        result["kind"] = "文件缺失"
         return result
 
     try:
-        if date_col and path.endswith(".csv"):
+        if date_is_index and path.endswith(".csv"):
+            # 日期在第一列的宽表（date 作 index）：取首列真实日期，不再看 mtime
+            df = pd.read_csv(path, usecols=[0])
+            dates = pd.to_datetime(df[df.columns[0]], errors="coerce").dropna()
+            if len(dates) == 0:
+                result["reason"] = "首列（日期）无有效日期"
+                result["level"] = "error"
+                result["kind"] = "校验异常"
+                return result
+            last_date = dates.max()
+            staleness = (pd.Timestamp(now).normalize() - last_date.normalize()).days
+            result["last_date"] = last_date.strftime("%Y-%m-%d")
+        elif date_col and path.endswith(".csv"):
             df = pd.read_csv(path, usecols=[date_col])
             dates = pd.to_datetime(df[date_col], errors="coerce").dropna()
             if len(dates) == 0:
                 result["reason"] = f"{date_col} 列无有效日期"
+                result["level"] = "error"
+                result["kind"] = "校验异常"
                 return result
             last_date = dates.max()
             # ★ 修复：now 是标准库 datetime，没有 .normalize()（pandas Timestamp 才有）。
@@ -94,10 +120,14 @@ def check_date_freshness(
         result["fresh"] = staleness <= threshold
         if not result["fresh"]:
             result["reason"] = f"已 {staleness} 天未更新（阈值 {threshold} 天）"
+            result["level"] = "warn"
+            result["kind"] = "数据陈旧"
         return result
 
     except Exception as e:
         result["reason"] = f"校验异常: {e}"
+        result["level"] = "error"
+        result["kind"] = "校验异常"
         return result
 
 
@@ -213,29 +243,65 @@ def write_freshness_report(results: list[dict], path: str = FRESHNESS_REPORT_PAT
     payload = {
         "generated_at": datetime.now().isoformat(),
         "results": merged_results,
+        # stale_count 保留原语义（任一异常项），供既有代码/报告继续读；
+        # error_count / warn_count 是新拆的两级：error=校验本身挂了，warn=数据陈旧。
         "stale_count": sum(
             1 for r in merged_results if r.get("fresh") is False or r.get("stale_flag") is True
         ),
+        "error_count": sum(1 for r in merged_results if r.get("level") == "error"),
+        "warn_count": sum(1 for r in merged_results if r.get("level") == "warn"),
     }
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     return payload
 
 
+def check_freshness_report_health(path: str = FRESHNESS_REPORT_PATH, max_hours: int = 26) -> dict:
+    """守卫自己也要被守卫。
+
+    每天正常跑一次的话 generated_at 距今不会超过 26 小时；超过说明校验链
+    根本没在跑（或被跳过），此时所有 fresh=True 都不可信，应视为 error。
+    """
+    now = datetime.now()
+    if not os.path.exists(path):
+        return {"label": "新鲜度守卫自检", "level": "error", "kind": "文件缺失",
+                "reason": "freshness_report.json 不存在", "age_hours": None}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            generated_at = json.load(f).get("generated_at")
+        t = pd.Timestamp(generated_at)
+        age_hours = (pd.Timestamp(now) - t).total_seconds() / 3600.0
+    except Exception as e:
+        return {"label": "新鲜度守卫自检", "level": "error", "kind": "校验异常",
+                "reason": f"读取 generated_at 失败: {e}", "age_hours": None}
+
+    if age_hours > max_hours:
+        return {"label": "新鲜度守卫自检", "level": "error", "kind": "数据陈旧",
+                "reason": f"守卫已 {age_hours:.1f} 小时未运行（阈值 {max_hours} 小时），"
+                          f"报告里的 fresh 判定不可信",
+                "age_hours": round(age_hours, 1), "generated_at": generated_at}
+    return {"label": "新鲜度守卫自检", "level": "ok", "kind": "",
+            "reason": "", "age_hours": round(age_hours, 1), "generated_at": generated_at}
+
+
 def print_freshness_summary(results: list[dict]):
-    """在日志里打印一份醒目的汇总表，过期项前面加 ❌，正常项加 ✅。"""
+    """在日志里打印一份醒目的汇总表：❌=error（校验/文件故障） ⚠️=warn（数据陈旧） ✅=正常。"""
     print("\n" + "=" * 60)
     print("🔍 数据新鲜度汇总")
     print("=" * 60)
-    any_stale = False
+    any_error = any_warn = False
     for r in results:
-        is_bad = (r.get("fresh") is False) or (r.get("stale_flag") is True)
-        mark = "❌" if is_bad else "✅"
-        if is_bad:
-            any_stale = True
+        level = r.get("level") or ("ok" if r.get("fresh") is not False and r.get("stale_flag") is not True else "warn")
+        mark = {"error": "❌", "warn": "⚠️"}.get(level, "✅")
+        if level == "error":
+            any_error = True
+        elif level == "warn":
+            any_warn = True
         detail = r.get("reason") or r.get("stale_note") or ""
         last = r.get("last_date", "")
         print(f" {mark} {r.get('label', '?')}{f' ({last})' if last else ''} {detail}")
-    if any_stale:
-        print("\n⚠️ 存在数据新鲜度异常，请检查上方标 ❌ 的数据源，报告结论可能不可靠。")
+    if any_error:
+        print("\n❌ [error] 校验/文件级故障：结论可信度未知，需人工排查（不是数据延迟）。")
+    if any_warn:
+        print("\n⚠️ [warn] 数据陈旧：报告结论可能基于旧数据，价格类信号应视为无效。")
     print("=" * 60)

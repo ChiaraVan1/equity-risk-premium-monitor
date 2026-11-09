@@ -241,8 +241,8 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
         return f"{header}\n\n{table_html}\n\n---\n"
 
 
-def markdown_to_html(md_text: str, date_str: str) -> str:
-    """将Markdown转为HTML。"""
+def markdown_to_html(md_text: str, date_str: str, price_meta: str | None = None) -> str:
+    """将Markdown转为HTML。price_meta 与"生成时间"并列展示价格数据日期。"""
     html_content = markdown2.markdown(md_text, extras=["tables", "fenced-code-blocks"])
 
     html_doc = f"""<!DOCTYPE html>
@@ -272,17 +272,18 @@ code {{ background-color: #f4f4f4; padding: 2px 6px; border-radius: 3px; }}
 <body>
 <h1>📊 ERP 策略每日监控报告</h1>
 <p><strong>生成时间：</strong> {date_str}</p>
+<p><strong>价格数据日期：</strong> {price_meta or '未提供'}</p>
 {html_content}
 </body>
 </html>"""
     return html_doc
 
 
-def save_html_report(full_report_md: str, date_str: str):
+def save_html_report(full_report_md: str, date_str: str, price_meta: str | None = None):
     """保存HTML报告到本地。"""
     os.makedirs("./docs", exist_ok=True)
 
-    html_content = markdown_to_html(full_report_md, date_str)
+    html_content = markdown_to_html(full_report_md, date_str, price_meta)
 
     file_path = f"./docs/report.html"
     with open(file_path, "w", encoding="utf-8") as f:

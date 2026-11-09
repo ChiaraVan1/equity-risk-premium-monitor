@@ -132,6 +132,37 @@ def load_etf_adjusted_price_series(erp_code: str):
     return pd.to_numeric(df[erp_code], errors="coerce").dropna().sort_index()
 
 
+# 【2026-11-09】价格类信号的一级口径：内容日期滞后超过 N 个交易日即判为过期，
+# 强制回退到原始价，并由报告侧硬闸门停发减仓/止盈/清仓信号。
+MAX_PRICE_LAG_TRADING_DAYS = 5
+
+
+def get_etf_price_last_date():
+    """etf_price.csv 内容里的最后一个交易日（当交易日历用），没数据返回 None。"""
+    if not os.path.exists(ETF_PRICE_PATH):
+        return None
+    try:
+        idx = pd.read_csv(ETF_PRICE_PATH, index_col=0, parse_dates=True).index
+        return pd.Timestamp(idx.max()).normalize() if len(idx) else None
+    except Exception:
+        return None
+
+
+def price_lag_trading_days(end_date):
+    """end_date 之后还有多少个交易日（到 etf_price.csv 最新一行为止）。
+
+    用真实交易日历而不是自然日：长假和周末不会被误判成"过期"。
+    返回 None 表示无法判断（缺少 end_date 或价格文件）。
+    """
+    if end_date is None:
+        return None
+    try:
+        idx = pd.read_csv(ETF_PRICE_PATH, index_col=0, parse_dates=True).index
+    except Exception:
+        return None
+    return int((idx > pd.Timestamp(end_date)).sum())
+
+
 # ══════════════════════════════════════════════════════════════════════
 #  东方财富快讯（基本面预警数据源）
 # ══════════════════════════════════════════════════════════════════════
@@ -292,25 +323,25 @@ def prepare_all_data():
             check_date_freshness(
                 label="ETF价格序列",
                 path=ETF_PRICE_PATH,
-                date_col=None,  # 日期是index不是普通列，同样退化为mtime校验
+                date_is_index=True,  # 日期在首列：按内容日期校验；mtime 在 CI checkout 后会被重置成"今天"
                 max_staleness_days=3,
             ),
             check_date_freshness(
                 label="ETF前复权价格序列",
                 path=ETF_ADJ_PRICE_PATH,
-                date_col=None,
+                date_is_index=True,
                 max_staleness_days=3,
             ),
             check_date_freshness(
                 label="ETF净值序列",
                 path=ETF_NAV_PATH,
-                date_col=None,  # 日期是index不是普通列，退化为mtime校验
+                date_is_index=True,
                 max_staleness_days=3,
             ),
             check_date_freshness(
                 label="基准指数涨跌幅序列",
                 path=INDEX_PCT_PATH,
-                date_col=None,  # 日期是index不是普通列，退化为mtime校验
+                date_is_index=True,
                 max_staleness_days=3,
             ),
         ]

@@ -12,6 +12,9 @@ from prepare_all_data import (
     prepare_all_data,
     load_etf_adjusted_price_series,
     load_etf_price_series,
+    MAX_PRICE_LAG_TRADING_DAYS,
+    price_lag_trading_days,
+    get_etf_price_last_date,
 )
 from analysis.valuation import build_shiller_block, build_unified_valuation_block, calc_odds, is_holding
 from analysis.risk import (compute_exit_signal_summary, build_exit_signal_block,
@@ -23,6 +26,7 @@ from analysis.utils import (check_metric_freshness, build_freshness_note, genera
                              _format_win_odds, _format_range, safe_action_markers)
 from report.markdown import build_summary_block, save_html_report, send_to_wechat
 from report.erp_chart import build_erp_chart
+from fetch.freshness import check_freshness_report_health
 from analysis.dividend_yield_analysis import build_dividend_yield_block
 from analysis.popularity_signal import build_popularity_block, compute_popularity_confirmation
 from analysis.etf_quality import build_etf_quality_block
@@ -185,17 +189,55 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     bubble, value, spec, b_msg, v_msg, t_msg = compute_position_sizing(current_erp, quantiles)
     total_pct = bubble + value + spec
 
-    # 优先使用前复权 ETF 价格；首次缓存尚未建成时保留原有价格风险模块，
-    # 但必须在报告里明确披露未复权口径，避免把份额折算误读为真实回撤。
-    price_series = load_etf_adjusted_price_series(code)
-    if price_series is None:
-        price_series = load_etf_price_series(code)
-        price_source_note = (
-            "\n> ⚠️ 价格风险信号暂用未复权 ETF 收盘价；分红或份额折算附近的"
-            "回撤、均线及止盈止损信号可能失真。\n"
+    # 【2026-11-09】价格源按"新鲜度"选，不再按"文件在不在"选。
+    # 旧逻辑：只要 etf_price_adj.csv 里有这只标的就用前复权 —— 于是内容停在
+    # 2026-09-23 的前复权价永远赢过更新到当日的新价格，回撤/均线/止损全部基于旧价。
+    # 新逻辑：前复权价滞后超过 MAX_PRICE_LAG_TRADING_DAYS 个交易日就强制回退到
+    # 未复权价，并在报告里显式标出回退原因；价格数据日期与生成时间并列展示。
+    raw_price_series = load_etf_price_series(code)
+    adj_price_series = load_etf_adjusted_price_series(code)
+
+    price_series = None
+    price_source_note = ""
+    price_source_label = "无价格数据"
+    price_end = None
+    price_lag = None
+    adj_end = pd.Timestamp(adj_price_series.index[-1]) if adj_price_series is not None else None
+    adj_lag = price_lag_trading_days(adj_end) if adj_end is not None else None
+
+    if adj_price_series is not None and (adj_lag is None or adj_lag <= MAX_PRICE_LAG_TRADING_DAYS):
+        price_series = adj_price_series
+        price_end, price_lag = adj_end, adj_lag
+        price_source_label = "前复权"
+    elif raw_price_series is not None:
+        price_series = raw_price_series
+        price_end = pd.Timestamp(raw_price_series.index[-1])
+        price_lag = price_lag_trading_days(price_end)
+        price_source_label = "未复权"
+        if adj_price_series is not None:
+            price_source_note = (
+                f"\n> ⚠️ 前复权价已过期：最新只到 {adj_end:%Y-%m-%d}（滞后 {adj_lag} 个交易日，"
+                f"阈值 {MAX_PRICE_LAG_TRADING_DAYS}），已回退到未复权 ETF 收盘价。"
+                f"分红或份额折算附近的回撤、均线及止盈止损信号可能失真。\n"
+            )
+        else:
+            price_source_note = (
+                "\n> ⚠️ 价格风险信号暂用未复权 ETF 收盘价；分红或份额折算附近的"
+                "回撤、均线及止盈止损信号可能失真。\n"
+            )
+
+    # 硬闸门：价格数据年龄超过阈值时，任何减仓/止盈/清仓信号都不许输出。
+    # 宁可没有建议，也不能基于一个多月前的价格给出"强制全清"。
+    price_gate = (price_end is not None and price_lag is not None
+                  and price_lag > MAX_PRICE_LAG_TRADING_DAYS)
+
+    if price_end is not None:
+        price_meta_line = (
+            f"> 📅 价格数据日期：**{price_end:%Y-%m-%d}**（{price_source_label}，"
+            f"滞后 {price_lag if price_lag is not None else '?'} 个交易日）\n\n"
         )
     else:
-        price_source_note = ""
+        price_meta_line = "> 📅 价格数据日期：**无**（未找到价格文件）\n\n"
 
     # 【2026-08-02 恢复】PE/PSY 数据新鲜度校验——check_metric_freshness()/
     # build_freshness_note() 之前只在 import 列表里，从没被实际调用过，导致
@@ -218,7 +260,7 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
 
     # 生成各类分析块
     holding = is_holding(code)
-    header_block = f"## {name}（{code}）\n{freshness_note}{price_source_note}"
+    header_block = f"## {name}（{code}）\n{price_meta_line}{freshness_note}{price_source_note}"
 
     shiller_block = build_shiller_block(code, (
         prepared_data.get("shiller_grouped"),
@@ -230,27 +272,47 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
 
     trend_block = build_trend_block(df, name, erp_series, code, quantiles, ps_df=prepared_data.get("ps_data"))
 
-    exit_summary = compute_exit_signal_summary(code, win_rate, price_series, holding)
-    exit_block = build_exit_signal_block(code, win_rate, price_series, holding)
-
-    # 止盈信号仅对持仓有意义，未持仓无仓位可止盈，维持跳过（拆分前原版逻辑，2026-08-03恢复）。
-    if holding:
-        profit_summary = compute_profit_signal_summary(code, win_rate, price_series)
-        profit_block = build_profit_signal_block(code, win_rate, price_series)
+    # 【2026-11-09 硬闸门】价格数据过期时，回撤/均线/止盈/止损一律不输出。
+    # 这一段必须在 build_exit_signal_block 之前短路，否则旧价会被算成"🚨 强制全清"。
+    if price_gate:
+        gate_msg = (
+            f"⛔ 数据已过期，信号暂停 — 价格数据止于 {price_end:%Y-%m-%d}，"
+            f"滞后 {price_lag} 个交易日（阈值 {MAX_PRICE_LAG_TRADING_DAYS} 个交易日）。"
+            f"回撤、均线、减仓/止盈/强制清仓信号全部基于旧价，已停止输出。"
+        )
+        exit_summary = {"level": -2, "verdict_icon": "⛔", "message": gate_msg, "has_data": True}
+        profit_summary = {"level": -2, "verdict_icon": "⛔", "message": gate_msg}
+        exit_block = f"\n---\n### 减仓 / 清仓信号\n\n> **{gate_msg}**\n"
+        profit_block = (f"\n---\n### 止盈信号\n\n> **{gate_msg}**\n" if holding else "")
+        range_stats = None
+        position_block = build_position_block(
+            bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
+            exit_level=0, profit_level=0,
+            exit_icon="─", profit_icon="─",
+            current_erp=current_erp,
+        )
     else:
-        profit_summary = {"level": 0, "verdict_icon": "─", "message": ""}
-        profit_block = ""
+        exit_summary = compute_exit_signal_summary(code, win_rate, price_series, holding)
+        exit_block = build_exit_signal_block(code, win_rate, price_series, holding)
 
-    # 【2026-08-02 恢复】仓位建议区块（三仓文案 + 触发止损/止盈时的override提示），
-    # 之前完全没有生成，仪表盘/详情页都看不到"为什么是这个仓位比例"的文字说明。
-    position_block = build_position_block(
-        bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
-        exit_level=exit_summary.get("level", 0), profit_level=profit_summary.get("level", 0),
-        exit_icon=exit_summary.get("verdict_icon", "─"), profit_icon=profit_summary.get("verdict_icon", "─"),
-        current_erp=current_erp,
-    )
+        # 止盈信号仅对持仓有意义，未持仓无仓位可止盈，维持跳过（拆分前原版逻辑，2026-08-03恢复）。
+        if holding:
+            profit_summary = compute_profit_signal_summary(code, win_rate, price_series)
+            profit_block = build_profit_signal_block(code, win_rate, price_series)
+        else:
+            profit_summary = {"level": 0, "verdict_icon": "─", "message": ""}
+            profit_block = ""
 
-    range_stats = compute_range_drawdown_rebound(code, price_series, lookback=120) or {}
+        # 【2026-08-02 恢复】仓位建议区块（三仓文案 + 触发止损/止盈时的override提示），
+        # 之前完全没有生成，仪表盘/详情页都看不到"为什么是这个仓位比例"的文字说明。
+        position_block = build_position_block(
+            bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
+            exit_level=exit_summary.get("level", 0), profit_level=profit_summary.get("level", 0),
+            exit_icon=exit_summary.get("verdict_icon", "─"), profit_icon=profit_summary.get("verdict_icon", "─"),
+            current_erp=current_erp,
+        )
+
+        range_stats = compute_range_drawdown_rebound(code, price_series, lookback=120) or {}
 
     popularity_block = build_sentiment_block(code, name, code, win_rate, prepared_data.get("news_df"))
 
@@ -292,7 +354,10 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
             "profit_level": profit_summary.get("level", 0),
             "profit_icon": profit_summary.get("verdict_icon", "─"),
             "profit_message": profit_summary.get("message", ""),
-            "range_str": _format_range(range_stats) if range_stats else "─",
+            "range_str": ("⛔ 价格过期" if price_gate else
+                          (_format_range(range_stats) if range_stats else "─")),
+            "price_date": f"{price_end:%Y-%m-%d}" if price_end is not None else "无",
+            "price_gate": price_gate,
             "vol_icon": markers["vol_icon"],
             "premium_icon": markers["premium_icon"],
             "divergence_flag": markers["divergence_flag"],
@@ -302,6 +367,31 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         })
 
     return md
+
+
+def build_price_meta_summary() -> str:
+    """报告头用：未复权价与前后复权价的最新日期各自可见。
+
+    【2026-11-09】此前报告只有"生成时间"，价格数据日期被隐掉——那正是"报告写
+    11/07、价格其实是 9/23"这类问题的遮羞布。
+    """
+    raw_last = get_etf_price_last_date()
+    adj_last = None
+    try:
+        idx = pd.read_csv("./data/etf_price_adj.csv", index_col=0, parse_dates=True).index
+        adj_last = pd.Timestamp(idx.max()).normalize() if len(idx) else None
+    except Exception:
+        adj_last = None
+
+    if raw_last is None:
+        return "无价格文件"
+    if adj_last is None:
+        return f"{raw_last:%Y-%m-%d}（未复权）；前复权文件缺失"
+    lag = price_lag_trading_days(adj_last)
+    if lag is not None and lag > MAX_PRICE_LAG_TRADING_DAYS:
+        return (f"{raw_last:%Y-%m-%d}（未复权，信号已回退到此）｜前复权 {adj_last:%Y-%m-%d} "
+                f"⛔ 滞后 {lag} 个交易日，已停用")
+    return f"{raw_last:%Y-%m-%d}（未复权）｜前复权 {adj_last:%Y-%m-%d}（滞后 {lag} 个交易日）"
 
 
 if __name__ == "__main__":
@@ -324,11 +414,23 @@ if __name__ == "__main__":
         date_str = datetime.now().strftime("%Y-%m-%d")
         summary_html = build_summary_block(summary_list, output_format="html")
         full_md = "\n".join(report_list)
+        price_meta = build_price_meta_summary()
+
+        # 【2026-11-09】守卫自己也要被守卫：freshness 报告太久没更新，
+        # 说明整条校验链没在跑，此时报告里的 fresh 判定全部不可信。
+        health = check_freshness_report_health()
+        guard_warn = ""
+        if health.get("level") == "error":
+            guard_warn = f"> ⚠️【守卫自检】{health.get('reason')}\n\n"
+            print(f"\n⚠️ 守卫自检异常：{health.get('reason')}")
+            full_md = guard_warn + full_md
+        else:
+            print(f"\n✅ 守卫自检正常（freshness_report 更新于 {health.get('age_hours')} 小时前）")
 
         # docs/report.html 照常本地生成——即使是预览模式也生成没关系，
         # 因为 gh-pages 部署那一步在 workflow 里已经用
         # `if: github.event.inputs.dry_run != 'true'` 挡住了，不会真的发布出去。
-        save_html_report(full_md, date_str)
+        save_html_report(full_md, date_str, price_meta)
 
         # 生成 ERP 概览条形图到 docs/erp_chart.png（gh-pages 部署后获得稳定 URL）。
         # 注意：Server酱推送发生在 gh-pages 部署之前，微信正文当天的图 URL 指向的
@@ -342,6 +444,9 @@ if __name__ == "__main__":
         if erp_chart_url:
             wechat_md = f"![各标的ERP概览]({erp_chart_url})\n\n{wechat_md}"
         wechat_md = f"{wechat_md}\n\n📄 [查看完整报告]({report_url})"
+        if guard_warn:
+            wechat_md = f"{guard_warn}{wechat_md}"
+        wechat_md = f"> 📅 价格数据日期：{price_meta}\n\n{wechat_md}"
 
         dry_run = os.getenv("DRY_RUN", "").strip().lower() == "true"
         if dry_run:
