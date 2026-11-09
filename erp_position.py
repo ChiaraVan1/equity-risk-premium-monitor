@@ -30,6 +30,7 @@ from fetch.freshness import check_freshness_report_health
 from analysis.dividend_yield_analysis import build_dividend_yield_block
 from analysis.popularity_signal import build_popularity_block, compute_popularity_confirmation
 from analysis.etf_quality import build_etf_quality_block
+from analysis.ma_position import build_ma_position_block
 
 
 def compute_position_sizing(current_erp, quantiles):
@@ -321,7 +322,11 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     etf_df = prepared_data.get("etf_df")
     etf_block = build_etf_quality_block(code, etf_df)
 
-    md = f"""{header_block}{position_block}{unified_block}{trend_block}{exit_block}{profit_block}{popularity_block}{dividend_block}{etf_block}{shiller_block}"""
+    # 【新增】均线位置块：MA20 只回答"这个价能不能下手"，放在执行层（ETF 执行质量之前），
+    # 不再埋在"减仓/止盈"明细表里。失败返回空串，不影响主报告。
+    ma_position_block = build_ma_position_block(code, price_series, holding)
+
+    md = f"""{header_block}{position_block}{unified_block}{trend_block}{exit_block}{profit_block}{popularity_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
 
     # 汇总信息用于仪表盘
     if summary_list is not None:
