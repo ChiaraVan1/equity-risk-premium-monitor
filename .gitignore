@@ -2,3 +2,4 @@ fetch_and_push.sh
 logs/
 __pycache__/
 .DS_Store
+check_cloud_run.sh
