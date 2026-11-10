@@ -1,6 +1,6 @@
 STATUS.md — 跨 session 运行记忆
 
-每次完成工作后更新此文件（直接更新，无需确认）。每条记录带精确时间，只写一句话结论，不写过程。最后更新：2026-11-09 CST
+每次完成工作后更新此文件（直接更新，无需确认）。每条记录带精确时间，只写一句话结论，不写过程。最后更新：2026-11-10 CST
 
 ## TODO
 
@@ -10,7 +10,7 @@ STATUS.md — 跨 session 运行记忆
 - 新鲜度校验：能检测但未影响结论；抓取失败会覆盖旧值；覆盖面仅部分列
 - 930794 偶发缺 IndexClose → PE ffill → streak 误报（已重置，频繁再发再考虑换源）
 - 无远程失败通知；QQQ_PE_TODAY 当日未写入会沿用旧值
-- cron-job.org 每天 18:30 CST 触发 workflow_dispatch；GitHub 原 schedule 与其撞车
+- cron-job.org 每天 18:30 CST 触发 workflow_dispatch（内置 schedule 已删，无重复触发）
 - EWQ/EWG/EWJ/EEM 历史 PE 为估算值，长期需更准数据源
 - 迁移 AI API 后观察 1-2 天日志，确认无解读失败
 - ERP 图微信推送滞后一天（推送早于 gh-pages 部署）
@@ -19,6 +19,8 @@ STATUS.md — 跨 session 运行记忆
 
 | 日期 | 变更内容 |
 |---|---|
+| 2026-11-10 CST | 按投资规则重构：删热榜人气信号模块；仓位由三仓拆分改「ERP 分位 → 档位 → 一档定额」；减仓/清仓/止盈不再产出（summary 强制 level 0）；本地 DRY_RUN 三跑通过 |
+| 2026-11-10 CST | ETF 执行质量删价格/量背离与资金加速度，成交额分位改归 A 段下单成本口径；README 清理已停用模块沿革与固定阈值兜底描述 |
 | 2026-11-09 14:55 CST | 前复权改由云端产出：入 `QUANTDASH_API_KEY`、加 quantdash 依赖、prepare_all_data 条件调度；`data/etf_price_adj.csv` 由 9-23 补齐到 11-09；本机 `fetch_and_push.sh` 停用，云端成唯一写入方 |
 | 2026-11-09 13:10 CST | 价格源改为按新鲜度选（前复权滞后 >5 交易日回退未复权并标注）；价格过期时减仓/止盈/清仓降为「信号暂停」；报告并列价格数据日期；新鲜度改按内容日期校验、error/warn 两级、新增守卫自检 |
 | 2026-11-09 11:20 CST | CI 改用 python 3.11（3.10 不在 runner 缓存，下载遇 504）；修 980032 `timedelta` 报错；单标的异常写入 freshness |
