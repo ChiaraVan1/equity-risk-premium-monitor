@@ -5,9 +5,8 @@ ETF 执行质量分析模块
 数据源: simple_etf_metrics.csv
 补充维度（不替代 ERP 估值判断，仅辅助执行决策）：
   1. 折溢价率   — 当前买入/卖出的执行成本
-  2. 换手背离   — 价格走势是否有成交量支撑
-  3. 波动/回撤  — 当前风险水位（历史分位）
-  4. 超额收益   — ETF 跟踪质量 + 近期相对基准动量
+  2. 波动/回撤  — 当前风险水位（历史分位）
+  3. 超额收益   — ETF 跟踪质量 + 近期相对基准动量
 
 【2026-10-08 迁移说明】七牛云 qnaigc 已收费，AI 解读统一改走 analysis/llm_client.py
 （阿里云 DashScope，ALIYUN_API_KEY）。降级链：AI 解读 → 规则版 build_etf_quality_block 原文。
@@ -24,7 +23,7 @@ _metrics_cache = {}
 
 def _etf_conclusion_prompt(name, ts_code, conclusions: dict) -> str:
     """注意：喂给AI的是 A/B/C 规则已经算出来的结论文字，不是原始指标数字——
-    规则计算（折溢价分档/量能背离/风险分位等）仍由本模块负责，AI只负责把
+    规则计算（折溢价分档/风险分位等）仍由本模块负责，AI只负责把
     这些已有判断组织成一段人话，不重新做判断、不看不到的原始数据。"""
     lines = "\n".join(f"- {k}: {v}" for k, v in conclusions.items())
     return f"""你是一名ETF交易执行顾问。以下是「{name}（{ts_code}）」这只ETF今天的执行质量分析结论（已经过规则计算，你不需要重新判断，只需要把这些结论组织成一段人话）：
@@ -33,7 +32,7 @@ def _etf_conclusion_prompt(name, ts_code, conclusions: dict) -> str:
 
 请只给出一段结论性文字（3-5句话，不用列表、不用小标题），直接回答三个问题：
 1. 今天怎么下单（折溢价是否划算，市价/限价/等一等）
-2. 现在建仓要不要分批、量能是否支撑当前走势
+2. 现在建仓要不要分批
 3. 这只ETF长期跟踪质量如何，是否值得继续持有或该考虑换仓
 
 直接给结论，语气像给自己看的交易笔记，不要输出任何多余的开场白或标题，也不要逐条复述上面的结论列表。"""
@@ -98,9 +97,6 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     discount_q3y     = safe("discount_quantile_3y", 0.5)
     discount_5d_chg  = safe("change_5d_discount", 0.0)
     discount_10d_chg = safe("change_10d_discount", 0.0)
-    turnover_q       = safe("turnover_quantile", 0.5)
-    acceleration     = safe("turnover_acceleration", float("nan"))
-    divergence       = bool(safe("is_price_turnover_divergence", False))
     vol_q1y          = safe("volatility_quantile_1y", 0.5)
     dd_q1y           = safe("max_drawdown_quantile_1y", 0.5)
     ann_vol          = safe("annualized_volatility", 0.0)
@@ -162,36 +158,7 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
             trend_label = "折溢价近期稳定"
 
     # ══════════════════════════════════════════════════════
-    # B. 这波量是否真实 — 资金流
-    # ══════════════════════════════════════════════════════
-    tq_pct = turnover_q * 100
-    if turnover_q >= 0.8:
-        tq_icon, tq_label = "🔥", f"1周成交额在52周中处于{tq_pct:.0f}%分位 — 市场高度活跃"
-    elif turnover_q >= 0.5:
-        tq_icon, tq_label = "🟡", f"1周成交额在52周中处于{tq_pct:.0f}%分位 — 活跃度中等"
-    else:
-        tq_icon, tq_label = "🧊", f"1周成交额在52周中处于{tq_pct:.0f}%分位 — 成交清淡"
-
-    if pd.notna(acceleration):
-        acc_pct = acceleration * 100
-        if acceleration > 1.6:
-            acc_label = f"🔥 {acc_pct:.0f}% — 本周放量明显（正常≈100%），资金加速涌入"
-        elif acceleration > 1.0:
-            acc_label = f"🟡 {acc_pct:.0f}% — 本周略高于近4周均值，温和放量"
-        elif acceleration > 0.4:
-            acc_label = f"🟠 {acc_pct:.0f}% — 本周低于近4周均值，资金动能偏弱"
-        else:
-            acc_label = f"🧊 {acc_pct:.0f}% — 本周明显缩量，谨慎追入"
-    else:
-        acc_label = "─ 数据不足"
-
-    if divergence:
-        div_label = "⚠️ 背离 — 价格走势与成交量方向相反，需警惕假突破/假跌破"
-    else:
-        div_label = "✅ 无背离 — 价格与成交量方向一致，走势有量配合"
-
-    # ══════════════════════════════════════════════════════
-    # C. 风险水位 / 换只ETF — 波动 + 超额收益
+    # B. 风险水位 / 换只ETF — 波动 + 超额收益
     # ══════════════════════════════════════════════════════
     vol_pct = vol_q1y * 100
     if vol_q1y >= 0.85:
@@ -246,9 +213,6 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     # ══════════════════════════════════════════════════════
     conclusions = {
         "折溢价": f"{disc_label}（{q_label.split('—')[-1].strip()}），{trend_label}，判断：{disc_action}",
-        "资金活跃度": tq_label.split("—")[-1].strip() if "—" in tq_label else tq_label,
-        "资金加速度": acc_label,
-        "价量背离": div_label,
         "波动率水位": vol_label,
         "回撤水位": dd_label,
         "综合风险结论": risk_conclusion,
@@ -268,8 +232,6 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     alerts = []
     if discount_rate > 0.003:
         alerts.append("溢价偏高→等折价或限价")
-    if divergence:
-        alerts.append("价格/量背离→确认量能再入")
     if vol_q1y >= 0.85:
         alerts.append("波动高位→分批建仓")
     if dd_q1y < 0.3 and vol_q1y < 0.4:
@@ -297,14 +259,7 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 - 当前：{disc_icon} {disc_label}（1年{q1y_pct:.0f}% / 3年{q3y_pct:.0f}%分位）— {q_label.split('—')[-1].strip()} → {disc_action}
 - 趋势：5日{d5_str} / 10日{d10_str} → {trend_label}
 
-**B · 这波量是否真实（资金流）**
-> 价格涨但量在缩 = 假突破；价格跌但量在涨 = 可能在建仓。量配合才值得跟。
-
-- 资金活跃度：{tq_icon} {tq_label}
-- 资金加速度：{acc_label}
-- 价格/量背离：{div_label}
-
-**C · 风险水位 / 要不要换ETF（波动 + 超额收益）**
+**B · 风险水位 / 要不要换ETF（波动 + 超额收益）**
 > 波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。
 
 - 年化波动率：{ann_vol:.1f}%，{vol_icon} {vol_label}
