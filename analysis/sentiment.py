@@ -243,14 +243,14 @@ news_sentiment 数组的长度和顺序必须与上面新闻列表一一对应�
 # ══════════════════════════════════════════════════════════════════════
 
 def build_sentiment_block(code, name, etf_code, erp_percentile, news_df=None):
-    """生成综合情绪块（热度 + 基本面预警）。"""
+    """生成综合情绪块（仅基本面预警）。"""
     blocks = []
 
-    # 1. 热度信号
-    popularity_result = compute_popularity_confirmation(code, erp_percentile)
-    popularity_block = build_popularity_block(code, erp_percentile, precomputed=popularity_result)
-    if popularity_block:
-        blocks.append(popularity_block)
+    # 1. 热度/热榜信号 —— 2026-11-10 停用（用户判定为噪声，不参与任何决策）
+    # popularity_result = compute_popularity_confirmation(code, erp_percentile)
+    # popularity_block = build_popularity_block(code, erp_percentile, precomputed=popularity_result)
+    # if popularity_block:
+    #     blocks.append(popularity_block)
 
     # 2. 基本面预警
     _, fundamental_block = build_fundamental_alert_block(code, name, news_df)
