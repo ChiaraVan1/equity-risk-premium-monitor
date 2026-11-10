@@ -86,29 +86,39 @@ def fetch(code, start_date, end_date):
 
 # ─────────────────────────── 回测 ───────────────────────────
 
-def backtest_one(df, threshold, horizon=60):
-    """逐点入场。返回明细 DataFrame。"""
+def backtest_one(df, threshold, horizon=60, hold_years=None):
+    """逐点入场。hold_years=None 时持有到期末；否则固定持有 N 年强制结算。"""
     c = df["close"].values.astype(float)
-    dates = df["date"].values
+    dates = pd.to_datetime(df["date"]).values
     n = len(c)
     rows = []
 
     for i in range(n - 1):
+        if hold_years:
+            target = np.datetime64(pd.Timestamp(dates[i]) + pd.DateOffset(years=int(hold_years)))
+            end_idx = int(np.searchsorted(dates, target))
+            if end_idx >= n:
+                continue  # 尾部不足一个完整持有期，跳过
+        else:
+            end_idx = n - 1
+        if end_idx <= i:
+            continue
+
         cost = c[i]
         thr = cost * (1 - threshold / 100.0)
-        fut = c[i + 1:]
+        fut = c[i + 1:end_idx + 1]
         hit = np.nonzero(fut <= thr)[0]
-        hold_ret = c[-1] / cost - 1.0  # 死扛：持有到期末
+        hold_ret = c[end_idx] / cost - 1.0
 
         if len(hit):
             j = i + 1 + int(hit[0])
             exit_price = c[j]
             cut_ret = exit_price / cost - 1.0
-            k = min(j + horizon, n - 1)
+            k = min(j + horizon, end_idx)
             post = c[k] / exit_price - 1.0
             rows.append((i, 1, j - i, cut_ret, hold_ret, post, float(cost)))
         else:
-            rows.append((i, 0, n - 1 - i, hold_ret, hold_ret, np.nan, float(cost)))
+            rows.append((i, 0, end_idx - i, hold_ret, hold_ret, np.nan, float(cost)))
 
     out = pd.DataFrame(rows, columns=[
         "entry_idx", "triggered", "hold_days", "cut_ret", "hold_ret", "post_horizon_ret", "cost"
@@ -185,10 +195,11 @@ def judge(rows):
     return verdict, valid, note
 
 
-def write_report(rows, verdict, valid, note, horizon):
+def write_report(rows, verdict, valid, note, horizon, hold_years=None):
     os.makedirs(RESULT_DIR, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M")
-    csv_path = os.path.join(RESULT_DIR, f"backtest_stoploss_{stamp}.csv")
+    tag = f"{int(hold_years)}y" if hold_years else "toperiod"
+    csv_path = os.path.join(RESULT_DIR, f"backtest_stoploss_{stamp}_{tag}.csv")
     pd.DataFrame(rows).to_csv(csv_path, index=False, encoding="utf-8-sig")
 
     md = [f"# 成本回撤止损阈值回测（逐点入场法）", "",
@@ -213,7 +224,7 @@ def write_report(rows, verdict, valid, note, horizon):
            "3. 未计入交易成本与滑点；阈值越近触发越频繁，实际损耗更大。",
            "4. 判定规则事先写死（收益差中位 > 0 且 止损更优占比 > 55%，需 ≥2 只票、≥3 阈值同时成立），避免看到结果再挑理由。", "",
            f"明细 CSV：`{csv_path}`"]
-    md_path = os.path.join(RESULT_DIR, f"backtest_stoploss_{stamp}.md")
+    md_path = os.path.join(RESULT_DIR, f"backtest_stoploss_{stamp}_{tag}.md")
     with open(md_path, "w", encoding="utf-8") as f:
         f.write("\n".join(md))
     return csv_path, md_path
@@ -233,6 +244,8 @@ def main():
     ap.add_argument("--years", type=int, default=10)
     ap.add_argument("--thresholds", default="5,8,10,15,20")
     ap.add_argument("--horizon", type=int, default=60)
+    ap.add_argument("--hold-years", type=float, default=None,
+                    help="固定持有年限，到期强制结算；不给则持有到期末")
     args = ap.parse_args()
 
     end = datetime.now()
@@ -254,7 +267,7 @@ def main():
             print("  ✗ 样本不足 250 日，跳过")
             continue
         for x in ths:
-            d = backtest_one(df, x, args.horizon)
+            d = backtest_one(df, x, args.horizon, args.hold_years)
             all_rows.append(summarize(d, code, x, source, name))
 
     if not all_rows:
@@ -267,7 +280,7 @@ def main():
 
     verdict, valid, note = judge(all_rows)
     print(f"\n判定：{verdict}    {note}")
-    csv_path, md_path = write_report(all_rows, verdict, valid, note, args.horizon)
+    csv_path, md_path = write_report(all_rows, verdict, valid, note, args.horizon, args.hold_years)
     print(f"明细：{csv_path}\n结论：{md_path}")
 
 
