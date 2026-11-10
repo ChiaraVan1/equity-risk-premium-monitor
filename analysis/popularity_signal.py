@@ -35,10 +35,11 @@ MASTER_CSV_URL = (
     "https://raw.githubusercontent.com/ChiaraVan1/xueqiu_hot/main/"
     "xueqiu_data/xueqiu_hot_master.csv"
 )
-# 【新增】板块轮动数据源：qwenwork 基金工作台的后端接口（服务端拉天天基金指数基金计算）。
-# 返回结构：{"ok":true,"result":{"periods":{"w1":{"top":[{"key","code","name","inception","value"}...],
-#          "bottom":[...]}, "m1":..., "m3":..., "m6":..., "ytd":...}}}
-ROTATION_API_URL = "https://4vh8j4cl.qwenwork.host/api/rotation?qdii=1"
+# 板块轮动数据源：基金工作台已从 qwenwork 动态页迁到「静态单文件」页（链接恒定，页面内联快照）。
+# 旧域名 4vh8j4cl 已冻结且无人维护——用它只会静默拿到过期数据，故 2026-11-10 改为读快照。
+# snapshot.rotation 结构 = {"computedAt", "periods":{"w1":{"top":[{key,code,name,inception,value}...],"bottom":[...]}, ...}}
+SNAPSHOT_PAGE_URL = "https://ycnqgm8f2pbw.doubao.link/app/app_17hs0hy3tm6"
+ROTATION_API_URL = SNAPSHOT_PAGE_URL  # 兼容旧引用/日志文案
 
 # 只分析「全球」榜单（沪深/港股/美股一律不参与统计）
 TARGET_LIST = "全球"
@@ -138,10 +139,16 @@ def fetch_sector_rotation(timeout: int = 20, use_cache: bool = True):
     if use_cache and _rotation_cache is not None:
         return _rotation_cache
     try:
-        resp = requests.get(ROTATION_API_URL, timeout=timeout)
+        resp = requests.get(SNAPSHOT_PAGE_URL, timeout=timeout)
         resp.raise_for_status()
-        payload = resp.json()
-    except (requests.exceptions.RequestException, ValueError) as e:
+        txt = resp.text
+        i = txt.find("window.__SNAPSHOT__")
+        if i < 0:
+            raise ValueError("页面里找不到 window.__SNAPSHOT__（不是快照版页面？）")
+        j = txt.find("{", i)
+        snap = json.JSONDecoder().raw_decode(txt[j:])[0]
+        payload = {"ok": True, "result": snap.get("rotation")}
+    except (requests.exceptions.RequestException, ValueError, Exception) as e:
         print(f"⚠️ 拉取板块轮动数据失败（{ROTATION_API_URL}）：{e}")
         return None
     if not (payload.get("ok") and payload.get("result")):
