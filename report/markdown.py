@@ -119,7 +119,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 pos = r.get("position", {})
                 range_str = r.get("range_str", "─")
                 lines.append(
-                    f"\n{lead_icon} {badge}{r['name']} · {zone_short} · {pos.get('total', '─')}%\n"
+                    f"\n{lead_icon} {badge}{r['name']} · {zone_short} · 分位 {r.get('zone_pct', '─')}\n"
                     f"　{combined}｜{range_str}"
                 )
 
@@ -156,8 +156,8 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 range_str = r.get("range_str", "─")
 
                 lines.append(
-                    f"\n{badge}{r['name']} · {pos.get('total', '─')}%"
-                    f"({pos.get('bubble', '─')}+{pos.get('value', '─')}+{pos.get('spec', '─')}){extra_str}"
+                    f"\n{badge}{r['name']} · 分位 {r.get('zone_pct', '─')} · {r.get('tier', '─')}"
+                    f"{extra_str}"
                     f" · {wo_str} · {range_str} · {action}"
                 )
                 # 未持仓但回撤已触线：不进「需要处理」置顶区，但补一行观察提示，
@@ -195,7 +195,7 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 rows_html.append(
                     f'<tr class="alert-row">'
                     f'<td class="col-name">{badge}{r["name"]}</td>'
-                    f'<td class="col-pos">{pos.get("total", "─")}%</td>'
+                    f'<td class="col-pos">{r.get("zone_pct", "─")}</td>'
                     f'<td class="col-action">{lead_icon} {zone_short}｜{combined}｜{range_str}</td>'
                     f'</tr>'
                 )
@@ -223,8 +223,8 @@ def build_summary_block(summary_list: list, output_format: str = "html") -> str:
                 rows_html.append(
                     f'<tr>'
                     f'<td class="col-name">{badge}{r["name"]}</td>'
-                    f'<td class="col-pos {pos_cls}">{total_pct}%<br>'
-                    f'<span class="col-sub">{pos.get("bubble", "─")}+{pos.get("value", "─")}+{pos.get("spec", "─")}</span></td>'
+                    f'<td class="col-pos {pos_cls}">{r.get("zone_pct", "─")}<br>'
+                    f'<span class="col-sub">{r.get("tier", "─")}</span></td>'
                     f'<td class="col-action">{wo_str} · {range_str} · {action}</td>'
                     f'</tr>'
                 )

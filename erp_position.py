@@ -17,9 +17,7 @@ from prepare_all_data import (
     get_etf_price_last_date,
 )
 from analysis.valuation import build_shiller_block, build_unified_valuation_block, calc_odds, is_holding
-from analysis.risk import (compute_exit_signal_summary, build_exit_signal_block,
-                            compute_profit_signal_summary, build_profit_signal_block,
-                            compute_range_drawdown_rebound)
+from analysis.risk import compute_range_drawdown_rebound
 from analysis.trend import compute_erp_slope_signal, build_trend_block
 from analysis.sentiment import build_sentiment_block
 from analysis.utils import (check_metric_freshness, build_freshness_note, generate_action_sentence,
@@ -32,49 +30,28 @@ from analysis.etf_quality import build_etf_quality_block
 from analysis.ma_position import build_ma_position_block
 
 
-def compute_position_sizing(current_erp, quantiles):
-    """三仓拆分：泡沫底仓 / 价值主力 / 投机奇兵，规则见 README「仓位框架」。
-    返回 (bubble, value, spec, b_msg, v_msg, t_msg)：数值百分比 + 对应文字说明。
-    【2026-08-02 恢复说明】b_msg/v_msg/t_msg 这三句文案之前被砍掉了，仪表盘只剩
-    数字拆分（30+40+20这种），看不出每一档背后的判断依据。原样恢复。"""
-    p25, p50, p75, p90 = quantiles['P25'], quantiles['P50'], quantiles['P75'], quantiles['P90']
-    p95 = quantiles.get('P95', p90)
+def describe_zone(win_rate):
+    """按 ERP 分位给档位与动作（唯一口径）。返回 (档位名, 动作文案, 分位百分数)。
 
-    if current_erp >= p50:
-        b_msg, bubble = "泡沫仓: 已进入相对便宜击球区，30% 底仓应长期锁定", 30
-    elif current_erp >= p25:
-        b_msg, bubble = "泡沫仓: 尚未达到远期目标价，底仓持有不动", 30
-    else:
-        b_msg, bubble = "泡沫仓: 触发极致远期溢价，考虑收割最后的筹码", 5
-
-    if current_erp >= p75:
-        v_msg, value = "价值仓: 足够便宜的价格，40% 核心主力必须在场", 40
-    elif current_erp >= p50:
-        v_msg, value = "价值仓: 估值修复中，建议持有 30%-40% 主力仓位", 35
-    elif current_erp >= p25:
-        v_msg, value = "价值仓: 回到合理估值区间，开始减持主力仓位", 10
-    else:
-        v_msg, value = "价值仓: 估值已高，价值段位应已全部离场", 0
-
-    if current_erp >= p95:
-        t_msg, spec = "投机仓: 触发极端惯性下跌，30% 预备队全额出击", 30
-    elif current_erp >= p90:
-        t_msg, spec = "投机仓: 极低估区，保持 20% 仓位积极做T降本", 20
-    elif current_erp >= p50:
-        t_msg, spec = "投机仓: 震荡区间，维持 10% 灵活部做T", 10
-    else:
-        t_msg, spec = "投机仓: 溢价区基本只卖不买，缩减至 5% 观察", 5
-
-    return bubble, value, spec, b_msg, v_msg, t_msg
+    四档：>90 极便宜 / 60–90 便宜 / 25–60 中性 / <25 贵。
+    不论哪一档，单次都只买一档，不重仓。
+    """
+    if win_rate is None or (isinstance(win_rate, float) and win_rate != win_rate):
+        return "数据不足", "─", 0.0
+    pct = win_rate * 100
+    if win_rate > 0.90:
+        return "极便宜", "可买一档 3,000 元", pct
+    if win_rate >= 0.60:
+        return "便宜", "可买一档 3,000 元", pct
+    if win_rate >= 0.25:
+        return "中性", "只持有，不加", pct
+    return "贵", "不加，考虑减一档", pct
 
 
-def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
-                          exit_level=0, profit_level=0, exit_icon="─", profit_icon="─",
-                          current_erp=None):
-    """仓位建议区块。触发减仓/止盈信号时不展示常规3+4+3拆分，改为提示已进入对应流程
-    （避免"回撤已破防但仪表盘还在建议加仓"这种自相矛盾的观感）。估值分档表格随仓位
-    建议一起展示（分档是仓位拆分的依据），不再单独出现在核心估值决策模块里，
-    并以折叠形式呈现，避免详情页数值堆砌，只留结论文字。"""
+def build_position_block(tier, action_text, zone_pct, quantiles, current_erp=None):
+    """仓位建议区块：按 ERP 分位给档位与动作（唯一口径）。
+    三仓拆分（泡沫/价值/投机）与减仓/止盈 override 已于 2026-11-10 停用。
+    估值分档表格随仓位建议一起展示，折叠呈现，只留结论文字。"""
     erp_line = f"**当前 ERP：{current_erp:.2%}**\n" if current_erp is not None else ""
     zone_table = f"""
 <details>
@@ -90,30 +67,13 @@ def build_position_block(bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
 
 </details>
 """
-    if exit_level > 0:
-        return f"""
+    return f"""
 ---
 ### 仓位建议
 
-{erp_line}{exit_icon} 已触发减仓/清仓预警（详见下方「减仓 / 清仓信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
-低估位置参考：P75 = {quantiles['P75']:.2%}（显著低估） / P90 = {quantiles['P90']:.2%}（极度低估）
-{zone_table}"""
-    elif profit_level > 0:
-        return f"""
----
-### 仓位建议
-
-{erp_line}{profit_icon} 已触发止盈预警（详见下方「止盈信号」模块），暂不展示常规仓位建议（3+4+3拆分）。
-高估位置参考：P25 = {quantiles['P25']:.2%}（进入高估） / P10 = {quantiles['P10']:.2%}（极度高估）
-{zone_table}"""
-    else:
-        return f"""
----
-### 仓位建议
-
-{erp_line}**{b_msg}** ({bubble}%)
-**{v_msg}** ({value}%)
-**{t_msg}** ({spec}%)
+{erp_line}**分位 {zone_pct:.0f}% → {tier}**
+**动作：{action_text}**
+买入前自查：该只市值不超过总资产 6%。
 {zone_table}"""
 
 
@@ -186,8 +146,7 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         erp_zone = "🔴 高估/规避"
 
     # 三仓拆分（仓位建议区块 + 仪表盘共用同一份计算结果，避免重复算两次）
-    bubble, value, spec, b_msg, v_msg, t_msg = compute_position_sizing(current_erp, quantiles)
-    total_pct = bubble + value + spec
+    tier, action_text, zone_pct_num = describe_zone(win_rate)
 
     # 【2026-11-09】价格源按"新鲜度"选，不再按"文件在不在"选。
     # 旧逻辑：只要 etf_price_adj.csv 里有这只标的就用前复权 —— 于是内容停在
@@ -280,41 +239,32 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
             f"滞后 {price_lag} 个交易日（阈值 {MAX_PRICE_LAG_TRADING_DAYS} 个交易日）。"
             f"回撤、均线、减仓/止盈/强制清仓信号全部基于旧价，已停止输出。"
         )
-        exit_summary = {"level": -2, "verdict_icon": "⛔", "message": gate_msg, "has_data": True}
-        profit_summary = {"level": -2, "verdict_icon": "⛔", "message": gate_msg}
-        exit_block = f"\n---\n### 减仓 / 清仓信号\n\n> **{gate_msg}**\n"
-        profit_block = (f"\n---\n### 止盈信号\n\n> **{gate_msg}**\n" if holding else "")
+        exit_summary = {"level": 0, "verdict_icon": "─", "message": ""}
+        profit_summary = {"level": 0, "verdict_icon": "─", "message": ""}
+        exit_block = ""
+        profit_block = ""
         range_stats = None
         position_block = build_position_block(
-            bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
-            exit_level=0, profit_level=0,
-            exit_icon="─", profit_icon="─",
+            tier, action_text, zone_pct_num, quantiles,
             current_erp=current_erp,
         )
     else:
-        exit_summary = compute_exit_signal_summary(code, win_rate, price_series, holding)
-        exit_block = build_exit_signal_block(code, win_rate, price_series, holding)
-
-        # 止盈信号仅对持仓有意义，未持仓无仓位可止盈，维持跳过（拆分前原版逻辑，2026-08-03恢复）。
-        if holding:
-            profit_summary = compute_profit_signal_summary(code, win_rate, price_series)
-            profit_block = build_profit_signal_block(code, win_rate, price_series)
-        else:
-            profit_summary = {"level": 0, "verdict_icon": "─", "message": ""}
-            profit_block = ""
+        # 2026-11-10 起：价格止损（回撤+均线）与止盈信号不再参与决策，两个模块不再生成。
+        exit_summary = {"level": 0, "verdict_icon": "─", "message": ""}
+        profit_summary = {"level": 0, "verdict_icon": "─", "message": ""}
+        exit_block = ""
+        profit_block = ""
 
         # 【2026-08-02 恢复】仓位建议区块（三仓文案 + 触发止损/止盈时的override提示），
         # 之前完全没有生成，仪表盘/详情页都看不到"为什么是这个仓位比例"的文字说明。
         position_block = build_position_block(
-            bubble, value, spec, b_msg, v_msg, t_msg, quantiles,
-            exit_level=exit_summary.get("level", 0), profit_level=profit_summary.get("level", 0),
-            exit_icon=exit_summary.get("verdict_icon", "─"), profit_icon=profit_summary.get("verdict_icon", "─"),
+            tier, action_text, zone_pct_num, quantiles,
             current_erp=current_erp,
         )
 
         range_stats = compute_range_drawdown_rebound(code, price_series, lookback=120) or {}
 
-    popularity_block = build_sentiment_block(code, name, code, win_rate, prepared_data.get("news_df"))
+    sentiment_block = build_sentiment_block(code, name, code, win_rate, prepared_data.get("news_df"))
 
     dividend_block = build_dividend_yield_block(code)
 
@@ -325,7 +275,12 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     # 不再埋在"减仓/止盈"明细表里。失败返回空串，不影响主报告。
     ma_position_block = build_ma_position_block(code, price_series, holding)
 
-    md = f"""{header_block}{position_block}{unified_block}{trend_block}{exit_block}{profit_block}{popularity_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
+    if holding:
+        md = f"""{header_block}{position_block}{unified_block}{trend_block}{sentiment_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
+    else:
+        # 观察池：不逐只展开模块，只保留一行估值摘要，降低报告长度
+        md = (f"{header_block}\n\n"
+              f"**观察池 · 分位 {zone_pct_num:.0f}% · ERP {current_erp:.2%} → {tier}（{action_text}）**\n")
 
     # 汇总信息用于仪表盘
     if summary_list is not None:
@@ -350,7 +305,9 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
             "odds_ratio": odds_ratio,
             "win_odds_str": _format_win_odds({"win_rate": win_rate, "odds_ratio": odds_ratio}),
             "holding": holding,
-            "position": {"bubble": bubble, "value": value, "spec": spec, "total": total_pct},
+            "position": {"total": zone_pct_num},
+            "tier": tier,
+            "zone_pct": f"{zone_pct_num:.0f}%",
             "exit_level": exit_summary.get("level", 0),
             "exit_icon": exit_summary.get("verdict_icon", "─"),
             "exit_message": exit_summary.get("message", ""),

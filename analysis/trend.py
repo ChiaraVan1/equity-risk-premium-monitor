@@ -95,11 +95,11 @@ def compute_erp_slope_signal(erp_series: pd.Series) -> dict:
     if abs_extreme:
         signal, signal_icon = "恐慌踩踏", "🚨"
         desc = (f"近20日ERP急速飙升 {delta:.2%}（斜率 {slope*100:.3f}%/日）{pctl_note}"
-                "— 市场处于恐慌抛售期，PE急速压缩，历史上往往是买点临近的强化信号，但需警惕基本面是否同步恶化。")
+                "— 市场处于恐慌抛售期，PE急速压缩，历史上这类阶段往往对应估值修复的起点，但需警惕基本面是否同步恶化。")
     elif abs_moderate:
         signal, signal_icon = "估值快速改善", "🟢"
         desc = (f"近20日ERP持续走高 {delta:.2%}（斜率 {slope*100:.3f}%/日）{pctl_note}"
-                "— 估值快速修复，买入窗口正在打开。")
+                "— 估值快速修复，便宜程度在改善。")
     elif neg_extreme:
         signal, signal_icon = "情绪过热", "⚠️"
         desc = (f"近20日ERP急速坠落 {delta:.2%}（斜率 {slope*100:.3f}%/日）{pctl_note}"

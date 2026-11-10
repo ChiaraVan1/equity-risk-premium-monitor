@@ -18,7 +18,6 @@ import json
 import requests
 
 from analysis.llm_client import call_llm
-from analysis.popularity_signal import build_popularity_block, compute_popularity_confirmation
 from config_loader import FUNDAMENTAL_KEYWORDS
 
 
@@ -78,7 +77,7 @@ def build_fundamental_alert_block(code: str, name: str, news_df=None) -> tuple:
         return (
             {"alert_level": "N/A", "confidence": "─", "summary": "宽基/国别指数，基本面预警不适用"},
             "\n> ℹ️ 基本面预警：宽基/国别指数成分股高度分散，单一基本面暴雷对指数影响有限，"
-            "本模块不适用。请关注上方「减仓/清仓信号」中的价格回撤提示。\n",
+            "本模块不适用。\n",
         )
 
     keywords = FUNDAMENTAL_KEYWORDS.get(code, [])
@@ -246,13 +245,9 @@ def build_sentiment_block(code, name, etf_code, erp_percentile, news_df=None):
     """生成综合情绪块（仅基本面预警）。"""
     blocks = []
 
-    # 1. 热度/热榜信号 —— 2026-11-10 停用（用户判定为噪声，不参与任何决策）
-    # popularity_result = compute_popularity_confirmation(code, erp_percentile)
-    # popularity_block = build_popularity_block(code, erp_percentile, precomputed=popularity_result)
-    # if popularity_block:
-    #     blocks.append(popularity_block)
+    # 热度/热榜信号已于 2026-11-10 整体移除（判定为噪声，不参与任何决策）
 
-    # 2. 基本面预警
+    # 基本面预警
     _, fundamental_block = build_fundamental_alert_block(code, name, news_df)
     if fundamental_block:
         blocks.append(fundamental_block)
