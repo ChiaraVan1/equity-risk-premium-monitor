@@ -17,6 +17,7 @@ STATUS.md — 跨 session 运行记忆
 
 | 日期 | 变更内容 |
 |---|---|
+| 2026-11-10 CST | 新增两个回测脚本（`backtest_stoploss.py` 止损阈值、`backtest_grid.py` 加仓间距），结论：不设价格止损、维持 5% 间距；两者只作规则体检，不接入日报 |
 | 2026-11-10 CST | 按投资规则重构：删热榜人气信号模块；仓位由三仓拆分改「ERP 分位 → 档位 → 一档定额」；减仓/清仓/止盈不再产出（summary 强制 level 0）；本地 DRY_RUN 三跑通过 |
 | 2026-11-10 CST | ETF 执行质量删价格/量背离与资金加速度，成交额分位改归 A 段下单成本口径；README 清理已停用模块沿革与固定阈值兜底描述 |
 | 2026-11-09 14:55 CST | 前复权改由云端产出：入 `QUANTDASH_API_KEY`、加 quantdash 依赖、prepare_all_data 条件调度；`data/etf_price_adj.csv` 由 9-23 补齐到 11-09；本机 `fetch_and_push.sh` 停用，云端成唯一写入方 |
