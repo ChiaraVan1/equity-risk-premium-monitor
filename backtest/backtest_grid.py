@@ -26,7 +26,7 @@ import pandas as pd
 from backtest_stoploss import fetch, RESULT_DIR
 
 
-def simulate(c, i, end_idx, step, tiers, amount):
+def simulate(c, i, end_idx, step, tiers, amount, spacing="geometric"):
     """返回该入场点在窗口末的表现。"""
     budget = tiers * amount
     base = c[i]
@@ -34,7 +34,12 @@ def simulate(c, i, end_idx, step, tiers, amount):
     cash = budget - amount
     used = 1
     # 第 k 档触发价（k=1..tiers-1），按首笔成本几何递减
-    triggers = [base * (1 - step / 100.0) ** k for k in range(1, tiers)]
+    if spacing == "linear":
+        # 等差：首笔价 −5%、−10%、−15%……绝对间隔固定，与实际挂单口径一致
+        triggers = [base * (1 - step * k / 100.0) for k in range(1, tiers)]
+    else:
+        # 几何：每档相对上一档再跌 step%（触发价越来越密）
+        triggers = [base * (1 - step / 100.0) ** k for k in range(1, tiers)]
 
     min_eq = budget
     for j in range(i + 1, end_idx + 1):
@@ -57,7 +62,7 @@ def simulate(c, i, end_idx, step, tiers, amount):
     }
 
 
-def run_code(code, df, steps, tiers, amount, hold_years, entry_step=1):
+def run_code(code, df, steps, tiers, amount, hold_years, entry_step=1, spacing="geometric"):
     c = df["close"].values.astype(float)
     dates = pd.to_datetime(df["date"]).values
     n = len(c)
@@ -69,7 +74,7 @@ def run_code(code, df, steps, tiers, amount, hold_years, entry_step=1):
             end_idx = int(np.searchsorted(dates, target))
             if end_idx >= n:
                 continue
-            r = simulate(c, i, end_idx, step, tiers, amount)
+            r = simulate(c, i, end_idx, step, tiers, amount, spacing=spacing)
             r["entry_date"] = pd.Timestamp(dates[i])
             recs.append(r)
         d = pd.DataFrame(recs)
@@ -104,6 +109,7 @@ def main():
     ap.add_argument("--tiers", type=int, default=4)
     ap.add_argument("--amount", type=float, default=5000)
     ap.add_argument("--hold-years", type=int, default=2)
+    ap.add_argument("--spacing", default="geometric", choices=["geometric", "linear"])
     args = ap.parse_args()
 
     from datetime import timedelta
@@ -121,7 +127,7 @@ def main():
         if df is None or len(df) < 300:
             print("  跳过：数据不足")
             continue
-        r, y = run_code(code, df, steps, args.tiers, args.amount, args.hold_years)
+        r, y = run_code(code, df, steps, args.tiers, args.amount, args.hold_years, spacing=args.spacing)
         all_rows += r
         yearly_rows += y
 

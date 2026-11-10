@@ -31,7 +31,7 @@ def price_code_of(item):
     return etf or item["code"]
 
 
-def check_one(item, years, hold_years, thresholds, steps, tiers, amount, quick):
+def check_one(item, years, hold_years, thresholds, steps, tiers, amount, quick, spacing="geometric"):
     code, name = item["code"], item.get("name", item["code"])
     pc = price_code_of(item)
     end = datetime.now()
@@ -70,7 +70,8 @@ def check_one(item, years, hold_years, thresholds, steps, tiers, amount, quick):
     loss_at_best = float(best["median_diff"])  # 负=止损比死扛差
 
     # ── 间距 ──
-    grows, _ = run_code(code, df, [float(x) for x in steps], tiers, amount, hold_years, entry_step=entry_step)
+    grows, _ = run_code(code, df, [float(x) for x in steps], tiers, amount, hold_years,
+                           entry_step=entry_step, spacing=spacing)
     gd = pd.DataFrame(grows)
     r5 = gd.loc[gd["step"] == 5.0, "total_ret"]
     ret5 = float(r5.iloc[0]) if len(r5) else float("nan")
@@ -113,6 +114,7 @@ def main():
     ap.add_argument("--amount", type=float, default=5000)
     ap.add_argument("--quick", action="store_true")
     ap.add_argument("--domestic", action="store_true", help="只跑国内标的，海外跳过")
+    ap.add_argument("--spacing", default="geometric", choices=["geometric", "linear"])
     args = ap.parse_args()
 
     items = json.load(open(os.path.join(ROOT, "config.json")))["indices"]
@@ -130,7 +132,7 @@ def main():
     for i, item in enumerate(items, 1):
         print(f"\n[{i}/{len(items)}] {item.get('name', item['code'])}({item['code']})", flush=True)
         r = check_one(item, args.years, args.hold_years, thresholds, steps,
-                      args.tiers, args.amount, args.quick)
+                      args.tiers, args.amount, args.quick, spacing=args.spacing)
         rows.append(r)
         print(f"  → 止损:{r.get('止损结论')} 间距:{r.get('间距结论')} 一致:{r.get('与现行规则一致')}", flush=True)
 
