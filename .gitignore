@@ -6,3 +6,4 @@ check_cloud_run.sh
 data/backtest/
 data/backtest_verdicts.csv
 output_preview.md
+data/grid_state.csv
