@@ -61,7 +61,7 @@ def run_code(code, df, steps, tiers, amount, hold_years):
     c = df["close"].values.astype(float)
     dates = pd.to_datetime(df["date"]).values
     n = len(c)
-    rows = []
+    rows, yearly = [], []
     for step in steps:
         recs = []
         for i in range(n - 1):
@@ -69,8 +69,13 @@ def run_code(code, df, steps, tiers, amount, hold_years):
             end_idx = int(np.searchsorted(dates, target))
             if end_idx >= n:
                 continue
-            recs.append(simulate(c, i, end_idx, step, tiers, amount))
+            r = simulate(c, i, end_idx, step, tiers, amount)
+            r["entry_date"] = pd.Timestamp(dates[i])
+            recs.append(r)
         d = pd.DataFrame(recs)
+        d["year"] = d["entry_date"].dt.year
+        for yr, ret in d.groupby("year")["total_ret"].mean().items():
+            yearly.append({"code": code, "step": step, "year": int(yr), "ret": float(ret)})
         rows.append({
             "code": code,
             "step": step,
@@ -84,7 +89,7 @@ def run_code(code, df, steps, tiers, amount, hold_years):
         })
         print(f"  {code} 间距{step:g}%：{len(d)} 个入场点，平均建仓 {d['tiers_used'].mean():.2f} 档，"
               f"2年收益 {d['total_ret'].mean() * 100:.1f}%，均价相对首日 {d['avg_cost_vs_entry'].mean() * 100:+.1f}%", flush=True)
-    return rows
+    return rows, yearly
 
 
 NAMES = {"600585": "海螺水泥", "601006": "大秦铁路", "600600": "青岛啤酒",
@@ -109,13 +114,16 @@ def main():
     budget = args.tiers * args.amount
 
     all_rows = []
+    yearly_rows = []
     for code in args.codes:
         print(f"\n{NAMES.get(code, code)}({code}) 预算 {budget:,.0f} 元 = {args.tiers} 档 × {args.amount:,.0f}", flush=True)
         df, source = fetch(code, s, e)
         if df is None or len(df) < 300:
             print("  跳过：数据不足")
             continue
-        all_rows += run_code(code, df, steps, args.tiers, args.amount, args.hold_years)
+        r, y = run_code(code, df, steps, args.tiers, args.amount, args.hold_years)
+        all_rows += r
+        yearly_rows += y
 
     if not all_rows:
         return
@@ -145,6 +153,15 @@ def main():
                                     "最大浮亏": "{:.1%}".format}))
     print("=" * 96)
 
+    # 按入场年份拆分：检验排序是否只在一类行情里成立
+    ydf = pd.DataFrame(yearly_rows)
+    pivot = ydf.pivot_table(index="year", columns="step", values="ret", aggfunc="mean") * 100
+    print("\n按入场年份（各标的平均，2 年收益 %）")
+    print(pivot.round(1).to_string())
+    best = pivot.idxmax(axis=1)
+    print("\n每年最优间距：" + "，".join(f"{int(yr)}→{b:g}%" for yr, b in best.items()))
+    print("最优间距分布：" + str({f"{k:g}%": int(v) for k, v in best.value_counts().items()}))
+
     md = [f"# 分批加仓间距回测", "",
           f"- 生成时间：{datetime.now():%Y-%m-%d %H:%M}",
           f"- 预算：{budget:,.0f} 元（{args.tiers} 档 × {args.amount:,.0f}），持币待跌，跌不到位不买",
@@ -154,6 +171,12 @@ def main():
     for r in agg.itertuples():
         md.append(f"| {r.step:g}% | {r.平均档数:.2f} | {r.打满比例:.1%} | {r.两年收益:+.1%} | "
                   f"{r.收益中位:+.1%} | {r.均价相对首日:+.2%} | {r.最大浮亏:.1%} |")
+    md += ["", "## 按入场年份拆分（2 年收益 %）", "",
+           "| 年份 | " + " | ".join(f"{c:g}%" for c in pivot.columns) + " | 当年最优 |",
+           "|---|" + "---|" * (len(pivot.columns) + 1)]
+    for yr, row in pivot.iterrows():
+        cells = " | ".join("—" if pd.isna(v) else f"{v:+.1f}" for v in row.values)
+        md.append(f"| {int(yr)} | {cells} | {row.idxmax():g}% |")
     md += ["", "## 明细", "", "| 标的 | 间距 | 入场点 | 平均档数 | 打满比例 | 2年收益 | 均价vs首日 | 最大浮亏 |",
            "|---|---|---|---|---|---|---|---|"]
     for r in out.itertuples():
