@@ -4,14 +4,7 @@ STATUS.md — 跨 session 运行记忆
 
 ## TODO
 
-- 加入其他信号指标
-- HSTECH 报告里估值指标仍标注为「ERP」，应为「PSY」（仅文案，数值正确）
-- feature/pe-band-demo 分支未同步 main 的近期修复，待评估
-- 新鲜度校验：能检测但未影响结论；抓取失败会覆盖旧值；覆盖面仅部分列
-- 930794 偶发缺 IndexClose → PE ffill → streak 误报（已重置，频繁再发再考虑换源）
-- EWQ/EWG/EWJ/EEM 历史 PE 为估算值，长期需更准数据源
-- 迁移 AI API 后观察 1-2 天日志，确认无解读失败
-- ERP 图微信推送滞后一天（推送早于 gh-pages 部署）
+见 [TODO.md](TODO.md) —— 唯一路线图，按 P0–P3 排序。
 
 ## 变更日志
 
