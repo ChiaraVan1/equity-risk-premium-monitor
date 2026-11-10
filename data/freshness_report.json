@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-10T14:08:09.557343",
+  "generated_at": "2026-11-09T10:37:32.462396",
   "results": [
     {
       "label": "QQQ_PE_TODAY",
@@ -351,9 +351,9 @@
       "level": "ok",
       "kind": "",
       "last_date": "2026-11-09",
-      "staleness_days": 1,
+      "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-10T14:08:09.545917",
+      "checked_at": "2026-11-09T10:37:32.454848",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
@@ -362,10 +362,10 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-09",
-      "staleness_days": 1,
+      "last_date": "2026-11-06",
+      "staleness_days": 3,
       "reason": "",
-      "checked_at": "2026-11-10T14:08:09.546253"
+      "checked_at": "2026-11-09T10:37:32.455067"
     },
     {
       "label": "ETF净值序列",
@@ -373,10 +373,10 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-09",
-      "staleness_days": 1,
+      "last_date": "2026-11-06",
+      "staleness_days": 3,
       "reason": "",
-      "checked_at": "2026-11-10T14:08:09.552757"
+      "checked_at": "2026-11-09T10:37:32.458837"
     },
     {
       "label": "基准指数涨跌幅序列",
@@ -385,9 +385,9 @@
       "level": "ok",
       "kind": "",
       "last_date": "2026-11-09",
-      "staleness_days": 1,
+      "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-10T14:08:09.554975"
+      "checked_at": "2026-11-09T10:37:32.460542"
     },
     {
       "label": "FRED-US10Y",
@@ -530,9 +530,9 @@
       "level": "ok",
       "kind": "",
       "last_date": "2026-11-09",
-      "staleness_days": 1,
+      "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-10T14:08:09.550970"
+      "checked_at": "2026-11-09T10:37:32.457396"
     },
     {
       "label": "ERP-980032",
