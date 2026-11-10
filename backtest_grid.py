@@ -57,14 +57,14 @@ def simulate(c, i, end_idx, step, tiers, amount):
     }
 
 
-def run_code(code, df, steps, tiers, amount, hold_years):
+def run_code(code, df, steps, tiers, amount, hold_years, entry_step=1):
     c = df["close"].values.astype(float)
     dates = pd.to_datetime(df["date"]).values
     n = len(c)
     rows, yearly = [], []
     for step in steps:
         recs = []
-        for i in range(n - 1):
+        for i in range(0, n - 1, entry_step):
             target = np.datetime64(pd.Timestamp(dates[i]) + pd.DateOffset(years=int(hold_years)))
             end_idx = int(np.searchsorted(dates, target))
             if end_idx >= n:

@@ -81,19 +81,30 @@ def fetch(code, start_date, end_date):
         except Exception:
             continue
         time.sleep(1)
+
+    # 指数兜底：无对应 ETF 的指数（如 930794），akshare 指数接口不带 adjust 参数
+    try:
+        df = ak.index_zh_a_hist(symbol=code, period="daily", start_date=s8, end_date=e8)
+        d = _clean(df, code)
+        if d is not None and len(d) >= 120:
+            os.makedirs(CACHE_DIR, exist_ok=True)
+            d.to_csv(cache, index=False)
+            return d, "指数"
+    except Exception:
+        pass
     return None, "failed"
 
 
 # ─────────────────────────── 回测 ───────────────────────────
 
-def backtest_one(df, threshold, horizon=60, hold_years=None):
+def backtest_one(df, threshold, horizon=60, hold_years=None, entry_step=1):
     """逐点入场。hold_years=None 时持有到期末；否则固定持有 N 年强制结算。"""
     c = df["close"].values.astype(float)
     dates = pd.to_datetime(df["date"]).values
     n = len(c)
     rows = []
 
-    for i in range(n - 1):
+    for i in range(0, n - 1, entry_step):
         if hold_years:
             target = np.datetime64(pd.Timestamp(dates[i]) + pd.DateOffset(years=int(hold_years)))
             end_idx = int(np.searchsorted(dates, target))
@@ -123,6 +134,9 @@ def backtest_one(df, threshold, horizon=60, hold_years=None):
     out = pd.DataFrame(rows, columns=[
         "entry_idx", "triggered", "hold_days", "cut_ret", "hold_ret", "post_horizon_ret", "cost"
     ])
+    if len(out) == 0:
+        out["entry_date"] = pd.Series(dtype="datetime64[ns]")
+        return out
     out["entry_date"] = pd.to_datetime(dates[out["entry_idx"].values])
     return out
 
