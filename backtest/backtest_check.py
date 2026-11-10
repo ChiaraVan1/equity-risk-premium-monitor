@@ -21,7 +21,7 @@ import pandas as pd
 from backtest_stoploss import fetch, backtest_one, summarize
 from backtest_grid import run_code
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 仓库根
 OUT_CSV = os.path.join(ROOT, "data", "backtest_verdicts.csv")
 
 
@@ -141,11 +141,13 @@ def main():
         out = pd.concat([old[~old["code"].isin(out["code"])], out], ignore_index=True)
     out.to_csv(OUT_CSV, index=False, encoding="utf-8-sig")
 
+    cur = pd.DataFrame(rows)
     print("\n" + "=" * 90)
-    print(out[["code", "name", "止损结论", "间距结论", "与现行规则一致", "备注"]].to_string(index=False))
+    print(cur[["code", "name", "止损结论", "间距结论", "与现行规则一致", "备注"]].to_string(index=False))
     print("=" * 90)
-    bad = out[out["与现行规则一致"] == "否"]
-    print(f"\n一致 {len(out) - len(bad)} 只 / 偏离 {len(bad)} 只")
+    bad = cur[cur["与现行规则一致"] == "否"]
+    print(f"\n本轮 {len(cur)} 只：一致 {len(cur) - len(bad) - (cur['与现行规则一致'] == '跳过').sum()} / 偏离 {len(bad)} / 跳过 {(cur['与现行规则一致'] == '跳过').sum()}")
+    print(f"文件累计 {len(out)} 只")
     if len(bad):
         print("偏离标的：")
         print(bad[["code", "name", "止损结论", "间距结论", "备注"]].to_string(index=False))

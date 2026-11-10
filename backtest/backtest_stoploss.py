@@ -23,8 +23,9 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 
-CACHE_DIR = "data/backtest"
-RESULT_DIR = "results"
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 仓库根
+CACHE_DIR = os.path.join(BASE, "data", "backtest")
+RESULT_DIR = os.path.join(BASE, "backtest", "results")
 
 
 # ─────────────────────────── 取数 ───────────────────────────

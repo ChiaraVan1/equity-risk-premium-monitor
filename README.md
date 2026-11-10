@@ -218,17 +218,17 @@ PSY 替代 ERP 参与胜率/赔率与斜率计算。
 
 ## 回测工具
 
-两个脚本只做规则体检，不进入日报决策链。
+全部回测代码与产物集中在 `backtest/` 目录（`backtest/results/` 放每次回测的 csv/md），不进入日报决策链。
 
 | 脚本 | 测什么 | 结论 |
 |---|---|---|
-| `backtest_stoploss.py` | 成本回撤止损 5/8/10/15/20% | 2~3 年持有期下全部跑输死扛（触发率 85~90%，几乎每次都被震出），**不设价格止损** |
-| `backtest_grid.py` | 分批加仓间距 3/5/8/10/15% | 优劣取决于后续行情：涨的年头 3% 最优、跌的年头 15% 最优；5% 居中，**维持 5%** |
+| `backtest/backtest_stoploss.py` | 成本回撤止损 5/8/10/15/20% | 2~3 年持有期下全部跑输死扛（触发率 85~90%，几乎每次都被震出），**不设价格止损** |
+| `backtest/backtest_grid.py` | 分批加仓间距 3/5/8/10/15% | 优劣取决于后续行情：涨的年头 3% 最优、跌的年头 15% 最优；5% 居中，**维持 5%** |
 
 ```bash
 # 个股与 ETF 通用
-python3 backtest_stoploss.py --codes 600585 600600 --years 10 --thresholds 5,8,10,15,20 --hold-years 2
-python3 backtest_grid.py --codes 600585 510300 --step 3,5,8,10,15 --tiers 4 --amount 5000
+python3 backtest/backtest_stoploss.py --codes 600585 600600 --years 10 --thresholds 5,8,10,15,20 --hold-years 2
+python3 backtest/backtest_grid.py --codes 600585 510300 --step 3,5,8,10,15 --tiers 4 --amount 5000
 ```
 
 口径要点：每个交易日视为一次买入，固定持有 N 年强制结算——不用"持有到期末"，否则终点价位会制造伪胜。结论只回答"该不该设、该用多宽"，不用于择时。
