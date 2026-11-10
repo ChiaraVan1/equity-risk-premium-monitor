@@ -28,7 +28,6 @@ from report.markdown import build_summary_block, save_html_report, send_to_wecha
 from report.erp_chart import build_erp_chart
 from fetch.freshness import check_freshness_report_health
 from analysis.dividend_yield_analysis import build_dividend_yield_block
-from analysis.popularity_signal import build_popularity_block, compute_popularity_confirmation
 from analysis.etf_quality import build_etf_quality_block
 from analysis.ma_position import build_ma_position_block
 
