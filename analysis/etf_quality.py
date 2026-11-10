@@ -97,6 +97,7 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     discount_q3y     = safe("discount_quantile_3y", 0.5)
     discount_5d_chg  = safe("change_5d_discount", 0.0)
     discount_10d_chg = safe("change_10d_discount", 0.0)
+    turnover_q       = safe("turnover_quantile", 0.5)
     vol_q1y          = safe("volatility_quantile_1y", 0.5)
     dd_q1y           = safe("max_drawdown_quantile_1y", 0.5)
     ann_vol          = safe("annualized_volatility", 0.0)
@@ -151,11 +152,20 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
             trend_label = "折溢价近期稳定"
     else:
         if discount_5d_chg < -0.001:
-            trend_label = "折价扩大 → 买入窗口正在打开"
+            trend_label = "折价扩大 → 执行成本在变低"
         elif discount_5d_chg > 0.001:
-            trend_label = "折价收窄 → 买入窗口趋于关闭，抓紧或等下次"
+            trend_label = "折价收窄 → 执行成本在变高"
         else:
             trend_label = "折溢价近期稳定"
+
+    # 成交活跃度 —— 下单成本口径，不是择时：盘口薄时市价单滑点可能比折溢价还大
+    tq_pct = turnover_q * 100
+    if turnover_q >= 0.8:
+        tq_icon, tq_label = "🔥", f"成交额处52周{tq_pct:.0f}%分位 — 盘口厚，市价单滑点小"
+    elif turnover_q >= 0.5:
+        tq_icon, tq_label = "🟡", f"成交额处52周{tq_pct:.0f}%分位 — 活跃度中等，正常挂单即可"
+    else:
+        tq_icon, tq_label = "🧊", f"成交额处52周{tq_pct:.0f}%分位 — 盘口薄，别用市价单，挂限价慢慢等"
 
     # ══════════════════════════════════════════════════════
     # B. 风险水位 / 换只ETF — 波动 + 超额收益
@@ -213,6 +223,7 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
     # ══════════════════════════════════════════════════════
     conclusions = {
         "折溢价": f"{disc_label}（{q_label.split('—')[-1].strip()}），{trend_label}，判断：{disc_action}",
+        "成交活跃度": f"{tq_label}",
         "波动率水位": vol_label,
         "回撤水位": dd_label,
         "综合风险结论": risk_conclusion,
@@ -253,11 +264,12 @@ def build_etf_quality_block(erp_code: str, etf_df: pd.DataFrame | None) -> str:
 
 **{exec_line}**
 
-**A · 今天怎么下单（折溢价）**
-> 折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。
+**A · 今天怎么下单（折溢价 + 盘口）**
+> 折溢价决定你买入时的实际成本。折价 = 相当于打折买净值；溢价 = 多付钱。盘口薄时市价单还会额外滑点。
 
 - 当前：{disc_icon} {disc_label}（1年{q1y_pct:.0f}% / 3年{q3y_pct:.0f}%分位）— {q_label.split('—')[-1].strip()} → {disc_action}
 - 趋势：5日{d5_str} / 10日{d10_str} → {trend_label}
+- 活跃度：{tq_icon} {tq_label}
 
 **B · 风险水位 / 要不要换ETF（波动 + 超额收益）**
 > 波动率高位时分批进；超额收益长期为负时考虑换同指数的其他ETF。
