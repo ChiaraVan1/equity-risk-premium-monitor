@@ -46,30 +46,39 @@ def build():
             continue
 
         anchor = float(anchor)
-        nxt = bought + 1
-        trig = anchor * (1 - STEP * bought / 100.0)
-        gap = (trig / price - 1) * 100 if price else None
-        note = "已低于触发价，可下单" if (gap is not None and gap >= 0) else ""
-        rows.append({"name": name, "code": code, "anchor": anchor, "bought": bought,
+        # 下一买点：从成本往下，找第一个低于现价的档位（不依赖「已买几档」）
+        trig, nxt = None, None
+        for k in range(0, 8):
+            lvl = anchor * (1 - STEP * k / 100.0)
+            if price is None or lvl < price:
+                trig, nxt = lvl, k + 1
+                break
+        gap = (trig / price - 1) * 100 if (trig and price) else None
+        if trig is None:
+            note = "已跌破成本 40% 以上，档位用尽"
+        elif nxt == 1:
+            note = "高于成本，跌回成本才加仓"
+        else:
+            note = "距上一档已跌破，等这条线"
+        rows.append({"name": name, "code": code, "anchor": anchor, "bought": None,
                      "next_no": nxt, "trigger": trig, "price": price, "gap": gap, "note": note})
     return rows, asof
 
 
 def render(rows, asof):
     lines = [f"# 档位表 · 数据截至 {asof}", "",
-             "| 标的 | anchor | 已买 | 下一档 | 触发价 | 现价 | 距触发 | 提示 |",
-             "|---|---|---|---|---|---|---|---|"]
+             "| 标的 | 成本 | 现价 | 相对成本 | 下一买点 | 还差 | 说明 |",
+             "|---|---|---|---|---|---|---|"]
     for r in rows:
         if r["anchor"] is None:
             price = "—" if r["price"] is None else f"{r['price']:.4f}"
-            lines.append(f"| {r['name']} | — | {r['bought']} | {r['next_no']} | — | "
-                         f"{price} | — | 待填 anchor |")
+            lines.append(f"| {r['name']} | — | {price} | — | — | — | 待填成本 |")
             continue
-        pct = 100 - STEP * r["bought"]
-        gap = "—" if r["gap"] is None else f"{r['gap']:+.1f}%"
         price = "—" if r["price"] is None else f"{r['price']:.4f}"
-        lines.append(f"| {r['name']} | {r['anchor']:.4f} | {r['bought']} | 第 {r['next_no']} 档（{pct:.0f}%） | "
-                     f"{r['trigger']:.4f} | {price} | {gap} | {r['note']} |")
+        rel = "—" if r["price"] is None else f"{(r['price']/r['anchor']-1)*100:+.1f}%"
+        trig = "—" if r["trigger"] is None else f"{r['trigger']:.4f}（第 {r['next_no']} 档）"
+        gap = "—" if r["gap"] is None else f"{r['gap']:+.1f}%"
+        lines.append(f"| {r['name']} | {r['anchor']:.4f} | {price} | {rel} | {trig} | {gap} | {r['note']} |")
     return "\n".join(lines)
 
 
