@@ -56,7 +56,19 @@ jobs:
           sudo apt-get install -y fonts-noto-cjk
           python3 -m pip install --upgrade pip
           python3 -m pip install -r requirements.txt
-      # 4. 执行主入口（内部自动调度所有数据准备脚本）
+      # 4. 还原网格档位表的成本数据（存于 Secret，不进仓库、不在公开代码里）
+      - name: Restore grid state
+        env:
+          GRID_STATE: ${{ secrets.GRID_STATE }}
+        run: |
+          mkdir -p data
+          if [ -n "$GRID_STATE" ]; then
+            printf '%s\n' "$GRID_STATE" > data/grid_state.csv
+            echo "已还原 $(($(wc -l < data/grid_state.csv) - 1)) 只的成本数据"
+          else
+            echo "GRID_STATE 未配置，跳过网格档位"
+          fi
+      # 5. 执行主入口（内部自动调度所有数据准备脚本）
       - name: Prepare Data and Analyze
         env:
           SKIP_ETF_METRICS: ${{ steps.check_local.outputs.skip }}

@@ -255,4 +255,5 @@ python3 backtest/backtest_grid.py --codes 600585 510300 --step 3,5,8,10,15 --tie
 
 - **Shiller CAPE**：`data/ie_data.xls` 从 Shiller 官网手动下载，仅 SPY 用，建议月初检查。
 - **QQQ PE**：GuruFocus xlsx + `QQQ_PE_TODAY` 手填，断更则 QQQ ERP 沿用旧值。
-- **网格档位表**：每月复盘时跑 `python3 grid.py`，输出 `~/Desktop/grid_plan.md`。成本价来自券商导出 `holdings.json` 的 `costUnit`，一次性转录进 `data/grid_state.csv` 后**冻结不再更新**（该文件已 gitignore，不入库）；云端 Actions 没有成本数据，跑不了此表。触发价手工设成券商**条件单**（固定价、触发一次失效）——不要用网格，网格会随成交移动基准。
+- **网格档位表**：成本价来自券商导出 `holdings.json` 的 `costUnit`，一次性转录进 `data/grid_state.csv`（本地，已 gitignore）后**冻结不再更新**，同时存入 Secret `GRID_STATE`；workflow 每天跑前还原该文件，日报里每只持仓带一行"成本 / 下一买点 / 还差多少"。本地另可跑 `python3 grid.py` 输出 `~/Desktop/grid_plan.md` 用于设条件单。触发价手工设成券商**条件单**（固定价、触发一次失效）——不要用网格，网格会随成交移动基准。改成本价须同时更新本地文件和 Secret，否则两边档位不一致。
+- **ERP 分位 <25% 汇总提醒**：日报最前面单独一个区块，列出所有进入高估区的持仓（无命中不显示），对应"考虑减一档"，不是新规则。

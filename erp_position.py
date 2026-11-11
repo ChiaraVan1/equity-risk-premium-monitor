@@ -28,6 +28,7 @@ from fetch.freshness import check_freshness_report_health
 from analysis.dividend_yield_analysis import build_dividend_yield_block
 from analysis.etf_quality import build_etf_quality_block
 from analysis.ma_position import build_ma_position_block
+from grid_plan import build_grid_block
 
 
 def describe_zone(win_rate):
@@ -46,6 +47,32 @@ def describe_zone(win_rate):
     if win_rate >= 0.25:
         return "中性", "只持有，不加", pct
     return "贵", "不加，考虑减一档", pct
+
+
+def build_reduce_alert_block(summary_list):
+    """ERP 分位跌破 25% 的持仓集中提示，放在日报最前面。
+
+    只列命中的标的；一只都没有时返回空串，不占版面。
+    这不是新规则，只是把原本埋在"仓位建议"表格里的一行文案提到顶部。
+    """
+    hits = []
+    for s in summary_list:
+        try:
+            pct = float(s.get("position", {}).get("total", 100))
+        except (TypeError, ValueError):
+            continue
+        if s.get("holding") and pct < 25:
+            hits.append(s)
+    if not hits:
+        return ""
+    lines = ["### ⚠️ ERP 分位进入高估区，可考虑减一档\n"]
+    for h in hits:
+        erp_val = h.get("erp")
+        erp_txt = f" · ERP {erp_val:.2%}" if isinstance(erp_val, (int, float)) else ""
+        lines.append(
+            f"- **{h.get('name', '')}**（{h.get('code', '')}）分位 {h.get('zone_pct', '')}{erp_txt} → 贵，考虑减一档"
+        )
+    return "\n".join(lines) + "\n\n"
 
 
 def build_position_block(tier, action_text, zone_pct, quantiles, current_erp=None):
@@ -275,8 +302,11 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     # 不再埋在"减仓/止盈"明细表里。失败返回空串，不影响主报告。
     ma_position_block = build_ma_position_block(code, price_series, holding)
 
+    # 网格档位：固定成本价 + 等差 5%，只给持有标的。成本数据缺失时返回空串。
+    grid_block = build_grid_block(code)
+
     if holding:
-        md = f"""{header_block}{position_block}{unified_block}{trend_block}{sentiment_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
+        md = f"""{header_block}{position_block}{grid_block}{unified_block}{trend_block}{sentiment_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
     else:
         # 观察池：不逐只展开模块，只保留一行估值摘要，降低报告长度
         md = (f"{header_block}\n\n"
@@ -375,6 +405,13 @@ if __name__ == "__main__":
         date_str = datetime.now().strftime("%Y-%m-%d")
         summary_html = build_summary_block(summary_list, output_format="html")
         full_md = "\n".join(report_list)
+
+        # ERP 分位 <25% 的持仓集中提示：原本只在"仓位建议"表格里占一行，
+        # 用户要翻表才看得见，这里提到报告最前面。
+        reduce_alert = build_reduce_alert_block(summary_list)
+        if reduce_alert:
+            full_md = reduce_alert + full_md
+            print(f"\n⚠️ 有 {reduce_alert.count(chr(10) + '- ')} 只持仓 ERP 分位低于 25%")
         price_meta = build_price_meta_summary()
 
         # 【2026-11-09】守卫自己也要被守卫：freshness 报告太久没更新，
@@ -408,6 +445,8 @@ if __name__ == "__main__":
         if guard_warn:
             wechat_md = f"{guard_warn}{wechat_md}"
         wechat_md = f"> 📅 价格数据日期：{price_meta}\n\n{wechat_md}"
+        if reduce_alert:
+            wechat_md = reduce_alert + wechat_md
 
         dry_run = os.getenv("DRY_RUN", "").strip().lower() == "true"
         if dry_run:
