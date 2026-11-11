@@ -26,7 +26,47 @@ DESKTOP = os.path.expanduser("~/Desktop")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT_PATH = os.path.join(ROOT, "data", "portfolio_total.csv")
 API_URL = "http://127.0.0.1:8091/api/watchlist"
+ONLINE_URL = "https://ycnqgm8f2pbw.doubao.link/app/app_17hs0hy3tm6"
 REPO = "ChiaraVan1/equity-risk-premium-monitor"
+
+
+def from_online():
+    """线上工作台的静态单文件里内联了 watchlist 快照（不是 /api，路径会回落成 index.html）。"""
+    with urllib.request.urlopen(ONLINE_URL, timeout=25) as r:
+        html = r.read().decode("utf-8", "ignore")
+
+    m = re.search(r'"total"\s*:\s*([0-9.]+)', html)
+    if not m:
+        raise RuntimeError("线上页里没找到 total 字段")
+    total = float(m.group(1))
+
+    asof = ""
+    ca = re.search(r'"computedAt"\s*:\s*"([^"]+)"', html)
+    if ca:
+        asof = ca.group(1)[:10]
+
+    dec = json.JSONDecoder()
+    holdings, pos = {}, 0
+    while True:
+        i = html.find('{"name"', pos)
+        if i < 0:
+            break
+        try:
+            obj, end = dec.raw_decode(html[i:])
+            if isinstance(obj, dict) and "amount" in obj:
+                code = str(obj.get("code", ""))
+                if re.fullmatch(r"\d{6}", code):
+                    holdings[code] = (
+                        obj.get("name", ""),
+                        int(round(obj.get("shares") or 0)),
+                        float(obj.get("amount") or 0),
+                    )
+            pos = i + end
+        except Exception:
+            pos = i + 1
+    if not holdings:
+        raise RuntimeError("线上页里没解析出持仓明细")
+    return total, holdings, asof
 
 
 def from_api():
@@ -88,9 +128,14 @@ def main():
         total, holdings, asof = from_api()
         source = "本地基金工作台 API（当日实时）"
     except Exception as e:
-        print(f"本地 API 不可用（{e}），回落到复盘定稿")
-        total, holdings, asof, fname = from_postmortem()
-        source = f"月度复盘 {fname}（月末值，会偏旧）"
+        print(f"本地 API 不可用（{e}），试线上快照")
+        try:
+            total, holdings, asof = from_online()
+            source = f"线上工作台内联快照（{asof}）"
+        except Exception as e2:
+            print(f"线上快照不可用（{e2}），回落复盘定稿")
+            total, holdings, asof, fname = from_postmortem()
+            source = f"月度复盘 {fname}（月末值，会偏旧）"
 
     rows = [{"key": "TOTAL", "name": "全账户总资产", "shares": "",
              "market_value": f"{total:.2f}", "asof": asof}]

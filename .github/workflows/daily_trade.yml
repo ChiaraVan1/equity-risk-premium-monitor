@@ -80,6 +80,9 @@ jobs:
           else
             echo "PORTFOLIO_TOTAL 未配置，6% 上限检查会跳过"
           fi
+      # 4c. 优先用线上工作台快照刷新分母（云端连不到本机 8091，脚本会自动走线上内联快照）
+      - name: Refresh portfolio total
+        run: python3 tools/portfolio_snapshot.py || echo "刷新失败，沿用 Secret 还原的基准"
       # 5. 执行主入口（内部自动调度所有数据准备脚本）
       - name: Prepare Data and Analyze
         env:
