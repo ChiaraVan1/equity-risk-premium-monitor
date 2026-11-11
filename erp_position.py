@@ -7,7 +7,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from config_loader import HOLDING_CATEGORY, INDICES_LIST
+from config_loader import ALL_INDICES, HOLDING_CATEGORY, INDICES_LIST
 from prepare_all_data import (
     prepare_all_data,
     load_etf_adjusted_price_series,
@@ -31,19 +31,22 @@ from analysis.ma_position import build_ma_position_block
 from grid.grid_plan import build_grid_block
 
 
-def describe_zone(win_rate):
+def describe_zone(win_rate, is_stock=False):
     """按 ERP 分位给档位与动作（唯一口径）。返回 (档位名, 动作文案, 分位百分数)。
 
     四档：>90 极便宜 / 60–90 便宜 / 25–60 中性 / <25 贵。
     不论哪一档，单次都只买一档，不重仓。
+    【2026-11-11】个股接入后单档定额按标的类型分流：指数/ETF 3,000，个股 5,000
+    （投资规则口径）。此前一律写 3,000，个股会拿到偏小的金额。
     """
+    amount = "5,000" if is_stock else "3,000"
     if win_rate is None or (isinstance(win_rate, float) and win_rate != win_rate):
         return "数据不足", "─", 0.0
     pct = win_rate * 100
     if win_rate > 0.90:
-        return "极便宜", "可买一档 3,000 元", pct
+        return "极便宜", f"可买一档 {amount} 元", pct
     if win_rate >= 0.60:
-        return "便宜", "可买一档 3,000 元", pct
+        return "便宜", f"可买一档 {amount} 元", pct
     if win_rate >= 0.25:
         return "中性", "只持有，不加", pct
     return "贵", "不加，考虑减一档", pct
@@ -173,7 +176,9 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         erp_zone = "🔴 高估/规避"
 
     # 三仓拆分（仓位建议区块 + 仪表盘共用同一份计算结果，避免重复算两次）
-    tier, action_text, zone_pct_num = describe_zone(win_rate)
+    tier, action_text, zone_pct_num = describe_zone(
+        win_rate, is_stock=any(i["code"] == code and i.get("source") == "baidu" for i in ALL_INDICES)
+    )
 
     # 【2026-11-09】价格源按"新鲜度"选，不再按"文件在不在"选。
     # 旧逻辑：只要 etf_price_adj.csv 里有这只标的就用前复权 —— 于是内容停在

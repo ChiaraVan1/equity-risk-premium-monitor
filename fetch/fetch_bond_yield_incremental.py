@@ -628,6 +628,54 @@ def main():
                 else:
                     raise ValueError(f"未知 manual 指数: {code}")
 
+            elif pe_source == 'baidu_stock':
+                # 【2026-11-11】个股 PE 走百度源（akshare stock_zh_valuation_baidu）：
+                # 免 token，可取近十年 PE-TTM，但实测是**周频**（固定 5 天一个点，
+                # 一年约 73 个点）。分位看的是长期位置，周频够用；当日 ERP 精度会滞后。
+                # 首次建库拉近十年，之后每次拉近一年做增量覆盖。
+                _period = '近十年' if not os.path.exists(f"./data/erp_{code}.csv") else '近一年'
+                _raw = ak.stock_zh_valuation_baidu(
+                    symbol=code, indicator='市盈率(TTM)', period=_period
+                )
+                pe_df = pd.DataFrame({
+                    'Date': pd.to_datetime(_raw['date']),
+                    'PE': pd.to_numeric(_raw['value'], errors='coerce'),
+                }).dropna()
+                # 个股没有指数点位，IndexClose 填个股收盘价（pe_band 用它算价格分位）。
+                # PE 是周频、价格是日频，按日期 outer 合并：日频行只有价、周频行只有 PE，
+                # 入库时 PE 会被 ffill 到每个交易日，ERP 曲线因此变连续。
+                try:
+                    _px = ak.stock_zh_a_hist(
+                        symbol=code, period='daily',
+                        start_date="20160101", end_date=end_date_str, adjust=''
+                    )[['日期', '收盘']]
+                    _px.columns = ['Date', 'IndexClose']
+                    _px['Date'] = pd.to_datetime(_px['Date'])
+                    pe_df = pe_df.merge(_px, on='Date', how='outer').sort_values('Date')
+                    time.sleep(1)
+                except Exception as _e:
+                    print(f"   ⚠️ [{code}] 个股收盘价未获取（{_e}），仅更新 PE")
+                # 国债历史补齐：增量脚本只拉近 30 天 CN10Y，首次建库时历史行没有国债，
+                # ERP 整列只会剩最近 30 条 → 分位阈值失真（实测 31 条样本，P25/P10 几乎重合）。
+                # 这里从仓库内 000300 的 CN10Y 全历史借用（同一中债口径，2006 起），
+                # 覆盖后 ERP 能重算到 2016。判据是"现有 ERP 非空不足 500 条"，已建坏的文件也能修好。
+                _need_bond = True
+                _f_self = f"./data/erp_{code}.csv"
+                if os.path.exists(_f_self):
+                    try:
+                        _need_bond = pd.read_csv(_f_self, usecols=['ERP'])['ERP'].notna().sum() < 500
+                    except Exception:
+                        _need_bond = True
+                if _need_bond and bond_code == 'CN10Y':
+                    _ref = "./data/erp_000300.csv"
+                    if os.path.exists(_ref):
+                        _b = pd.read_csv(_ref, usecols=['Date', 'Bond_Yield_10Y']).dropna()
+                        _b['Date'] = pd.to_datetime(_b['Date'])
+                        if len(_b):
+                            bonds['CN10Y'] = _b
+                            print(f"   [baidu_stock] {code} 国债历史补齐：借用 000300 全量 {len(_b)} 条")
+                time.sleep(1)
+
             elif pe_source == 'hstech_csv':
                 # HSTECH 的 PE 已废弃，改用 PS/PSY 口径（由 update_hstech_ps 维护），
                 # 这里直接跳过，不要再按"未知 pe_source"报错。

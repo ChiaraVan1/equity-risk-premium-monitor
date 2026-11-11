@@ -58,10 +58,25 @@ def latest_prices():
     return _price_cache
 
 
+def price_of(code):
+    """现价：ETF/指数取 data/etf_price.csv 最后一列值；个股不在该表，回退读 erp_{code}.csv 最后收盘价。"""
+    p = latest_prices().get(str(code))
+    if p:
+        return p
+    f = os.path.join(BASE, "data", f"erp_{code}.csv")
+    if not os.path.exists(f):
+        return None
+    try:
+        df = pd.read_csv(f).dropna(subset=["IndexClose"])
+        return float(df["IndexClose"].iloc[-1]) if len(df) else None
+    except Exception:
+        return None
+
+
 def next_buy_point(code):
     """返回 (触发价, 第几档, 距现价百分比) 或 None。"""
     anchor = load_state().get(str(code))
-    price = latest_prices().get(str(code))
+    price = price_of(code)
     if not anchor or not price:
         return None
     for k in range(0, 8):

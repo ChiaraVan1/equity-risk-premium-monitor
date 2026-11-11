@@ -331,6 +331,42 @@
       "bond_code": "CN10Y",
       "pe_source": "lixinger",
       "pe_source_full": "lixinger"
+    },
+    {
+      "code": "600585",
+      "name": "海螺水泥",
+      "source": "baidu",
+      "yfinance_ticker": null,
+      "holding": true,
+      "keywords": ["水泥价格", "错峰生产", "基建投资", "地产开工", "熟料"],
+      "etf_code": null,
+      "currency": "CNY",
+      "bond_code": "CN10Y",
+      "pe_source": "baidu_stock"
+    },
+    {
+      "code": "601006",
+      "name": "大秦铁路",
+      "source": "baidu",
+      "yfinance_ticker": null,
+      "holding": true,
+      "keywords": ["大秦线运量", "煤价", "铁路运价", "货运量"],
+      "etf_code": null,
+      "currency": "CNY",
+      "bond_code": "CN10Y",
+      "pe_source": "baidu_stock"
+    },
+    {
+      "code": "600600",
+      "name": "青岛啤酒",
+      "source": "baidu",
+      "yfinance_ticker": null,
+      "holding": true,
+      "keywords": ["啤酒销量", "大麦价格", "消费复苏", "吨价"],
+      "etf_code": null,
+      "currency": "CNY",
+      "bond_code": "CN10Y",
+      "pe_source": "baidu_stock"
     }
   ]
 }

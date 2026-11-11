@@ -109,8 +109,25 @@ def load_etf_price_series(erp_code: str):
 
     df = _ETF_PRICE_CACHE["df"]
     if erp_code not in df.columns:
-        return None
+        # 【2026-11-11】个股不在 etf_price.csv 里（该表只有指数与 ETF）：回退到
+        # data/erp_{code}.csv 的 IndexClose —— 个股该列存的就是不复权收盘价。
+        # 指数/ETF 都有列，不会走到这里，所以不影响原有行为。
+        return _load_price_from_erp_csv(erp_code)
     return df[erp_code].dropna().sort_index()
+
+
+def _load_price_from_erp_csv(erp_code: str):
+    """从 erp_{code}.csv 的 IndexClose 取价格序列（个股专用回退），无数据返回 None。"""
+    path = f"./data/erp_{erp_code}.csv"
+    if not os.path.exists(path):
+        return None
+    try:
+        df = pd.read_csv(path, usecols=["Date", "IndexClose"])
+        df["Date"] = pd.to_datetime(df["Date"])
+        s = df.set_index("Date")["IndexClose"].dropna().sort_index()
+        return s if len(s) else None
+    except Exception:
+        return None
 
 
 def load_etf_adjusted_price_series(erp_code: str):

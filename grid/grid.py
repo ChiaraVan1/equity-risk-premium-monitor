@@ -26,6 +26,18 @@ OUT = os.path.expanduser("~/Desktop/grid_plan.md")
 STEP = 5.0
 
 
+def _stock_price(code):
+    """个股不在 etf_price.csv 里，现价回退到 erp_{code}.csv 的最后一根收盘价。"""
+    f = os.path.join(BASE, "data", f"erp_{code}.csv")
+    if not os.path.exists(f):
+        return None
+    try:
+        df = pd.read_csv(f).dropna(subset=["IndexClose"])
+        return float(df["IndexClose"].iloc[-1]) if len(df) else None
+    except Exception:
+        return None
+
+
 def build():
     st = pd.read_csv(STATE, dtype={"code": str})
     px = pd.read_csv(PRICE)
@@ -37,7 +49,7 @@ def build():
         code, name = str(r["code"]), r["name"]
         anchor, bought = r["anchor"], int(r["tiers_bought"])
         price = last.get(code)
-        price = float(price) if pd.notna(price) else None
+        price = float(price) if pd.notna(price) else _stock_price(code)
 
         if pd.isna(anchor):
             rows.append({"name": name, "code": code, "anchor": None, "bought": bought,
