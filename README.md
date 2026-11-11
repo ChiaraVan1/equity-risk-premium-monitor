@@ -259,3 +259,4 @@ python3 backtest/backtest_grid.py --codes 600585 510300 --step 3,5,8,10,15 --tie
 - **QQQ PE**：GuruFocus xlsx + `QQQ_PE_TODAY` 手填，断更则 QQQ ERP 沿用旧值。
 - **网格档位表**：成本价来自券商导出 `holdings.json` 的 `costUnit`，一次性转录进 `data/grid_state.csv`（本地，已 gitignore）后**冻结不再更新**，同时存入 Secret `GRID_STATE`；workflow 每天跑前还原该文件，日报里每只持仓带一行"成本 / 下一买点 / 还差多少"。本地另可跑 `python3 grid/grid.py` 输出 `~/Desktop/grid_plan.md` 用于设条件单。触发价手工设成券商**条件单**（固定价、触发一次失效）——不要用网格，网格会随成交移动基准。改成本价须同时更新本地文件和 Secret，否则两边档位不一致。
 - **ERP 分位 <25% 汇总提醒**：日报最前面单独一个区块，列出所有进入高估区的持仓（无命中不显示），对应"考虑减一档"，不是新规则。
+- **个股 PE**：海螺水泥 / 大秦铁路 / 青岛啤酒走 akshare 百度源（`pe_source=baidu_stock`），免 token、可取近十年，但**是周频**（每 5 天一个点，一年约 73 个），当日 ERP 精度会滞后几天；分位看长期位置，周频够用。个股收盘价也由这一步写入 `data/erp_{code}.csv` 的 `IndexClose`（不复权，与券商成本同口径）。首次建库时国债历史会从 `data/erp_000300.csv` 借用（同一中债 CN10Y 口径），否则增量只拉近 30 天、ERP 空一片。
