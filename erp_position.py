@@ -85,7 +85,8 @@ def build_dividend_value_block(code, price, bond_yield, pe=None):
     if not dps or not price or bond_yield is None:
         return ""
     dy = dps / price
-    spread = (dy - bond_yield) * 100
+    # 判定与显示绑定同一个值（保留 2 位），否则会出现「显示 +3.00 却判中性」的自相矛盾
+    spread = round((dy - bond_yield) * 100, 2)
     if spread >= 3:
         verdict = "便宜（可买一档）"
     elif spread >= 1:
@@ -102,7 +103,7 @@ def build_dividend_value_block(code, price, bond_yield, pe=None):
 {pe_line}| 每股派息TTM | {dps:.4f} 元 |
 | 股息率 | {dy:.2%} |
 | 十年国债 | {bond_yield:.2%} |
-| **股息率 − 国债** | **{spread:+.1f} 个点** |
+| **股息率 − 国债** | **{spread:+.2f} 个点** |
 
 **分红口径判定：{verdict}**
 > 阈值暂定（≥3 便宜 / 1–3 中性 / <1 偏贵），未经回测验证。
