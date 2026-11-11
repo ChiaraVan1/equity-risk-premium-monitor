@@ -8,6 +8,9 @@ from datetime import datetime
 import pandas as pd
 
 from config_loader import ALL_INDICES, HOLDING_CATEGORY, INDICES_LIST
+
+# 个股名单（source=baidu 即个股）：它们的动作依据是分红口径，不是 ERP 分位
+_STOCK_CODES = {str(i["code"]) for i in ALL_INDICES if i.get("source") == "baidu"}
 from prepare_all_data import (
     prepare_all_data,
     load_etf_adjusted_price_series,
@@ -52,6 +55,62 @@ def describe_zone(win_rate, is_stock=False):
     return "贵", "不加，考虑减一档", pct
 
 
+_STOCK_DIV_PATH = "./data/stock_dividend.csv"
+_STOCK_DIV_CACHE = None
+
+
+def _load_stock_div():
+    """读 data/stock_dividend.csv → {code: 每股派息TTM}。"""
+    global _STOCK_DIV_CACHE
+    if _STOCK_DIV_CACHE is None:
+        _STOCK_DIV_CACHE = {}
+        if os.path.exists(_STOCK_DIV_PATH):
+            try:
+                df = pd.read_csv(_STOCK_DIV_PATH, dtype={"code": str})
+                for _, r in df.iterrows():
+                    _STOCK_DIV_CACHE[str(r["code"])] = float(r["dps_ttm"])
+            except Exception:
+                _STOCK_DIV_CACHE = {}
+    return _STOCK_DIV_CACHE
+
+
+def build_dividend_value_block(code, price, bond_yield, pe=None):
+    """个股「分红口径」区块：股息率 = 每股派息TTM / 现价，再与十年国债比利差。
+
+    【2026-11-11】个股不用 ERP 分位做动作依据（周期股盈利崩塌时 PE 会虚高，
+    分位会长期卡在"贵"）。改按用户的分红价值法看「股息率 − 国债」。
+    ★ 阈值暂定、未经回测：≥3 个点便宜 / 1–3 中性 / <1 偏贵。要改先回测再动。
+    """
+    dps = _load_stock_div().get(str(code))
+    if not dps or not price or bond_yield is None:
+        return ""
+    dy = dps / price
+    spread = (dy - bond_yield) * 100
+    if spread >= 3:
+        verdict = "便宜（可买一档）"
+    elif spread >= 1:
+        verdict = "中性（只持有）"
+    else:
+        verdict = "偏贵（考虑减一档）"
+    pe_line = f"| PE(TTM) | {pe:.2f} |\n" if pe else ""
+    return f"""
+<details>
+<summary>分红口径（个股看这个，ERP 分位不作动作依据）</summary>
+
+| 指标 | 数值 |
+|:--|--:|
+{pe_line}| 每股派息TTM | {dps:.4f} 元 |
+| 股息率 | {dy:.2%} |
+| 十年国债 | {bond_yield:.2%} |
+| **股息率 − 国债** | **{spread:+.1f} 个点** |
+
+**分红口径判定：{verdict}**
+> 阈值暂定（≥3 便宜 / 1–3 中性 / <1 偏贵），未经回测验证。
+
+</details>
+"""
+
+
 def build_reduce_alert_block(summary_list):
     """ERP 分位跌破 25% 的持仓集中提示，放在日报最前面。
 
@@ -63,6 +122,10 @@ def build_reduce_alert_block(summary_list):
         try:
             pct = float(s.get("position", {}).get("total", 100))
         except (TypeError, ValueError):
+            continue
+        # 【2026-11-11】个股排除在外：它们的动作依据是分红口径（股息率 − 国债），
+        # ERP 分位对周期股会长期卡在"贵"，列进来会和个股区块里的结论直接打架。
+        if str(s.get("code", "")) in _STOCK_CODES:
             continue
         if s.get("holding") and pct < 25:
             hits.append(s)
@@ -176,9 +239,12 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         erp_zone = "🔴 高估/规避"
 
     # 三仓拆分（仓位建议区块 + 仪表盘共用同一份计算结果，避免重复算两次）
-    tier, action_text, zone_pct_num = describe_zone(
-        win_rate, is_stock=any(i["code"] == code and i.get("source") == "baidu" for i in ALL_INDICES)
-    )
+    is_stock = str(code) in _STOCK_CODES
+    tier, action_text, zone_pct_num = describe_zone(win_rate, is_stock=is_stock)
+    # 【2026-11-11】个股的动作不以 ERP 分位为准：周期股盈利崩塌时 PE 虚高、分位长期卡在"贵"，
+    # 与分红口径（股息率 − 国债）会给出相反结论。这里统一改成指向分红口径，避免同页自相矛盾。
+    if is_stock:
+        action_text = "见下方分红口径（ERP 分位仅参考）"
 
     # 【2026-11-09】价格源按"新鲜度"选，不再按"文件在不在"选。
     # 旧逻辑：只要 etf_price_adj.csv 里有这只标的就用前复权 —— 于是内容停在
@@ -310,8 +376,21 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
     # 网格档位：固定成本价 + 等差 5%，只给持有标的。成本数据缺失时返回空串。
     grid_block = build_grid_block(code)
 
+    # 个股「分红口径」区块：股息率 − 国债利差。只对个股（source=baidu）生成。
+    dividend_value_block = ""
+    if is_stock:
+        try:
+            _bond_last = df.dropna(subset=['Bond_Yield_10Y'])['Bond_Yield_10Y'].iloc[-1]
+            _pe = float(df['PE'].dropna().iloc[-1]) if df['PE'].notna().any() else None
+            _px = float(price_series.iloc[-1]) if price_series is not None and len(price_series) else None
+            dividend_value_block = build_dividend_value_block(
+                code, _px, float(_bond_last), _pe
+            )
+        except Exception:
+            dividend_value_block = ""
+
     if holding:
-        md = f"""{header_block}{position_block}{grid_block}{unified_block}{trend_block}{sentiment_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
+        md = f"""{header_block}{position_block}{grid_block}{dividend_value_block}{unified_block}{trend_block}{sentiment_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
     else:
         # 观察池：不逐只展开模块，只保留一行估值摘要，降低报告长度
         md = (f"{header_block}\n\n"

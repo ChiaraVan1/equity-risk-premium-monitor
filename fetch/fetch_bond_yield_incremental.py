@@ -394,6 +394,30 @@ def update_hstech_ps(cn10y_series=None):
 
 # ── 增量合并保存 ───────────────────────────────────────────────────────────────
 
+STOCK_DIV_PATH = "./data/stock_dividend.csv"
+
+
+def _save_stock_dividend(code, name, dps):
+    """维护 data/stock_dividend.csv：每只个股一行「每股派息TTM」（元/股）。
+
+    只存派息额不存股息率——股息率 = dps / 当日现价，价格天天变，日报里现算。
+    """
+    rows = []
+    if os.path.exists(STOCK_DIV_PATH):
+        try:
+            rows = pd.read_csv(STOCK_DIV_PATH, dtype={"code": str}).to_dict("records")
+        except Exception:
+            rows = []
+    rows = [r for r in rows if str(r.get("code")) != str(code)]
+    rows.append({
+        "code": str(code),
+        "name": name,
+        "dps_ttm": round(float(dps), 4),
+        "updated": datetime.now().strftime("%Y-%m-%d"),
+    })
+    pd.DataFrame(rows).to_csv(STOCK_DIV_PATH, index=False, encoding="utf-8-sig")
+
+
 def process_incremental(new_pe_df, new_bond_df, code, name, currency, bond_code):
     file_path = f"./data/erp_{code}.csv"
 
@@ -674,6 +698,18 @@ def main():
                         if len(_b):
                             bonds['CN10Y'] = _b
                             print(f"   [baidu_stock] {code} 国债历史补齐：借用 000300 全量 {len(_b)} 条")
+                # 分红数据：个股按「分红价值法」要算股息率 = 每股派息TTM / 现价。
+                # 价格每天变，所以这里只存"每股派息TTM"（dps），股息率由日报按当日现价现算。
+                try:
+                    _div = ak.stock_dividend_cninfo(symbol=code)
+                    _div['除权日'] = pd.to_datetime(_div['除权日'], errors='coerce')
+                    _div = _div.dropna(subset=['除权日'])
+                    _win = _div[_div['除权日'] >= pd.Timestamp.now() - pd.Timedelta(days=365)]
+                    _dps = (pd.to_numeric(_win['派息比例'], errors='coerce').fillna(0) / 10).sum()
+                    _save_stock_dividend(code, name, float(_dps))
+                    print(f"   [baidu_stock] {code} 每股派息TTM {_dps:.4f} 元（{len(_win)} 次分红）")
+                except Exception as _e:
+                    print(f"   ⚠️ [{code}] 分红数据未获取（{_e}）")
                 time.sleep(1)
 
             elif pe_source == 'hstech_csv':
