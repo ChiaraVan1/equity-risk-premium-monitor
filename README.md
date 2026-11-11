@@ -255,3 +255,4 @@ python3 backtest/backtest_grid.py --codes 600585 510300 --step 3,5,8,10,15 --tie
 
 - **Shiller CAPE**：`data/ie_data.xls` 从 Shiller 官网手动下载，仅 SPY 用，建议月初检查。
 - **QQQ PE**：GuruFocus xlsx + `QQQ_PE_TODAY` 手填，断更则 QQQ ERP 沿用旧值。
+- **网格档位表**：每月复盘时跑 `python3 grid.py`，输出 `~/Desktop/grid_plan.md`。成本价来自券商导出 `holdings.json` 的 `costUnit`，一次性转录进 `data/grid_state.csv` 后**冻结不再更新**（该文件已 gitignore，不入库）；云端 Actions 没有成本数据，跑不了此表。触发价手工设成券商**条件单**（固定价、触发一次失效）——不要用网格，网格会随成交移动基准。
