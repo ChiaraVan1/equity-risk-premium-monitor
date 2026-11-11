@@ -19,7 +19,7 @@ import os
 
 import pandas as pd
 
-BASE = os.path.dirname(os.path.abspath(__file__))
+BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 仓库根（本文件在 grid/ 下）
 STATE = os.path.join(BASE, "data", "grid_state.csv")
 PRICE = os.path.join(BASE, "data", "etf_price.csv")
 OUT = os.path.expanduser("~/Desktop/grid_plan.md")

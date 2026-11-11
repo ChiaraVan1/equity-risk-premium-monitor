@@ -28,7 +28,7 @@ from fetch.freshness import check_freshness_report_health
 from analysis.dividend_yield_analysis import build_dividend_yield_block
 from analysis.etf_quality import build_etf_quality_block
 from analysis.ma_position import build_ma_position_block
-from grid_plan import build_grid_block
+from grid.grid_plan import build_grid_block
 
 
 def describe_zone(win_rate):
