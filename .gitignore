@@ -7,3 +7,4 @@ data/backtest/
 data/backtest_verdicts.csv
 output_preview.md
 data/grid_state.csv
+data/portfolio_total.csv

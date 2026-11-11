@@ -68,6 +68,18 @@ jobs:
           else
             echo "GRID_STATE 未配置，跳过网格档位"
           fi
+      # 4b. 还原全账户总资产基准（6% 上限检查的分母；同样存 Secret，不进仓库）
+      - name: Restore portfolio total
+        env:
+          PORTFOLIO_TOTAL: ${{ secrets.PORTFOLIO_TOTAL }}
+        run: |
+          mkdir -p data
+          if [ -n "$PORTFOLIO_TOTAL" ]; then
+            printf '%s\n' "$PORTFOLIO_TOTAL" > data/portfolio_total.csv
+            echo "已还原总资产基准（$(($(wc -l < data/portfolio_total.csv) - 1)) 行）"
+          else
+            echo "PORTFOLIO_TOTAL 未配置，6% 上限检查会跳过"
+          fi
       # 5. 执行主入口（内部自动调度所有数据准备脚本）
       - name: Prepare Data and Analyze
         env:

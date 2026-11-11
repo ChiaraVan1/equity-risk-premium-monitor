@@ -55,6 +55,63 @@ def describe_zone(win_rate, is_stock=False):
     return "贵", "不加，考虑减一档", pct
 
 
+_PORTFOLIO_PATH = "./data/portfolio_total.csv"
+_PORTFOLIO_CACHE = None
+_CAP_RATIO = 0.06
+
+
+def _load_portfolio():
+    """读 data/portfolio_total.csv → {key: {name, mv, asof}}，key=TOTAL 是全账户总资产。"""
+    global _PORTFOLIO_CACHE
+    if _PORTFOLIO_CACHE is None:
+        _PORTFOLIO_CACHE = {}
+        if os.path.exists(_PORTFOLIO_PATH):
+            try:
+                import csv as _csv
+                with open(_PORTFOLIO_PATH, encoding="utf-8") as f:
+                    for r in _csv.DictReader(f):
+                        _PORTFOLIO_CACHE[r["key"]] = {
+                            "name": r["name"],
+                            "mv": float(r["market_value"]),
+                            "asof": r["asof"],
+                        }
+            except Exception:
+                _PORTFOLIO_CACHE = {}
+    return _PORTFOLIO_CACHE
+
+
+def build_cap_block(code):
+    """单只 ≤6% 检查。分母＝全账户总资产，来自月度复盘定稿的解析（tools/portfolio_snapshot.py）。
+
+    以前只有一句死文案「该只市值不超过总资产 6%」，分母从没进过系统，所以谁都查不了。
+    现在把分母和该只市值都接上，直接给「还能加多少 / 已经超了多少」。
+    市值基准月更，超过 45 天会标一句偏旧提示。
+    """
+    pf = _load_portfolio()
+    total = pf.get("TOTAL", {}).get("mv")
+    if not total:
+        return "\n> **6% 上限检查**：缺总资产基准，先在本地跑 `python3 tools/portfolio_snapshot.py` 并同步 Secret\n"
+    asof = pf.get("TOTAL", {}).get("asof", "")
+    cap = total * _CAP_RATIO
+    me = pf.get(str(code))
+    if not me:
+        return ""
+    mv = me["mv"]
+    pct = mv / total
+    gap = cap - mv
+    days = None
+    try:
+        days = (datetime.now() - datetime.strptime(asof, "%Y-%m-%d")).days
+    except Exception:
+        pass
+    stale = f"，基准偏旧 {days} 天" if days and days > 45 else ""
+    if gap >= 0:
+        line = f"6% 上限 {cap:,.0f} 元 · 当前 {mv:,.0f} 元（{pct:.2%}）→ **还可加 {gap:,.0f} 元**"
+    else:
+        line = f"6% 上限 {cap:,.0f} 元 · 当前 {mv:,.0f} 元（{pct:.2%}）→ **已超限 {-gap:,.0f} 元，不再加**"
+    return f"\n**仓位上限检查**：{line}\n> 分母＝全账户 {total:,.0f} 元（市值基准 {asof}{stale}）\n"
+
+
 _STOCK_DIV_PATH = "./data/stock_dividend.csv"
 _STOCK_DIV_CACHE = None
 
@@ -167,7 +224,6 @@ def build_position_block(tier, action_text, zone_pct, quantiles, current_erp=Non
 
 {erp_line}**分位 {zone_pct:.0f}% → {tier}**
 **动作：{action_text}**
-买入前自查：该只市值不超过总资产 6%。
 {zone_table}"""
 
 
@@ -390,8 +446,11 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         except Exception:
             dividend_value_block = ""
 
+    # 单只 6% 仓位上限检查：分母＝全账户总资产（月度复盘解析），分子＝该只市值
+    cap_block = build_cap_block(code) if holding else ""
+
     if holding:
-        md = f"""{header_block}{position_block}{grid_block}{dividend_value_block}{unified_block}{trend_block}{sentiment_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
+        md = f"""{header_block}{position_block}{cap_block}{grid_block}{dividend_value_block}{unified_block}{trend_block}{sentiment_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
     else:
         # 观察池：不逐只展开模块，只保留一行估值摘要，降低报告长度
         md = (f"{header_block}\n\n"
