@@ -177,10 +177,21 @@ def build_unified_valuation_block(df, code, val_series=None, win_rate=None, odds
             pe_row = (f"| 当前 {price_col} | {p_series.iloc[-1]:.1f}x | 历史均值 {p_series.mean():.1f}x，"
                       f"最高 {p_series.max():.1f}x，最低 {p_series.min():.1f}x |\n")
 
+    # 【2026-11-12】个股提示：个股的买卖依据是分红口径（股息率 − 国债），ERP 分位对周期股
+    # 会长期卡在"贵"，与分红结论常常相反。按用户决定：评级保留，但必须紧跟一行说明，
+    # 否则同一张卡片上会出现「中性（只持有）」和「🚨 极度高估区，规避」两个相反结论。
+    _STOCK_CODES = {"600585", "601006", "600600"}
+    stock_note = ""
+    if str(code) in _STOCK_CODES:
+        stock_note = (
+            f"\n> ⚠️ **个股提示**：本区块的 {metric_name} 评级仅供参考，"
+            "**不作买卖依据**；个股以本页「分红口径」（股息率 − 十年国债）为准。两者相反时，以分红口径为准。\n"
+        )
+
     block = f"""
 ---
 ### 核心估值决策（基于 {metric_name} 框架）
-
+{stock_note}
 <details>
 <summary>**综合评级：{rating}**</summary>
 
