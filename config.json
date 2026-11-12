@@ -182,7 +182,7 @@
       "keywords": [],
       "etf_code": "520580.SH",
       "currency": "USD",
-      "bond_code": "CN10Y",
+      "bond_code": "US10Y",
       "pe_source": "worldpe",
       "pe_source_full": "worldpe_ratio"
     },

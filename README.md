@@ -117,7 +117,7 @@ erp_position.py（主入口）
 | EWQ | MSCI France | 513080.SH | worldperatio.com 今日 × SPY 比值估历史 | FR10Y | 日频，历史估算 |
 | EWG | MSCI Germany | 159561.SZ | 同上 | DE10Y | 日频，历史估算 |
 | EWJ | MSCI Japan | 513880.SH | 同上 | JP10Y | 日频，历史估算 |
-| EEM | MSCI Emerging | 520580.SH | 同上 | CN10Y | 日频，历史估算 |
+| EEM | MSCI Emerging | 520580.SH | 同上 | US10Y | 日频，历史估算 |
 | HSTECH | 恒生科技 | 513180.SH | 自建：yfinance 市值 + akshare 季报 | CN10Y | 月频 |
 | 931637 | 港股通互联网 | 513770.SH | 中证指数官网（akshare） | CN10Y | 日频 |
 
