@@ -34,7 +34,7 @@ from concurrent.futures import ThreadPoolExecutor
 # 否则 `from config_loader import` 会报 ModuleNotFoundError。
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from config_loader import ETF_LIST, ETF_TO_BENCHMARK
+from config_loader import ETF_LIST, ETF_TO_BENCHMARK, PRICE_ONLY_LIST
 
 MAX_WORKERS = 1  # 并发线程数。【2026-08-06】原为5，本地macOS环境下多线程并发触发
                  # py_mini_racer(akshare内部用的V8引擎)的 address_pool_manager 崩溃
@@ -428,7 +428,7 @@ def get_etf_metrics():
     index_cache_df = _load_wide_cache(INDEX_CACHE_PATH)
 
     args_list = []
-    for erp_code, etf_code in ETF_LIST:
+    for erp_code, etf_code in (ETF_LIST + PRICE_ONLY_LIST):
         nav_start_str = _incremental_start_str(nav_cache_df, erp_code, start_date)
         bm_code = ETF_TO_BENCHMARK.get(etf_code)
         index_start_str = (

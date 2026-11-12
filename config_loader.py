@@ -107,6 +107,13 @@ ETF_LIST = [
     if idx.get("etf_code")  # 只包含有对应ETF的指数
 ]
 
+# PRICE_ONLY_LIST: (code, etf_code)
+# 只取价、不参与 ERP 估值的标的。商品 ETF（如黄金 518880）无 PE，算不出 ERP，
+# 进不了 indices 监控池；但档位表需要它的日线价格，所以单独列在这里。
+PRICE_ONLY_LIST = [
+    ("518880", "518880.SH"),
+]
+
 # ETF_TO_BENCHMARK: etf_code -> benchmark_code
 ETF_TO_BENCHMARK = {}
 for idx in ALL_INDICES:
