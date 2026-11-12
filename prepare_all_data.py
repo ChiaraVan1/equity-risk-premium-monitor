@@ -244,6 +244,7 @@ def prepare_all_data():
 
     scripts.extend([
         ("fetch/fetch_bond_yield_incremental.py", "国债 PE 增量数据（含 HSTECH PS/PSY）"),
+        ("fetch/fetch_tips.py", "美国 10 年期实际利率（TIPS，月频口径）"),
         ("analysis/dividend_yield_analysis.py", "股息率数据"),  # __main__ 入口在这个文件
     ])
 

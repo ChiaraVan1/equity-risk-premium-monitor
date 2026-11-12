@@ -22,6 +22,7 @@ import pandas as pd
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 仓库根（本文件在 grid/ 下）
 STATE = os.path.join(BASE, "data", "grid_state.csv")
 PRICE = os.path.join(BASE, "data", "etf_price.csv")
+TIPS = os.path.join(BASE, "data", "tips_10y.csv")
 OUT = os.path.expanduser("~/Desktop/grid_plan.md")
 STEP = 5.0
 
@@ -100,6 +101,42 @@ def build():
     return rows, asof
 
 
+def _gold_context():
+    """黄金背景：实际利率。518880 是商品 ETF，无 PE，ERP 对它是错的工具。
+
+    纯规则模板，不经 LLM：所有数字来自 data/tips_10y.csv，**判定用历史分位，
+    不用人为设定的阈值**（曾经写过「1.5% 经验阈值」，那个数是凭空定的，已废弃）。
+    数据缺失或样本不足时整段不输出，不留半截。
+    """
+    if not os.path.exists(TIPS):
+        return ""
+    try:
+        d = pd.read_csv(TIPS, encoding="utf-8-sig")
+        if d.empty or len(d) < 500:      # 样本太短算分位没有意义
+            return ""
+        cur = float(d.iloc[-1]["real_yield"])
+        nom = float(d.iloc[-1]["nominal_10y"])
+        inf = float(d.iloc[-1]["inflation_expectation"])
+        asof = str(d.iloc[-1]["date"])
+        series = pd.to_numeric(d["real_yield"], errors="coerce").dropna()
+        pctl = (series < cur).mean() * 100
+        med = series.median()
+        lo, hi = series.min(), series.max()
+        span = f"{d.iloc[0]['date'][:4]}–{asof[:4]}"
+    except Exception:  # noqa: BLE001
+        return ""
+
+    return (
+        "\n## 黄金背景（518880 是商品 ETF，无 PE，ERP 不适用）\n\n"
+        f"实际利率 **{cur:.2f}%** = 名义 10 年期美债 {nom:.2f}% "
+        f"− 隐含通胀预期 {inf:.2f}%（{asof}）\n\n"
+        f"> 历史位置：{span} 共 {len(series)} 个交易日，中位 {med:.2f}%、"
+        f"区间 {lo:.2f}%~{hi:.2f}%。当前 {cur:.2f}% 处于第 **{pctl:.1f}** 百分位。\n"
+        "> 机制说明（非统计结论）：实际利率越高，持有黄金这种无息资产的机会成本越大。\n"
+        "> 此处只给读数，不产生买卖动作。\n"
+    )
+
+
 def render(rows, asof):
     lines = [f"# 档位表 · ETF/个股截至 {asof}，黄金等表外标的为实时价", "",
              "| 标的 | 成本 | 现价 | 相对成本 | 下一买点 | 还差 | 说明 |",
@@ -114,7 +151,7 @@ def render(rows, asof):
         trig = "—" if r["trigger"] is None else f"{r['trigger']:.4f}（第 {r['next_no']} 档）"
         gap = "—" if r["gap"] is None else f"{r['gap']:+.1f}%"
         lines.append(f"| {r['name']} | {r['anchor']:.4f} | {price} | {rel} | {trig} | {gap} | {r['note']} |")
-    return "\n".join(lines)
+    return "\n".join(lines) + _gold_context()
 
 
 def main():
