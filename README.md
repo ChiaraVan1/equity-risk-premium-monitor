@@ -257,6 +257,4 @@ python3 backtest/backtest_grid.py --codes 600585 510300 --step 3,5,8,10,15 --tie
 
 - **Shiller CAPE**：`data/ie_data.xls` 从 Shiller 官网手动下载，仅 SPY 用，建议月初检查。
 - **QQQ PE**：GuruFocus xlsx + `QQQ_PE_TODAY` 手填，断更则 QQQ ERP 沿用旧值。
-- **网格档位表**：13 只（含黄金 518880）锚取券商持仓页的**「买入均价」**（不是「成本价／本价」，后者是摊薄成本），一次性转录进 `data/grid_state.csv`（本地，已 gitignore）后**永久冻结——买入成交不改锚，档位变动只来自价格变动**，同时存入 Secret `GRID_STATE`；workflow 每天跑前还原该文件，日报里每只持仓带一行"成本 / 下一买点 / 还差多少"。本地另可跑 `python3 grid/grid.py` 输出 `~/Desktop/grid_plan.md`。现价统一来自 `data/etf_price.csv`（黄金由 `PRICE_ONLY_LIST` 单独取价，与其他 12 只同源）。例外情况只有两种：清仓后重开、或换标的，此时才重设锚；改 `grid_state.csv` 须同时更新本地文件和 Secret `GRID_STATE`，否则两边档位不一致。
-- **条件单**：13 只通用。程序只负责算出触发价，下单要你在券商 App 里手工挂**条件单**（固定价、触发一次失效）——不要用券商网格，网格会随成交移动基准。
 
