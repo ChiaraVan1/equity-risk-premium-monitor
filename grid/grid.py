@@ -3,13 +3,13 @@
 """档位表：按「本轮首笔成本」固定锚 + 等差档位算出下一档触发价。
 
 数据来源
-  成本：data/grid_state.csv（code, name, anchor, tiers_bought）—— 自己填
+  成本：data/grid_state.csv（code, name, anchor）—— 自己填
   现价：data/etf_price.csv 最后一个交易日（系统每天 18:30 更新）
 
 口径
   第 1 档 = anchor 本身（首笔买入价）
   第 n 档 = anchor × (1 − 5% × (n−1))，即 95% / 90% / 85% / 80%
-  成交只把 tiers_bought 加一，anchor 永不改；清仓后重算 anchor
+  anchor 永不改；清仓后重算 anchor。下一买点由「现价与 anchor 的距离」反推，不记「已买几档」
 
 用法
   python3 grid.py            # 输出到 ~/Desktop/grid_plan.md
@@ -24,6 +24,26 @@ STATE = os.path.join(BASE, "data", "grid_state.csv")
 PRICE = os.path.join(BASE, "data", "etf_price.csv")
 OUT = os.path.expanduser("~/Desktop/grid_plan.md")
 STEP = 5.0
+
+
+def _live_etf_price(code):
+    """不在 etf_price.csv 也不在 erp_*.csv 的标的（如黄金 518880，商品 ETF 无 PE 口径、
+    未进 config 监控池），直接从新浪行情取最新价，仅供档位表使用。"""
+    import urllib.request
+
+    digits = str(code).split(".")[0]
+    if not digits.isdigit():
+        return None
+    prefix = "sh" if digits.startswith(("51", "58", "56", "50", "52")) else "sz"
+    url = f"https://hq.sinajs.cn/list={prefix}{digits}"
+    try:
+        req = urllib.request.Request(url, headers={"Referer": "https://finance.sina.com.cn"})
+        raw = urllib.request.urlopen(req, timeout=8).read().decode("gbk", "ignore")
+        fields = raw.split('"')[1].split(",")
+        price = float(fields[3])  # 名称,今开,昨收,现价,...
+        return price if price > 0 else None
+    except Exception:
+        return None
 
 
 def _stock_price(code):
@@ -47,13 +67,16 @@ def build():
 
     for _, r in st.iterrows():
         code, name = str(r["code"]), r["name"]
-        anchor, bought = r["anchor"], int(r["tiers_bought"])
+        anchor = r["anchor"]
         price = last.get(code)
-        price = float(price) if pd.notna(price) else _stock_price(code)
+        if pd.notna(price):
+            price = float(price)
+        else:
+            price = _stock_price(code) or _live_etf_price(code)
 
         if pd.isna(anchor):
-            rows.append({"name": name, "code": code, "anchor": None, "bought": bought,
-                         "next_no": bought + 1, "trigger": None, "price": price, "gap": None,
+            rows.append({"name": name, "code": code, "anchor": None,
+                         "next_no": 1, "trigger": None, "price": price, "gap": None,
                          "note": "待填 anchor"})
             continue
 
@@ -72,13 +95,13 @@ def build():
             note = "高于成本，跌回成本才加仓"
         else:
             note = "距上一档已跌破，等这条线"
-        rows.append({"name": name, "code": code, "anchor": anchor, "bought": None,
+        rows.append({"name": name, "code": code, "anchor": anchor,
                      "next_no": nxt, "trigger": trig, "price": price, "gap": gap, "note": note})
     return rows, asof
 
 
 def render(rows, asof):
-    lines = [f"# 档位表 · 数据截至 {asof}", "",
+    lines = [f"# 档位表 · ETF/个股截至 {asof}，黄金等表外标的为实时价", "",
              "| 标的 | 成本 | 现价 | 相对成本 | 下一买点 | 还差 | 说明 |",
              "|---|---|---|---|---|---|---|"]
     for r in rows:
