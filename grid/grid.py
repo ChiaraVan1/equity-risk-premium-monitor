@@ -27,26 +27,6 @@ OUT = os.path.expanduser("~/Desktop/grid_plan.md")
 STEP = 5.0
 
 
-def _live_etf_price(code):
-    """不在 etf_price.csv 也不在 erp_*.csv 的标的（如黄金 518880，商品 ETF 无 PE 口径、
-    未进 config 监控池），直接从新浪行情取最新价，仅供档位表使用。"""
-    import urllib.request
-
-    digits = str(code).split(".")[0]
-    if not digits.isdigit():
-        return None
-    prefix = "sh" if digits.startswith(("51", "58", "56", "50", "52")) else "sz"
-    url = f"https://hq.sinajs.cn/list={prefix}{digits}"
-    try:
-        req = urllib.request.Request(url, headers={"Referer": "https://finance.sina.com.cn"})
-        raw = urllib.request.urlopen(req, timeout=8).read().decode("gbk", "ignore")
-        fields = raw.split('"')[1].split(",")
-        price = float(fields[3])  # 名称,今开,昨收,现价,...
-        return price if price > 0 else None
-    except Exception:
-        return None
-
-
 def _stock_price(code):
     """个股不在 etf_price.csv 里，现价回退到 erp_{code}.csv 的最后一根收盘价。"""
     f = os.path.join(BASE, "data", f"erp_{code}.csv")
@@ -73,7 +53,7 @@ def build():
         if pd.notna(price):
             price = float(price)
         else:
-            price = _stock_price(code) or _live_etf_price(code)
+            price = _stock_price(code)
 
         if pd.isna(anchor):
             rows.append({"name": name, "code": code, "anchor": None,
