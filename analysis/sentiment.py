@@ -22,8 +22,22 @@ from config_loader import FUNDAMENTAL_KEYWORDS
 
 
 def _parse_json_reply(raw: str) -> dict:
-    """去掉模型可能包裹的 ```json 围栏后解析 JSON。"""
-    return json.loads(raw.replace("```json", "").replace("```", "").strip())
+    """从模型回复里取出第一个完整 JSON 对象。
+
+    【2026-11-12】原实现只去掉 ```json 围栏就整串 json.loads。模型常不遵守
+    "不要输出任何其他内容"，会在 JSON 前后加一句人话（"好的，判断如下：…"），
+    于是抛 Extra data: line N column 1 (char 157)——char 157 正好是那个 JSON 的结尾。
+    整条基本面判断因此降级成「未知」，而且随机（今天这两只，明天可能换两只）。
+    改为 raw_decode 从第一个 '{' 起只解一个对象，前后多余文字直接丢弃。
+    """
+    text = raw.replace("```json", "").replace("```", "").strip()
+    start = text.find("{")
+    if start < 0:
+        raise ValueError(f"回复里没有 JSON 对象：{text[:120]}")
+    obj, _ = json.JSONDecoder().raw_decode(text[start:])
+    if not isinstance(obj, dict):
+        raise ValueError(f"解析结果不是 JSON 对象：{str(obj)[:80]}")
+    return obj
 
 
 # ══════════════════════════════════════════════════════════════════════
