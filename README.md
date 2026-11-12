@@ -258,13 +258,4 @@ python3 backtest/backtest_grid.py --codes 600585 510300 --step 3,5,8,10,15 --tie
 - **Shiller CAPE**：`data/ie_data.xls` 从 Shiller 官网手动下载，仅 SPY 用，建议月初检查。
 - **QQQ PE**：GuruFocus xlsx + `QQQ_PE_TODAY` 手填，断更则 QQQ ERP 沿用旧值。
 - **网格档位表**：锚取券商持仓页的**「买入均价」**（不是「成本价／本价」，后者是摊薄成本），一次性转录进 `data/grid_state.csv`（本地，已 gitignore）后**冻结不再更新**，同时存入 Secret `GRID_STATE`；workflow 每天跑前还原该文件，日报里每只持仓带一行"成本 / 下一买点 / 还差多少"。本地另可跑 `python3 grid/grid.py` 输出 `~/Desktop/grid_plan.md` 用于设条件单。黄金 518880 不在 config 的 ERP 监控池（商品 ETF 无 PE 口径），价格由 `grid/grid.py` 兜底从新浪行情实时取。触发价手工设成券商**条件单**（固定价、触发一次失效）——不要用网格，网格会随成交移动基准。改锚须同时更新本地文件和 Secret，否则两边档位不一致。
-- **个股分红口径**：个股不看 ERP 分位做动作（周期股盈利崩塌时 PE 虚高、分位会长期卡在"贵"）。改用分红价值法：**股息率 = 每股派息TTM ÷ 现价**，再与十年国债比利差。派息额存在 `data/stock_dividend.csv`（由增量脚本维护，只存每股派息、不存股息率，因为价格天天变）。判定阈值**暂定**：≥3 个点便宜 / 1–3 中性 / <1 偏贵，**未经回测**，要改先回测。个股的 ERP 分位仍显示，但只作盈利端参考，同时个股不进「高估区减一档」置顶区块，避免同页结论打架。
 
-- **单只 ≤6% 上限检查**：日报每只持仓都直接给「6% 上限 / 当前市值占比 / 还可加多少或已超多少」。分母＝全账户总资产，**主源是本地基金工作台 API**（`http://127.0.0.1:8091/api/watchlist` 的 `watchlist.total`＝holdings.json 逐只按实时价/最新净值算出的当日值，各只市值取 `funds[].amount`）。由 `tools/portfolio_snapshot.py` 解析成 `data/portfolio_total.csv`（本地生成、已 gitignore），同值存 Secret `PORTFOLIO_TOTAL` 供云端还原；本地 launchd `com.erpmonitor.portfoliosync` 每天 18:00 同步一次，赶在云端 18:30 触发之前。
-
-  - **只认本地实例或线上现役页**：线上地址 `https://ycnqgm8f2pbw.doubao.link/app/app_17hs0hy3tm6`（静态单文件，内联 watchlist 快照，云端连不到本机 8091 时走它）。历史地址 `4vh8j4cl` / `cuyvngpv` 已冻结，**能打开但数据是旧的，别用**。
-  - **三级源**：本地 API → 线上快照 → 月度复盘定稿（`~/Desktop/portfolio-postmortem-YYYY-MM.md` 的「全账户」行）。前两级是当日值，第三级是月末值、会偏旧（超过 45 天日报会标「基准偏旧」）。
-  - 这个 total 是「旧份额 × 新价格」的近似值，不是券商口径的真实总资产。
-
-- **ERP 分位 <25% 汇总提醒**：日报最前面单独一个区块，列出所有进入高估区的持仓（无命中不显示），对应"考虑减一档"，不是新规则。
-- **个股 PE**：海螺水泥 / 大秦铁路 / 青岛啤酒走 akshare 百度源（`pe_source=baidu_stock`），免 token、可取近十年，但**是周频**（每 5 天一个点，一年约 73 个），当日 ERP 精度会滞后几天；分位看长期位置，周频够用。个股收盘价也由这一步写入 `data/erp_{code}.csv` 的 `IndexClose`（不复权，与券商成本同口径）。首次建库时国债历史会从 `data/erp_000300.csv` 借用（同一中债 CN10Y 口径），否则增量只拉近 30 天、ERP 空一片。
