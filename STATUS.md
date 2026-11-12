@@ -31,7 +31,7 @@ STATUS.md — 跨 session 运行记忆
 ### P1.6 · 黄金实际利率（TIPS）接入（已完成 2026-11-12）
 问题：518880 是商品 ETF，无 PE，ERP 对它是错的工具；判断黄金只能用「实际利率」（名义利率 − 通胀预期）。
 - [x] 取数：新建 `fetch/fetch_tips.py`，复用 `fetch_bond_yield.py` 的 `FRED_API_KEY`（第 21 行），取 `DFII10`（TIPS 实际）与 `DGS10`（名义），相减得隐含通胀预期。带 15 秒 timeout + 3 次重试（原 `fetch_fred_bond_history` 无 timeout，实测会卡死）
-- [x] 落盘：`data/tips_10y.csv`，5968 条（2003-01-02 ~ 2026-11-09），格式 `date,real_yield,nominal_10y,inflation_expectation`，百分数单位、BOM+CRLF
+- [x] 落盘：`data/tips_10y.csv`，5968 条（2003-01-02 ~ 2026-11-09），格式 `date,real_yield,nominal_10y,inflation_expectation`，百分数单位、BOM+CRLF。**不 gitignore**——云端生成后随 workflow 第 115 行 `git add data/` 自动提交回流，本地靠 dailypull 拿，**不重复跑**（曾误设为 gitignore，导致云端产物被拦在门外、本地得再跑一遍）
 - [x] 容错：请求失败**不覆盖**旧文件，只打 warning 并 exit 0，不会拖垮日报流水线
 - [x] 调度：`prepare_all_data.py` 加一行 `("fetch/fetch_tips.py", "美国 10 年期实际利率（TIPS，月频口径）")`，云端 workflow 无需改动
 - [x] 展示：`grid/grid.py` 新增 `_gold_context()`，档位表末尾输出一段黄金背景。**不新增表格列**，13 行结构不动；数据缺失或样本 <500 条时整段不输出
@@ -70,6 +70,7 @@ STATUS.md — 跨 session 运行记忆
 
 | 日期 | 变更内容 |
 |---|---|
+| 2026-11-12 CST | **黄金补实际利率（TIPS）**：518880 是商品 ETF、无 PE，ERP 对它是错的工具，改用实际利率 = 名义 10 年期美债 − 隐含通胀预期。新建 `fetch/fetch_tips.py` 取 FRED `DFII10`+`DGS10`（15 秒 timeout + 3 次重试；失败**不覆盖**旧文件且 exit 0，不拖垮日报）；`prepare_all_data.py` 加一行调度；`grid/grid.py` 新增 `_gold_context()`，档位表末尾输出背景段（13 行结构不动，数据缺失整段不输出）。判定用**历史分位**而非人为阈值（当前 2.66% 处于 2003–2026 第 98.6 百分位，中位 1.07%）。数据文件**不 gitignore**，靠云端 `git add data/` 自动回流，本地不重复跑 |
 | 2026-11-11 CST | 单只 6% 上限检查接上真实分母：`tools/portfolio_snapshot.py` 从最新月度复盘定稿解析全账户总资产与各标的市值 → `data/portfolio_total.csv`（gitignore）→ Secret `PORTFOLIO_TOTAL` → workflow `Restore portfolio total`；日报每只持仓给出「6% 上限 / 占比 / 还可加或已超」，超 45 天标基准偏旧。当前基准 437,034.94（2026-10-31），海螺水泥 6.64% 已超限 2,818 元 |
 |---|---|
 | 2026-11-11 CST | 个股改「分红口径」：股息率（每股派息TTM ÷ 现价）− 十年国债利差，≥3 便宜 / 1–3 中性 / <1 偏贵（**阈值暂定、未回测**）；个股动作行与置顶减仓区块均不再用 ERP 分位，避免与分红结论打架 |
