@@ -602,9 +602,9 @@ if __name__ == "__main__":
         save_html_report(full_md, date_str, price_meta)
 
         # 生成 ERP 概览条形图到 docs/erp_chart.png（gh-pages 部署后获得稳定 URL）。
-        # 注意：Server酱推送发生在 gh-pages 部署之前，微信正文当天的图 URL 指向的
-        # 是前一天部署的图（滞后一天）；趋势图滞后一天影响可忽略，如需当天精确
-        # 可在 workflow 里把推送挪到部署之后。
+        # Server酱推送发生在 gh-pages 部署之前，微信正文里当天的图 URL 指向的是
+        # 前一天部署的图（滞后一天）。文字部分（分位、档位、买卖点）都是当天数据，
+        # 只有这张概览图晚一天，已评估并接受，不做改动。
         erp_chart_url = build_erp_chart()
 
         report_url = "https://chiaravan1.github.io/equity-risk-premium-monitor/report.html"
