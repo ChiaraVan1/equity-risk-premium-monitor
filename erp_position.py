@@ -80,6 +80,26 @@ def _load_portfolio():
     return _PORTFOLIO_CACHE
 
 
+def _load_etf_map():
+    """config 里存的是指数代码（000300），持仓里是 ETF 代码（510300）。
+    grid_state.csv 的 etf_code 列就是现成的对照表；不读它，10 只 ETF 的 6% 检查会整片漏掉。
+    """
+    m = {}
+    path = "./data/grid_state.csv"
+    if not os.path.exists(path):
+        return m
+    try:
+        import csv as _csv
+        with open(path, encoding="utf-8-sig") as f:
+            for r in _csv.DictReader(f):
+                etf = (r.get("etf_code") or "").strip()
+                if etf:
+                    m[str(r.get("code", "")).strip()] = etf
+    except Exception:
+        pass
+    return m
+
+
 def build_cap_block(code):
     """单只 ≤6% 检查。分母＝全账户总资产，来自月度复盘定稿的解析（tools/portfolio_snapshot.py）。
 
@@ -94,6 +114,13 @@ def build_cap_block(code):
     asof = pf.get("TOTAL", {}).get("asof", "")
     cap = total * _CAP_RATIO
     me = pf.get(str(code))
+    # 指数代码查不到时，退回它对应的 ETF 代码（000300 → 510300），否则 ETF 持仓整片漏检
+    lookup_code = str(code)
+    if not me:
+        etf = _load_etf_map().get(str(code))
+        if etf and pf.get(etf):
+            me = pf.get(etf)
+            lookup_code = etf
     if not me:
         return ""
     mv = me["mv"]
