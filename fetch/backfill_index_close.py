@@ -36,7 +36,7 @@ def backfill_one(code):
     dates = [_normalize_date(row["Date"]) for row in rows if row.get("Date")]
     start_date = min(dates).replace("-", "")
     end_date = max(dates).replace("-", "")
-    index_df = ak.stock_zh_index_hist_csindex(
+    index_df = ak.index_hist_csindex(
         symbol=code,
         start_date=start_date,
         end_date=end_date,
