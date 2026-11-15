@@ -46,7 +46,7 @@ STATUS.md — 跨 session 运行记忆
 - [ ] 新鲜度校验：抓取失败会覆盖旧值；覆盖面仅部分列
 - [ ] EWQ / EWG / EWJ / EEM 历史 PE 为估算值，长期需更准数据源
 - [ ] 海螺水泥分红回本两行（10/15 年）待以年报公告复核后再决定是否采纳作者原值
-- [ ] akshare 代码适配新接口名 `index_hist_csindex`（6 处调用点）后，再把版本从 1.20.43 升级上去
+- [ ] 升级新版 akshare：现锁 `1.20.40`（1.20.41 起批量改名）。升级前需先适配 4 组旧名：`stock_zh_index_hist_csindex`→`index_hist_csindex`、`fund_etf_fund_info_em`→`fund_exchange_nav_hist_em`、`stock_zh_a_hist`→`stock_zh_a_hist_em`、`stock_info_global_em`→`stock_news_global_em`；`index_zh_a_hist` 新名待定位，逐一核对返回列后再升版本
 
 ### P3 · 待评估
 - [ ] 加入其他信号指标 —— 先想清楚要解决什么问题，不要为加而加
@@ -65,7 +65,7 @@ STATUS.md — 跨 session 运行记忆
 | 日期 | 变更内容 |
 |---|---|
 | 2026-11-15 CST | **分红回本年限参考台账**：核验内在价值表中持仓重叠两只。大秦铁路 10/13/15 年累计分红实测 628/831/947 亿（作者 570/880/968 亿，偏差 ±10% 内，已核验；作者股本 98 亿有误，实测长期约 148.7 亿股）；海螺水泥偏差 −14%~+27%，列待复核、未采纳作者数。明细 `data/dividend_payback_reference.csv`，口径与风险见 `docs/dividend_payback_notes.md`；独立参考台账，不进日报 `dps_ttm` 流程 |
-| 2026-11-15 CST | **akshare 止血**：`requirements.txt` 锁 `akshare==1.20.43`（旧接口名 `stock_zh_index_hist_csindex` 仍可用版本），线上日报恢复取数；新接口名适配与版本升级列为待办 |
+| 2026-11-15 CST | **akshare 止血**：`requirements.txt` 锁 `akshare==1.20.40`（1.20.41 起批量接口改名，1.20.40 是旧名全保留的最后版本；1.20.43 已缺 ETF 净值、全球快讯两个旧名）；升级新版的接口适配列为待办 |
 | 2026-11-12 CST | **黄金补实际利率（TIPS）**：518880 是商品 ETF、无 PE，ERP 对它是错的工具，改用实际利率 = 名义 10 年期美债 − 隐含通胀预期。新建 `fetch/fetch_tips.py` 取 FRED `DFII10`+`DGS10`（15 秒 timeout + 3 次重试；失败**不覆盖**旧文件且 exit 0，不拖垮日报）；`prepare_all_data.py` 加一行调度；`grid/grid.py` 新增 `_gold_context()`，档位表末尾输出背景段（13 行结构不动，数据缺失整段不输出）。判定用**历史分位**而非人为阈值（当前 2.66% 处于 2003–2026 第 98.6 百分位，中位 1.07%）。数据文件**不 gitignore**，靠云端 `git add data/` 自动回流，本地不重复跑 |
 | 2026-11-11 CST | 单只 6% 上限检查接上真实分母：`tools/portfolio_snapshot.py` 从最新月度复盘定稿解析全账户总资产与各标的市值 → `data/portfolio_total.csv`（gitignore）→ Secret `PORTFOLIO_TOTAL` → workflow `Restore portfolio total`；日报每只持仓给出「6% 上限 / 占比 / 还可加或已超」，超 45 天标基准偏旧。当前基准 437,034.94（2026-10-31），海螺水泥 6.64% 已超限 2,818 元 |
 |---|---|
@@ -103,7 +103,7 @@ STATUS.md — 跨 session 运行记忆
 | 2026-07-06 | 弃用 pi-mobile；QQQ PE 改 Claude Cowork 定时；指数数 21 个口径修正 |
 | 2026-07-02 | 新增有色（512400.SH）、半导体材料设备（588710.SH）；同步各模块配置并回填历史 |
 | 2026-06-10 | 删无效 plist；`gh auth login` 完成；QQQ PE 改 `gh variable set` 写入 |
-| 2026-06-08 | launchd 方案上线：17:00 CST 触发 `update_pe_trigger.sh`（后续已废弃） |
+| 2026-06-08 | launchd 方案上线：17:00 CST 触发 `update_pe_trigger.sh` |
 | 2026-06-08 | 初始化 CLAUDE.md / STATUS.md / KEYS.md，记录项目结构 |
 | 2025 | 持仓分类映射、稀土/中美互联网等指数、HSTECH PSY 口径、ERP 历史采集 |
 | （早期，无精确日期） | 胜率赔率仓位框架、ETF 执行质量模块、Shiller CAPE、ERP 斜率信号、三级止损/止盈、基本面暴雷预警、决策仪表盘、Pages 自动部署、AI 趋势解读 |
