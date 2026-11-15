@@ -63,7 +63,7 @@ def load_band_df(code):
             price_df = erp_df[["Date", "IndexClose"]].dropna()
             price_df = price_df.rename(columns={"IndexClose": "Price"})
         else:
-            price_df = ak.stock_zh_index_hist_csindex(
+            price_df = ak.index_hist_csindex(
                 symbol=code,
                 start_date=pe_df["Date"].min().strftime("%Y%m%d"),
                 end_date=pe_df["Date"].max().strftime("%Y%m%d"),
