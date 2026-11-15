@@ -1,279 +1,336 @@
 {
-  "generated_at": "2026-11-14T10:35:40.324627",
+  "generated_at": "2026-11-15T10:38:11.976360",
   "results": [
     {
       "label": "QQQ_PE_TODAY",
       "fresh": true,
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:33:55.305778"
+      "checked_at": "2026-11-15T10:35:39.669033"
     },
     {
       "label": "ERP-000300",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.757354"
+      "path": "./data/erp_000300.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:35:47.555401"
     },
     {
       "label": "PE数值-000300",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:29.247693"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:35:47.559569"
     },
     {
       "label": "ERP-000688",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.757363"
+      "path": "./data/erp_000688.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:35:49.241930"
     },
     {
       "label": "PE数值-000688",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:30.961741"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:35:49.245762"
     },
     {
       "label": "ERP-000922",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.757368"
+      "path": "./data/erp_000922.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:35:50.953865"
     },
     {
       "label": "PE数值-000922",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:33.729480"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:35:50.957559"
     },
     {
       "label": "ERP-000015",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.757372"
+      "path": "./data/erp_000015.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:35:52.647314"
     },
     {
       "label": "PE数值-000015",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:35.868009"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:35:52.651375"
     },
     {
       "label": "ERP-399989",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.757376"
+      "path": "./data/erp_399989.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:35:54.371921"
     },
     {
       "label": "PE数值-399989",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:37.592177"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:35:54.375881"
     },
     {
       "label": "ERP-931071",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.757379"
+      "path": "./data/erp_931071.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:35:56.099855"
     },
     {
       "label": "PE数值-931071",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:39.442211"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:35:56.103767"
     },
     {
       "label": "ERP-000069",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.757382"
+      "path": "./data/erp_000069.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:35:57.890124"
     },
     {
       "label": "PE数值-000069",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:42.193118"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:35:57.894027"
     },
     {
       "label": "ERP-930781",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.757385"
+      "path": "./data/erp_930781.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:35:59.605999"
     },
     {
       "label": "PE数值-930781",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:43.905740"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:35:59.609660"
     },
     {
       "label": "ERP-399975",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.757389"
+      "path": "./data/erp_399975.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:02.352203"
     },
     {
       "label": "PE数值-399975",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:48.086587"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:02.356084"
     },
     {
       "label": "ERP-399967",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933077"
+      "path": "./data/erp_399967.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:05.207955"
     },
     {
       "label": "PE数值-399967",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:49.885457"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:05.211012"
     },
     {
       "label": "ERP-931066",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933086"
+      "path": "./data/erp_931066.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:07.974181"
     },
     {
       "label": "PE数值-931066",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:51.721584"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:07.977538"
     },
     {
       "label": "ERP-930794",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933091"
+      "path": "./data/erp_930794.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:10.111570"
     },
     {
       "label": "PE数值-930794",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:53.596017"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:10.115108"
     },
     {
       "label": "ERP-930598",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933095"
+      "path": "./data/erp_930598.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:11.799119"
     },
     {
       "label": "PE数值-930598",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:55.807190"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:11.802271"
     },
     {
       "label": "ERP-000819",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933099"
+      "path": "./data/erp_000819.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:13.784696"
     },
     {
       "label": "PE数值-000819",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:57.498671"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:13.787981"
     },
     {
       "label": "ERP-950125",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933103"
+      "path": "./data/erp_950125.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:15.457109"
     },
     {
       "label": "PE数值-950125",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:34:59.222671"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:15.460086"
     },
     {
       "label": "ERP-931637",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933106"
+      "path": "./data/erp_931637.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:17.156155"
     },
     {
       "label": "PE数值-931637",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:35:00.909430"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:17.159433"
     },
     {
       "label": "ERP-399986",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933110"
+      "path": "./data/erp_399986.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:18.925478"
     },
     {
       "label": "PE数值-399986",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:35:02.680960"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:18.928679"
     },
     {
       "label": "ERP-930633",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933113"
+      "path": "./data/erp_930633.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:20.615399"
     },
     {
       "label": "PE数值-930633",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:35:04.479286"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:20.618420"
     },
     {
       "label": "ERP-931946",
-      "fresh": false,
-      "last_date": null,
-      "staleness_days": null,
-      "reason": "更新失败：module 'akshare' has no attribute 'stock_zh_index_hist_csindex'",
-      "checked_at": "2026-11-14T10:34:02.933117"
+      "path": "./data/erp_931946.csv",
+      "fresh": true,
+      "level": "ok",
+      "kind": "",
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
+      "reason": "",
+      "checked_at": "2026-11-15T10:36:22.463064"
     },
     {
       "label": "PE数值-931946",
-      "stale_flag": false,
-      "stale_note": "",
-      "checked_at": "2026-11-13T10:35:06.186179"
+      "stale_flag": true,
+      "stale_note": "PE 已连续 3 次取值未变化",
+      "checked_at": "2026-11-15T10:36:22.466422"
     },
     {
       "label": "HSTECH-PS",
@@ -281,10 +338,10 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:35:36.591808",
+      "checked_at": "2026-11-15T10:38:02.288634",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
@@ -293,10 +350,10 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:35:40.317809",
+      "checked_at": "2026-11-15T10:38:11.970847",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
@@ -306,9 +363,9 @@
       "level": "ok",
       "kind": "",
       "last_date": "2026-11-13",
-      "staleness_days": 1,
+      "staleness_days": 2,
       "reason": "",
-      "checked_at": "2026-11-14T10:35:40.317840"
+      "checked_at": "2026-11-15T10:38:11.970912"
     },
     {
       "label": "ETF净值序列",
@@ -316,53 +373,53 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-11",
-      "staleness_days": 3,
+      "last_date": "2026-11-13",
+      "staleness_days": 2,
       "reason": "",
-      "checked_at": "2026-11-14T10:35:40.321012"
+      "checked_at": "2026-11-15T10:38:11.973875"
     },
     {
       "label": "基准指数涨跌幅序列",
       "path": "./data/index_pct.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
+      "fresh": false,
+      "level": "warn",
+      "kind": "数据陈旧",
       "last_date": "2026-11-11",
-      "staleness_days": 3,
-      "reason": "",
-      "checked_at": "2026-11-14T10:35:40.322832"
+      "staleness_days": 4,
+      "reason": "已 4 天未更新（阈值 3 天）",
+      "checked_at": "2026-11-15T10:38:11.975024"
     },
     {
       "label": "FRED-US10Y",
       "fresh": true,
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:00.967623"
+      "checked_at": "2026-11-15T10:35:42.572971"
     },
     {
       "label": "FRED-FR10Y",
       "fresh": true,
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:01.230419"
+      "checked_at": "2026-11-15T10:35:42.985294"
     },
     {
       "label": "FRED-DE10Y",
       "fresh": true,
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:01.497337"
+      "checked_at": "2026-11-15T10:35:43.515970"
     },
     {
       "label": "FRED-JP10Y",
       "fresh": true,
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:01.802753"
+      "checked_at": "2026-11-15T10:35:43.912946"
     },
     {
       "label": "ERP-SPY",
@@ -370,16 +427,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:02.796180"
+      "checked_at": "2026-11-15T10:36:02.377254"
     },
     {
       "label": "PE数值-SPY",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:02.801780"
+      "checked_at": "2026-11-15T10:36:02.381089"
     },
     {
       "label": "ERP-QQQ",
@@ -387,16 +444,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:02.833022"
+      "checked_at": "2026-11-15T10:36:02.399049"
     },
     {
       "label": "PE数值-QQQ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:02.837914"
+      "checked_at": "2026-11-15T10:36:02.402382"
     },
     {
       "label": "ERP-EWQ",
@@ -404,16 +461,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:02.853099"
+      "checked_at": "2026-11-15T10:36:02.411647"
     },
     {
       "label": "PE数值-EWQ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:02.856135"
+      "checked_at": "2026-11-15T10:36:02.414092"
     },
     {
       "label": "ERP-EWG",
@@ -421,16 +478,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:02.871875"
+      "checked_at": "2026-11-15T10:36:02.423521"
     },
     {
       "label": "PE数值-EWG",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:02.874946"
+      "checked_at": "2026-11-15T10:36:02.425465"
     },
     {
       "label": "ERP-EWJ",
@@ -438,16 +495,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:02.889774"
+      "checked_at": "2026-11-15T10:36:02.434040"
     },
     {
       "label": "PE数值-EWJ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:02.892756"
+      "checked_at": "2026-11-15T10:36:02.435948"
     },
     {
       "label": "ERP-EEM",
@@ -455,16 +512,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:02.927321"
+      "checked_at": "2026-11-15T10:36:02.457181"
     },
     {
       "label": "PE数值-EEM",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:02.932661"
+      "checked_at": "2026-11-15T10:36:02.461463"
     },
     {
       "label": "ETF前复权价格序列",
@@ -473,9 +530,9 @@
       "level": "ok",
       "kind": "",
       "last_date": "2026-11-13",
-      "staleness_days": 1,
+      "staleness_days": 2,
       "reason": "",
-      "checked_at": "2026-11-14T10:35:40.319658"
+      "checked_at": "2026-11-15T10:38:11.972814"
     },
     {
       "label": "ERP-980032",
@@ -484,15 +541,15 @@
       "level": "ok",
       "kind": "",
       "last_date": "2026-11-13",
-      "staleness_days": 1,
+      "staleness_days": 2,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:04.265952"
+      "checked_at": "2026-11-15T10:36:23.594301"
     },
     {
       "label": "PE数值-980032",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:04.268798"
+      "checked_at": "2026-11-15T10:36:23.596140"
     },
     {
       "label": "ERP-600585",
@@ -500,16 +557,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:13.618282"
+      "checked_at": "2026-11-15T10:36:30.585892"
     },
     {
       "label": "PE数值-600585",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:13.622907"
+      "checked_at": "2026-11-15T10:36:30.589164"
     },
     {
       "label": "ERP-601006",
@@ -517,16 +574,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:18.684121"
+      "checked_at": "2026-11-15T10:36:36.172883"
     },
     {
       "label": "PE数值-601006",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:18.688721"
+      "checked_at": "2026-11-15T10:36:36.176171"
     },
     {
       "label": "ERP-600600",
@@ -534,19 +591,19 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-14",
+      "last_date": "2026-11-15",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-14T10:34:23.659795"
+      "checked_at": "2026-11-15T10:36:42.387642"
     },
     {
       "label": "PE数值-600600",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-14T10:34:23.664441"
+      "checked_at": "2026-11-15T10:36:42.390927"
     }
   ],
-  "stale_count": 19,
+  "stale_count": 20,
   "error_count": 0,
-  "warn_count": 0
+  "warn_count": 1
 }
