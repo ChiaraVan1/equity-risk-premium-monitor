@@ -562,7 +562,14 @@ if __name__ == "__main__":
 
     # 第二阶段：分析和生成报告
     # 持仓标的优先展示：先按是否持仓排序，同为持仓/非持仓内部保持原有顺序（stable sort）
-    indices = sorted(INDICES_LIST, key=lambda x: not HOLDING_CATEGORY.get(x[0], False))
+    # 【2026-11-17】候选池标的（payback_candidate=true）只做数据层：
+    # 它们不是持仓、不参与仓位与网格，价格也未到买点，进正文会变成"可买一档"的
+    # 误导信号。日报正文暂不扩，等买点触发再单独出区块。
+    _cand = {str(i["code"]) for i in ALL_INDICES if i.get("payback_candidate")}
+    indices = [it for it in INDICES_LIST if str(it[0]) not in _cand]
+    if _cand:
+        print(f"   ℹ️  候选池 {len(_cand)} 只只更新数据，不进日报正文")
+    indices = sorted(indices, key=lambda x: not HOLDING_CATEGORY.get(x[0], False))
     summary_list = []
     report_list = []
 

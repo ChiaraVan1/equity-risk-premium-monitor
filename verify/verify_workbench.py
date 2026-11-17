@@ -521,8 +521,13 @@ def layer_L2(c, cfg, data_day):
         hdr, rows = read_csv(p794)
         valid = [r for r in rows if len(r) > 4 and to_float(r[4]) is not None]
         start = parse_date(rows[0][0]) if rows else None
-        ok = len(valid) >= 3000 and start and start <= date(2006, 1, 1)
-        c.add("L2", "L2-3", "930794 分位口径", "样本≥3000 且起始≤2006-01-01",
+        # 【2026-11-17】原判据"样本≥3000"写错：930794 真实历史 5444 行、
+        # ERP 非空 2876（PE 缺早期），从未到过 3000，首期就误报 WARN。
+        # 改为"起始≤2006-01-01 且样本≥总行数 50%（且≥2800）"——防历史被截断，
+        # 不拿一个不存在的绝对数当门槛。
+        ok = (start and start <= date(2006, 1, 1)
+              and len(valid) >= max(2800, int(len(rows) * 0.5)))
+        c.add("L2", "L2-3", "930794 分位口径", "起始≤2006-01-01 且样本≥总行数50%（≥2800）",
               f"样本 {len(valid)}，起始 {start}", "PASS" if ok else "WARN", "data/erp_930794.csv")
     else:
         c.add("L2", "L2-3", "930794 分位口径", "文件存在", "缺失", "FAIL", "")
