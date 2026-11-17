@@ -680,8 +680,10 @@ def layer_L5(c, args):
     if args.online:
         try:
             tc = fd_file("target_price/config.json")
-            stocks = [s["code"] if isinstance(s, dict) else s for s in tc.get("stocks", [])]
-            arch = [s["code"] if isinstance(s, dict) else s for s in tc.get("_archive", [])]
+            # config.json 里标的键叫 secid（不是 code），两种都兼容
+            _k = lambda s: (s.get("secid") or s.get("code") or "") if isinstance(s, dict) else s
+            stocks = [_k(s) for s in tc.get("stocks", [])]
+            arch = [_k(s) for s in tc.get("_archive", [])]
             overlap = set(stocks) & set(arch)
             c.add("L5", "L5-1", "目标价范围", "归档 7 只不出现在 stocks",
                   f"stocks {len(stocks)} 只、archive {len(arch)} 只、交集 {len(overlap)}",
