@@ -228,7 +228,12 @@ def layer_L0(c, cfg, args, data_day):
             commits = gh_api(f"/repos/{repo}/commits?per_page=5", token)
             day_commits = [x for x in commits
                            if x["commit"]["committer"]["date"][:10]
-                           >= str(datetime.now(CST).date() - timedelta(days=1))]
+                           >= str(datetime.now(CST).date() - timedelta(days=1))
+                           and "Auto update ERP" in x["commit"]["message"]]
+            if not day_commits:
+                # 宽一点：昨日/今日任何 Auto update 提交（跨时区）
+                day_commits = [x for x in commits
+                               if "Auto update ERP" in x["commit"]["message"]]
             if day_commits:
                 t = day_commits[0]["commit"]["committer"]["date"]
                 dt = datetime.fromisoformat(t.replace("Z", "+00:00")).astimezone(CST)
@@ -236,7 +241,8 @@ def layer_L0(c, cfg, args, data_day):
                 c.add("L0", "L0-3", "ERP 完成时点", f"≤{TH_ERP_COMMIT}", dt.strftime("%H:%M") + " CST", v,
                       day_commits[0]["sha"][:7])
             else:
-                c.add("L0", "L0-3", "ERP 完成时点", f"≤{TH_ERP_COMMIT}", "近 2 日无 commit", "FAIL", "")
+                c.add("L0", "L0-3", "ERP 完成时点", f"≤{TH_ERP_COMMIT}", "近 2 日无 ERP 数据提交", "FAIL", "")
+                day_commits = [] if True else day_commits
         except Exception as e:
             c.add("L0", "L0-3", "ERP 完成时点", f"≤{TH_ERP_COMMIT}", "查询失败", "SKIP", str(e))
     else:
