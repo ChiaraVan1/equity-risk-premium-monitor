@@ -116,7 +116,21 @@ jobs:
           git commit -m "Auto update ERP data [skip ci]" || exit 0
           git pull --rebase origin main
           git push
-      # 7. 部署 HTML 报告到 gh-pages 分支
+      # 7. 个股收盘价取数失败 → 显式标红（数据已提交，失败不再无声）
+      #    背景：2026-11-13 601006/600600 收盘价缺失，但 PE 与债券收益率正常，
+      #    ERP 照样算得出、日报照样正常，缺陷藏了两天没人发现。
+      - name: Fail loudly if stock close price missing
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        run: |
+          F=data/_price_failures.json
+          if [ -f "$F" ]; then
+            echo "❌ 以下个股当日收盘价取数失败（ERP 仍算得出，日报不会报错）："
+            cat "$F"
+            echo "请重跑本 workflow 或人工补数。"
+            exit 1
+          fi
+          echo "✅ 全部个股收盘价取数成功"
+      # 8. 部署 HTML 报告到 gh-pages 分支
       - name: Deploy HTML report to gh-pages
         if: ${{ github.event.inputs.dry_run != 'true' }}
         uses: peaceiris/actions-gh-pages@v4

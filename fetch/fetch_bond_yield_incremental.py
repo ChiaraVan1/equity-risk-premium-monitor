@@ -4,6 +4,7 @@ import requests
 import pandas as pd
 import numpy as np
 import os
+import json
 import sys
 import time
 from datetime import datetime, timedelta
@@ -24,6 +25,9 @@ from freshness import (
     write_freshness_report,
     print_freshness_summary,
 )
+
+# 同目录下的 price_source.py：个股收盘价取数（重试 + 东财/腾讯兜底 + 失败清单）
+import price_source
 
 # ── 配置表 ────────────────────────────────────────────────────────────────────
 
@@ -509,6 +513,8 @@ def main():
     _freshness_results = []
 
     os.makedirs('./data', exist_ok=True)
+    # 每轮重来一次失败清单，避免昨天的失败残留成今天的假警报
+    price_source.reset_failures()
 
     if QQQ_PE_TODAY is None:
         print("⚠️  警告: QQQ_PE_TODAY 未填写，今日 QQQ ERP 将不会更新！")
@@ -668,17 +674,18 @@ def main():
                 # 个股没有指数点位，IndexClose 填个股收盘价（pe_band 用它算价格分位）。
                 # PE 是周频、价格是日频，按日期 outer 合并：日频行只有价、周频行只有 PE，
                 # 入库时 PE 会被 ffill 到每个交易日，ERP 曲线因此变连续。
-                try:
-                    _px = ak.stock_zh_a_hist(
-                        symbol=code, period='daily',
-                        start_date="20160101", end_date=end_date_str, adjust=''
-                    )[['日期', '收盘']]
-                    _px.columns = ['Date', 'IndexClose']
-                    _px['Date'] = pd.to_datetime(_px['Date'])
+                # 【2026-11-17】原实现包在 try/except 里，失败只打一行"仅更新 PE"就继续：
+                # 601006/600600 因此静默丢了 11-13 的收盘价，而 ERP 照常算得出、日报照常正常。
+                # 改为走 price_source：akshare 重试 → 东财直连 → 腾讯，全失败才记失败清单，
+                # 由 workflow 显式标红（数据照常提交，但失败不再无声）。
+                # 已建库的个股只拉近一年日频做增量覆盖；首次建库才从 2016 拉全量，
+                # 避免候选池几十上百只个股每日重复拉全量历史、拉长 CI 与触发限流。
+                _px_start = ("20160101" if not os.path.exists(f"./data/erp_{code}.csv")
+                             else (pd.Timestamp.now() - pd.Timedelta(days=365)).strftime("%Y%m%d"))
+                _px = price_source.get_stock_close(code, _px_start, end_date_str)
+                if _px is not None:
                     pe_df = pe_df.merge(_px, on='Date', how='outer').sort_values('Date')
-                    time.sleep(1)
-                except Exception as _e:
-                    print(f"   ⚠️ [{code}] 个股收盘价未获取（{_e}），仅更新 PE")
+                time.sleep(1)
                 # 国债历史补齐：增量脚本只拉近 30 天 CN10Y，首次建库时历史行没有国债，
                 # ERP 整列只会剩最近 30 条 → 分位阈值失真（实测 31 条样本，P25/P10 几乎重合）。
                 # 这里从仓库内 000300 的 CN10Y 全历史借用（同一中债口径，2006 起），
@@ -751,6 +758,22 @@ def main():
 
     print_freshness_summary(_freshness_results)
     write_freshness_report(_freshness_results)
+
+    # 价格取数失败清单：非空则显式报错并给出清晰提示，workflow 会据此标红
+    if os.path.exists(price_source.FAIL_FILE):
+        try:
+            with open(price_source.FAIL_FILE, encoding="utf-8") as f:
+                _fails = json.load(f)
+        except Exception:
+            _fails = []
+        if _fails:
+            print("\n" + "!" * 60)
+            print(f"❌ 有 {len(_fails)} 只个股收盘价取数失败（已记入 {price_source.FAIL_FILE}）：")
+            for x in _fails:
+                print(f"   - {x['code']}  {x['reason']}")
+            print("   这些标的当日 IndexClose 为空，ERP 仍由 PE 与债券收益率算出，")
+            print("   日报不会报错——必须人工或下次重跑补齐，勿当正常。")
+            print("!" * 60)
 
 if __name__ == "__main__":
     main()
