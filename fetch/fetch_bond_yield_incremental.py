@@ -564,7 +564,13 @@ def main():
         bonds['CN10Y'] = fetch_cn_bond_incremental(start_date_str, end_date_str)
         print(f"   ✓ 中国国债: {len(bonds['CN10Y'])} 条")
     except Exception as e:
-        print(f"   ❌ 中国国债失败: {e}")
+        # 【2026-11-17】原来只打印一行就继续：CN10Y 缺了就进不了 bonds，
+        # 后面每个 A 股标的都走"国债未获取，跳过"，脚本照样 exit 0、CI 显示 ✓，
+        # 结果是 18 只个股一天没取数却无人发现。改为显式失败，交给上层标记。
+        import traceback
+        print(f"   ❌ 中国国债失败: {type(e).__name__}: {e}", file=sys.stderr)
+        traceback.print_exc()
+        raise SystemExit("CN10Y 取数失败，全部 A 股标的无法更新，终止本次增量")
 
     for bond_code, series_id in BOND_CONFIG.items():
         if bond_code == 'CN10Y':

@@ -256,7 +256,9 @@ def prepare_all_data():
                     [sys.executable, script],
                     capture_output=True,
                     text=True,
-                    timeout=300
+                    # 【2026-11-17】300s 时超时早于实跑：18 只候选个股首次建库
+                    # （近十年 PE + 2016 起日频价 + 分红）单只约 30-60s，300s 必爆。
+                    timeout=900
                 )
                 if result.returncode == 0:
                     print(f"   ✓ {desc} 完成")
