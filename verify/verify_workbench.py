@@ -229,11 +229,11 @@ def layer_L0(c, cfg, args, data_day):
             day_commits = [x for x in commits
                            if x["commit"]["committer"]["date"][:10]
                            >= str(datetime.now(CST).date() - timedelta(days=1))
-                           and "Auto update ERP" in x["commit"]["message"]]
+                           and x["commit"]["message"].startswith("Auto update ERP")]
             if not day_commits:
                 # 宽一点：昨日/今日任何 Auto update 提交（跨时区）
                 day_commits = [x for x in commits
-                               if "Auto update ERP" in x["commit"]["message"]]
+                               if x["commit"]["message"].startswith("Auto update ERP")]
             if day_commits:
                 t = day_commits[0]["commit"]["committer"]["date"]
                 dt = datetime.fromisoformat(t.replace("Z", "+00:00")).astimezone(CST)
