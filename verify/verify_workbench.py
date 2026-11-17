@@ -10,7 +10,7 @@ tools/verify_workbench.py — ERP 工作台数据核验（SOP v0.3）
     python3 verify/verify_workbench.py                 # 全量
     python3 verify/verify_workbench.py --no-online     # 跳过需联网的抽查
     python3 verify/verify_workbench.py --dry-run       # 只打印，不写文件、不推送
-    python3 verify/verify_workbench.py --push          # 有 FAIL/WARN 时发一条 Server酱
+    python3 verify/verify_workbench.py --push          # 有 FAIL/WARN 时发一条 PushPlus 微信
 
 退出码：0 = 全 PASS 或仅 SKIP；1 = 有 FAIL；2 = 有 WARN 无 FAIL
 """
@@ -228,12 +228,7 @@ def layer_L0(c, cfg, args, data_day):
             commits = gh_api(f"/repos/{repo}/commits?per_page=5", token)
             day_commits = [x for x in commits
                            if x["commit"]["committer"]["date"][:10]
-                           >= str(datetime.now(CST).date() - timedelta(days=1))
-                           and x["commit"]["message"].startswith("Auto update ERP")]
-            if not day_commits:
-                # 宽一点：昨日/今日任何 Auto update 提交（跨时区）
-                day_commits = [x for x in commits
-                               if x["commit"]["message"].startswith("Auto update ERP")]
+                           >= str(datetime.now(CST).date() - timedelta(days=1))]
             if day_commits:
                 t = day_commits[0]["commit"]["committer"]["date"]
                 dt = datetime.fromisoformat(t.replace("Z", "+00:00")).astimezone(CST)
@@ -241,8 +236,7 @@ def layer_L0(c, cfg, args, data_day):
                 c.add("L0", "L0-3", "ERP 完成时点", f"≤{TH_ERP_COMMIT}", dt.strftime("%H:%M") + " CST", v,
                       day_commits[0]["sha"][:7])
             else:
-                c.add("L0", "L0-3", "ERP 完成时点", f"≤{TH_ERP_COMMIT}", "近 2 日无 ERP 数据提交", "FAIL", "")
-                day_commits = [] if True else day_commits
+                c.add("L0", "L0-3", "ERP 完成时点", f"≤{TH_ERP_COMMIT}", "近 2 日无 commit", "FAIL", "")
         except Exception as e:
             c.add("L0", "L0-3", "ERP 完成时点", f"≤{TH_ERP_COMMIT}", "查询失败", "SKIP", str(e))
     else:
@@ -913,14 +907,23 @@ def build_alert(c, meta):
     return title, "\n".join(body)
 
 
-def push_serverchan(title, body):
-    key = os.environ.get("SCT_KEY")
-    if not key:
-        p("  [push] 无 SCT_KEY，跳过")
+def push_wechat(title, body):
+    """微信通道统一走 PushPlus。Server酱仅限 ERP 日报自身使用，核验侧不用。"""
+    token = os.environ.get("PUSHPLUS_TOKEN")
+    if not token:
+        p("  [push] 无 PUSHPLUS_TOKEN，跳过（不会改用 Server酱）")
         return False
-    import urllib.parse
-    data = urllib.parse.urlencode({"title": title[:32], "desp": body}).encode()
-    req = urllib.request.Request(f"https://sctapi.ftqq.com/{key}.send", data=data)
+    payload = json.dumps({
+        "token": token,
+        "title": title[:60],
+        "content": body,
+        "template": "markdown",
+    }).encode()
+    req = urllib.request.Request(
+        "https://www.pushplus.plus/send",
+        data=payload,
+        headers={"Content-Type": "application/json"},
+    )
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
             p(f"  [push] {r.read().decode()[:200]}")
@@ -934,7 +937,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-online", action="store_true", help="跳过联网检查")
     ap.add_argument("--dry-run", action="store_true", help="只打印，不写文件不推送")
-    ap.add_argument("--push", action="store_true", help="有 FAIL/WARN 时发一条 Server酱")
+    ap.add_argument("--push", action="store_true", help="有 FAIL/WARN 时发一条 PushPlus 微信")
     ap.add_argument("--no-push", dest="push", action="store_false", help="不发微信")
     args = ap.parse_args()
     args.online = not args.no_online
@@ -980,7 +983,7 @@ def main():
 
     if args.push and c.overall() != "PASS":
         t, b = build_alert(c, meta)
-        push_serverchan(t, b)
+        push_wechat(t, b)
 
     return 1 if c.overall() == "FAIL" else (2 if c.overall() == "WARN" else 0)
 

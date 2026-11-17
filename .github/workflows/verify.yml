@@ -59,7 +59,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          SCT_KEY: ${{ secrets.SCT_KEY }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
           FD_GH_TOKEN: ${{ secrets.FD_GH_TOKEN }}
         run: |
           set +e
