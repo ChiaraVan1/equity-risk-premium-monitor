@@ -1,0 +1,93 @@
+name: 工作台数据核验（半月）
+
+# SOP v0.3：每月 1 日、16 日北京时间 19:15 执行。
+# 排在 ERP(18:30→18:45) 与基金日报(19:00) 之后，等两套都跑完再核。
+on:
+  schedule:
+    - cron: '15 11 1,16 * *'   # UTC 11:15 = CST 19:15
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '只打印，不落盘、不推送'
+        type: boolean
+        default: false
+      no_push:
+        description: '不发微信'
+        type: boolean
+        default: false
+      no_online:
+        description: '跳过联网抽查（独立源/远端仓库）'
+        type: boolean
+        default: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # 与 daily_trade 一致：这两个文件被 gitignore，靠 secret 还原
+      - name: 还原本地私有文件
+        env:
+          PORTFOLIO_TOTAL: ${{ secrets.PORTFOLIO_TOTAL }}
+          GRID_STATE: ${{ secrets.GRID_STATE }}
+        run: |
+          mkdir -p data
+          if [ -n "$PORTFOLIO_TOTAL" ]; then
+            printf '%s\n' "$PORTFOLIO_TOTAL" > data/portfolio_total.csv
+            echo "portfolio_total.csv 已还原"
+          else
+            echo "无 PORTFOLIO_TOTAL，该两项将记 SKIP"
+          fi
+          if [ -n "$GRID_STATE" ]; then
+            printf '%s\n' "$GRID_STATE" > data/grid_state.csv
+            echo "grid_state.csv 已还原"
+          fi
+
+      - name: 核验
+        id: verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          SCT_KEY: ${{ secrets.SCT_KEY }}
+          FD_GH_TOKEN: ${{ secrets.FD_GH_TOKEN }}
+        run: |
+          set +e
+          ARGS=""
+          [ "${{ inputs.dry_run }}" = "true" ] && ARGS="$ARGS --dry-run"
+          [ "${{ inputs.no_push }}" = "true" ] && ARGS="$ARGS --no-push"
+          [ "${{ inputs.no_online }}" = "true" ] && ARGS="$ARGS --no-online"
+          if [ "${{ inputs.dry_run }}" != "true" ]; then ARGS="$ARGS --push"; fi
+          python3 verify/verify_workbench.py $ARGS
+          echo "exit=$?" >> "$GITHUB_OUTPUT"
+          # 不用 exit code 中断：报告与告警已落盘/发出，让 workflow 标红即可
+          exit 0
+
+      - name: 提交报告
+        if: ${{ inputs.dry_run != true }}
+        run: |
+          git config user.name  "verify-bot"
+          git config user.email "verify-bot@users.noreply.github.com"
+          git add verify/REPORT.md verify/report.json || true
+          if git diff --cached --quiet; then
+            echo "无变化，跳过提交"
+          else
+            git commit -m "chore: 工作台核验报告 $(TZ=Asia/Shanghai date +%F) [skip ci]"
+            git push
+          fi
+
+      - name: 汇总到运行页
+        if: always()
+        run: |
+          echo "### 核验结果" >> $GITHUB_STEP_SUMMARY
+          head -20 verify/REPORT.md >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "无报告文件" >> $GITHUB_STEP_SUMMARY

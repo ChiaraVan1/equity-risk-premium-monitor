@@ -1,0 +1,285 @@
+{
+  "meta": {
+    "generated_at": "2026-11-17 10:35:36",
+    "data_day": "2026-11-13"
+  },
+  "verdict": "FAIL",
+  "counts": {
+    "PASS": 14,
+    "WARN": 7,
+    "FAIL": 1,
+    "SKIP": 8
+  },
+  "items": [
+    {
+      "layer": "L0",
+      "id": "L0-1",
+      "name": "当日批次成功",
+      "expected": "conclusion=success",
+      "actual": "无 token/仓库名",
+      "verdict": "SKIP",
+      "evidence": "本地运行无 GITHUB_TOKEN，需在 Actions 内跑"
+    },
+    {
+      "layer": "L0",
+      "id": "L0-2",
+      "name": "校验器自身在跑",
+      "expected": "≤26h",
+      "actual": "48.0h 前（2026-11-15T10:38:11）",
+      "verdict": "WARN",
+      "evidence": "generated_at"
+    },
+    {
+      "layer": "L0",
+      "id": "L0-3",
+      "name": "ERP 完成时点",
+      "expected": "≤18:50",
+      "actual": "无 token",
+      "verdict": "SKIP",
+      "evidence": ""
+    },
+    {
+      "layer": "L0",
+      "id": "L0-4",
+      "name": "报告产物日期",
+      "expected": "=2026-11-13",
+      "actual": "含 2026-11-13",
+      "verdict": "PASS",
+      "evidence": "docs/report.html"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-1",
+      "name": "A股/ETF 新鲜度",
+      "expected": "落后 ≤1 交易日",
+      "actual": "最陈旧 000300 落后 2 交易日；超 1 日 23 只",
+      "verdict": "WARN",
+      "evidence": "data_day=2026-11-13；示例 [('000300', '2026-11-13', 2), ('000688', '2026-11-13', 2), ('000922', '2026-11-13', 2)]"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-2",
+      "name": "海外/FRED 新鲜度",
+      "expected": "落后 ≤1 交易日",
+      "actual": "最陈旧 SPY 落后 1 交易日",
+      "verdict": "PASS",
+      "evidence": "样例 [('SPY', '2026-11-15', 1), ('QQQ', '2026-11-15', 1), ('EWQ', '2026-11-15', 1)]"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-3",
+      "name": "关键列非空",
+      "expected": "末3行 PE/ERP/Bond 有空 → WARN，全空 → FAIL",
+      "actual": "全空 0 只、部分空 0 只",
+      "verdict": "PASS",
+      "evidence": "全空 []；部分空 []"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-4",
+      "name": "量纲 erp(小数)",
+      "expected": "Bond∈(0.0, 0.2), ERP∈(-0.15, 0.35)",
+      "actual": "Bond 越界 0、ERP 越界 0",
+      "verdict": "PASS",
+      "evidence": "越界样例 []"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-5",
+      "name": "量纲 tips(百分数)",
+      "expected": "三列 ∈(-2.0, 8.0)",
+      "actual": "越界 0 个",
+      "verdict": "PASS",
+      "evidence": "[]"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-6",
+      "name": "个股收盘价",
+      "expected": "末个有效收盘价不落后数据日",
+      "actual": "问题 2 只 [('601006', '末值 2026-11-12 落后 1 日'), ('600600', '末值 2026-11-12 落后 1 日')]",
+      "verdict": "FAIL",
+      "evidence": "data_day=2026-11-13"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-7",
+      "name": "指数收盘价",
+      "expected": "为空/落后仅 WARN",
+      "actual": "无值 0、末值落后 19；示例 [('000300', '末值 2026-11-11 落后 2 日'), ('000688', '末值 2026-11-11 落后 2 日')]",
+      "verdict": "WARN",
+      "evidence": "价格主用 etf_price.csv"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-8",
+      "name": "PE 数值卡住",
+      "expected": "streak<3",
+      "actual": "连续 3 次不变 19 只",
+      "verdict": "WARN",
+      "evidence": "['000300', '000688', '000922', '000015', '399989', '931071']…"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-9",
+      "name": "标的覆盖",
+      "expected": "在监 22 只全覆盖",
+      "actual": "缺文件 0 只 []",
+      "verdict": "PASS",
+      "evidence": "config=138（含 116 只股息候选/海外），文件=29"
+    },
+    {
+      "layer": "L1",
+      "id": "L1-10",
+      "name": "末行须为交易日",
+      "expected": "无周末行",
+      "actual": "末行落在周末 3 只",
+      "verdict": "WARN",
+      "evidence": "[('600585', '2026-11-15'), ('601006', '2026-11-15'), ('600600', '2026-11-15')]"
+    },
+    {
+      "layer": "L2",
+      "id": "L2-1",
+      "name": "ERP 恒等式",
+      "expected": "误差 ≤2.0bp（>10.0bp FAIL）",
+      "actual": "最大 0.0bp @None；超 2.0bp 0 只、超 10.0bp 0 只",
+      "verdict": "PASS",
+      "evidence": "样例 []"
+    },
+    {
+      "layer": "L2",
+      "id": "L2-2",
+      "name": "涨跌幅交叉",
+      "expected": "差 ≤1.0pct（>2.0pct FAIL）",
+      "actual": "最大差 0.39pct @399989（etf -1.15 vs pct -0.76）；超 2pct 0 只",
+      "verdict": "PASS",
+      "evidence": "2026-11-11；样例 []"
+    },
+    {
+      "layer": "L2",
+      "id": "L2-3",
+      "name": "930794 分位口径",
+      "expected": "样本≥3000 且起始≤2006-01-01",
+      "actual": "样本 2873，起始 2005-04-08",
+      "verdict": "WARN",
+      "evidence": "data/erp_930794.csv"
+    },
+    {
+      "layer": "L3",
+      "id": "L3-1",
+      "name": "回本价复算",
+      "expected": "误差 ≤0.02 元",
+      "actual": "115 行，不符 0 行，留空 2 行",
+      "verdict": "PASS",
+      "evidence": "不符 []；留空 ['601098', '600612']"
+    },
+    {
+      "layer": "L3",
+      "id": "L3-2",
+      "name": "单位换算一致",
+      "expected": "备注万亿的行，数值须已换算为亿（≥100）",
+      "actual": "可疑 0 行",
+      "verdict": "PASS",
+      "evidence": "[]"
+    },
+    {
+      "layer": "L3",
+      "id": "L3-3",
+      "name": "网格锚",
+      "expected": "anchor=13 且无重复",
+      "actual": "文件缺失（靠 secret 还原）",
+      "verdict": "SKIP",
+      "evidence": "data/grid_state.csv 缺失"
+    },
+    {
+      "layer": "L3",
+      "id": "L3-4",
+      "name": "单档定额",
+      "expected": "指数3000 / 个股5000",
+      "actual": "源码常量命中",
+      "verdict": "PASS",
+      "evidence": "erp_position.py:46"
+    },
+    {
+      "layer": "L3",
+      "id": "L3-5",
+      "name": "6% 分母基准",
+      "expected": "TOTAL 存在且 ≤45 天",
+      "actual": "文件缺失（靠 secret 还原）",
+      "verdict": "SKIP",
+      "evidence": "data/portfolio_total.csv 缺失"
+    },
+    {
+      "layer": "L4",
+      "id": "L4-1",
+      "name": "总资产一致",
+      "expected": "html 总资产=TOTAL",
+      "actual": "portfolio_total 缺失",
+      "verdict": "SKIP",
+      "evidence": "本地未还原 secret"
+    },
+    {
+      "layer": "L4",
+      "id": "L4-2",
+      "name": "缺数显式化",
+      "expected": "无 None/nan/undefined 裸露",
+      "actual": "命中 []",
+      "verdict": "PASS",
+      "evidence": "docs/report.html"
+    },
+    {
+      "layer": "L4",
+      "id": "L4-3",
+      "name": "产物完整性",
+      "expected": ">20KB 且含档位/ERP/仓位建议",
+      "actual": "89KB，区块命中 ['档位', 'ERP', '仓位建议']",
+      "verdict": "PASS",
+      "evidence": "docs/report.html"
+    },
+    {
+      "layer": "L5",
+      "id": "L5-1",
+      "name": "目标价范围",
+      "expected": "远端可读",
+      "actual": "读取失败",
+      "verdict": "SKIP",
+      "evidence": "仓库私有/raw 不可达，需配置 FD_GH_TOKEN"
+    },
+    {
+      "layer": "L5",
+      "id": "L5-2",
+      "name": "提醒每日一次",
+      "expected": "远端可读",
+      "actual": "读取失败",
+      "verdict": "SKIP",
+      "evidence": "仓库私有/raw 不可达，需配置 FD_GH_TOKEN"
+    },
+    {
+      "layer": "L5",
+      "id": "L5-3",
+      "name": "MA20 提示",
+      "expected": "仅翻转日出现",
+      "actual": "本期未验（需日报正文）",
+      "verdict": "SKIP",
+      "evidence": "跨仓库，取日报 report.md 才可验"
+    },
+    {
+      "layer": "L5",
+      "id": "L5-4",
+      "name": "下游可读",
+      "expected": "etf_price_adj 落后 ≤1 交易日",
+      "actual": "最新 2026-11-13（2 交易日）",
+      "verdict": "WARN",
+      "evidence": "基金日报 MA20 依赖此文件"
+    },
+    {
+      "layer": "S",
+      "id": "S-1",
+      "name": "独立源抽查",
+      "expected": "同日期收盘价差 ≤0.6%（ETF ≤1.0%）",
+      "actual": "通过 6 / 超差 0 / 未验 0",
+      "verdict": "PASS",
+      "evidence": "超差 []；未验 []"
+    }
+  ]
+}
