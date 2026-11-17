@@ -1,24 +1,21 @@
 {
-  "generated_at": "2026-11-16T10:38:25.361279",
+  "generated_at": "2026-11-17T06:59:23.882179",
   "results": [
     {
       "label": "QQQ_PE_TODAY",
       "fresh": true,
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:00.996087"
+      "checked_at": "2026-11-17T06:57:52.358229"
     },
     {
       "label": "ERP-000300",
-      "path": "./data/erp_000300.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:10.509418"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.326857"
     },
     {
       "label": "PE数值-000300",
@@ -28,14 +25,11 @@
     },
     {
       "label": "ERP-000688",
-      "path": "./data/erp_000688.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:12.524612"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.326865"
     },
     {
       "label": "PE数值-000688",
@@ -45,14 +39,11 @@
     },
     {
       "label": "ERP-000922",
-      "path": "./data/erp_000922.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:14.525330"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.326867"
     },
     {
       "label": "PE数值-000922",
@@ -62,14 +53,11 @@
     },
     {
       "label": "ERP-000015",
-      "path": "./data/erp_000015.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:16.575959"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.326869"
     },
     {
       "label": "PE数值-000015",
@@ -79,14 +67,11 @@
     },
     {
       "label": "ERP-399989",
-      "path": "./data/erp_399989.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:18.338073"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.326871"
     },
     {
       "label": "PE数值-399989",
@@ -96,14 +81,11 @@
     },
     {
       "label": "ERP-931071",
-      "path": "./data/erp_931071.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:20.026031"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.326873"
     },
     {
       "label": "PE数值-931071",
@@ -113,14 +95,11 @@
     },
     {
       "label": "ERP-000069",
-      "path": "./data/erp_000069.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:21.986696"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.326874"
     },
     {
       "label": "PE数值-000069",
@@ -130,14 +109,11 @@
     },
     {
       "label": "ERP-930781",
-      "path": "./data/erp_930781.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:24.027020"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.326876"
     },
     {
       "label": "PE数值-930781",
@@ -147,14 +123,11 @@
     },
     {
       "label": "ERP-399975",
-      "path": "./data/erp_399975.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:25.783737"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.326878"
     },
     {
       "label": "PE数值-399975",
@@ -164,14 +137,11 @@
     },
     {
       "label": "ERP-399967",
-      "path": "./data/erp_399967.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:27.638862"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454430"
     },
     {
       "label": "PE数值-399967",
@@ -181,14 +151,11 @@
     },
     {
       "label": "ERP-931066",
-      "path": "./data/erp_931066.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:29.344340"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454432"
     },
     {
       "label": "PE数值-931066",
@@ -198,14 +165,11 @@
     },
     {
       "label": "ERP-930794",
-      "path": "./data/erp_930794.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:31.050735"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454434"
     },
     {
       "label": "PE数值-930794",
@@ -215,14 +179,11 @@
     },
     {
       "label": "ERP-930598",
-      "path": "./data/erp_930598.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:32.720401"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454435"
     },
     {
       "label": "PE数值-930598",
@@ -232,14 +193,11 @@
     },
     {
       "label": "ERP-000819",
-      "path": "./data/erp_000819.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:34.401357"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454442"
     },
     {
       "label": "PE数值-000819",
@@ -249,14 +207,11 @@
     },
     {
       "label": "ERP-950125",
-      "path": "./data/erp_950125.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:36.456558"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454443"
     },
     {
       "label": "PE数值-950125",
@@ -266,14 +221,11 @@
     },
     {
       "label": "ERP-931637",
-      "path": "./data/erp_931637.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:38.237075"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454445"
     },
     {
       "label": "PE数值-931637",
@@ -283,14 +235,11 @@
     },
     {
       "label": "ERP-399986",
-      "path": "./data/erp_399986.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:39.908942"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454447"
     },
     {
       "label": "PE数值-399986",
@@ -300,14 +249,11 @@
     },
     {
       "label": "ERP-930633",
-      "path": "./data/erp_930633.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:41.587966"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454449"
     },
     {
       "label": "PE数值-930633",
@@ -317,14 +263,11 @@
     },
     {
       "label": "ERP-931946",
-      "path": "./data/erp_931946.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:43.296668"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454450"
     },
     {
       "label": "PE数值-931946",
@@ -338,10 +281,10 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:38:19.980213",
+      "checked_at": "2026-11-17T06:59:19.755029",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
@@ -350,10 +293,10 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:38:25.354356",
+      "checked_at": "2026-11-17T06:59:23.876293",
       "reason_prefix": "按文件修改时间校验（无日期列）"
     },
     {
@@ -362,10 +305,10 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-13",
-      "staleness_days": 3,
+      "last_date": "2026-11-16",
+      "staleness_days": 1,
       "reason": "",
-      "checked_at": "2026-11-16T10:38:25.354410"
+      "checked_at": "2026-11-17T06:59:23.876358"
     },
     {
       "label": "ETF净值序列",
@@ -373,10 +316,10 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-13",
-      "staleness_days": 3,
+      "last_date": "2026-11-16",
+      "staleness_days": 1,
       "reason": "",
-      "checked_at": "2026-11-16T10:38:25.357782"
+      "checked_at": "2026-11-17T06:59:23.879407"
     },
     {
       "label": "基准指数涨跌幅序列",
@@ -385,41 +328,41 @@
       "level": "ok",
       "kind": "",
       "last_date": "2026-11-16",
-      "staleness_days": 0,
+      "staleness_days": 1,
       "reason": "",
-      "checked_at": "2026-11-16T10:38:25.359448"
+      "checked_at": "2026-11-17T06:59:23.880682"
     },
     {
       "label": "FRED-US10Y",
       "fresh": true,
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:06.446739"
+      "checked_at": "2026-11-17T06:58:03.272075"
     },
     {
       "label": "FRED-FR10Y",
       "fresh": true,
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:06.716500"
+      "checked_at": "2026-11-17T06:58:03.588165"
     },
     {
       "label": "FRED-DE10Y",
       "fresh": true,
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:06.955957"
+      "checked_at": "2026-11-17T06:58:03.759695"
     },
     {
       "label": "FRED-JP10Y",
       "fresh": true,
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:07.240908"
+      "checked_at": "2026-11-17T06:58:03.937584"
     },
     {
       "label": "ERP-SPY",
@@ -427,16 +370,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:25.823781"
+      "checked_at": "2026-11-17T06:58:05.355457"
     },
     {
       "label": "PE数值-SPY",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-16T10:36:25.829602"
+      "checked_at": "2026-11-17T06:58:05.359730"
     },
     {
       "label": "ERP-QQQ",
@@ -444,16 +387,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:25.860414"
+      "checked_at": "2026-11-17T06:58:05.382425"
     },
     {
       "label": "PE数值-QQQ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-16T10:36:25.865371"
+      "checked_at": "2026-11-17T06:58:05.386116"
     },
     {
       "label": "ERP-EWQ",
@@ -461,16 +404,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:25.880156"
+      "checked_at": "2026-11-17T06:58:05.397002"
     },
     {
       "label": "PE数值-EWQ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-16T10:36:25.883153"
+      "checked_at": "2026-11-17T06:58:05.399225"
     },
     {
       "label": "ERP-EWG",
@@ -478,16 +421,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:25.898553"
+      "checked_at": "2026-11-17T06:58:05.410508"
     },
     {
       "label": "PE数值-EWG",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-16T10:36:25.901771"
+      "checked_at": "2026-11-17T06:58:05.412687"
     },
     {
       "label": "ERP-EWJ",
@@ -495,16 +438,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:25.916990"
+      "checked_at": "2026-11-17T06:58:05.423128"
     },
     {
       "label": "PE数值-EWJ",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-16T10:36:25.920259"
+      "checked_at": "2026-11-17T06:58:05.425247"
     },
     {
       "label": "ERP-EEM",
@@ -512,16 +455,16 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:36:25.955129"
+      "checked_at": "2026-11-17T06:58:05.450248"
     },
     {
       "label": "PE数值-EEM",
       "stale_flag": false,
       "stale_note": "",
-      "checked_at": "2026-11-16T10:36:25.960594"
+      "checked_at": "2026-11-17T06:58:05.454161"
     },
     {
       "label": "ETF前复权价格序列",
@@ -529,21 +472,18 @@
       "fresh": true,
       "level": "ok",
       "kind": "",
-      "last_date": "2026-11-16",
+      "last_date": "2026-11-17",
       "staleness_days": 0,
       "reason": "",
-      "checked_at": "2026-11-16T10:38:25.356426"
+      "checked_at": "2026-11-17T06:59:23.878233"
     },
     {
       "label": "ERP-980032",
-      "path": "./data/erp_980032.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:44.478433"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454452"
     },
     {
       "label": "PE数值-980032",
@@ -553,14 +493,11 @@
     },
     {
       "label": "ERP-600585",
-      "path": "./data/erp_600585.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:36:54.751829"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454453"
     },
     {
       "label": "PE数值-600585",
@@ -570,14 +507,11 @@
     },
     {
       "label": "ERP-601006",
-      "path": "./data/erp_601006.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:37:01.242146"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454455"
     },
     {
       "label": "PE数值-601006",
@@ -587,23 +521,172 @@
     },
     {
       "label": "ERP-600600",
-      "path": "./data/erp_600600.csv",
-      "fresh": true,
-      "level": "ok",
-      "kind": "",
-      "last_date": "2026-11-16",
-      "staleness_days": 0,
-      "reason": "",
-      "checked_at": "2026-11-16T10:37:05.348033"
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454456"
     },
     {
       "label": "PE数值-600600",
       "stale_flag": false,
       "stale_note": "",
       "checked_at": "2026-11-16T10:37:05.352995"
+    },
+    {
+      "label": "ERP-HSTECH",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454425"
+    },
+    {
+      "label": "ERP-002327",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454458"
+    },
+    {
+      "label": "ERP-603833",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454459"
+    },
+    {
+      "label": "ERP-603365",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454460"
+    },
+    {
+      "label": "ERP-600987",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454462"
+    },
+    {
+      "label": "ERP-600612",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454463"
+    },
+    {
+      "label": "ERP-002555",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454465"
+    },
+    {
+      "label": "ERP-603444",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454466"
+    },
+    {
+      "label": "ERP-600398",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454467"
+    },
+    {
+      "label": "ERP-603277",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454469"
+    },
+    {
+      "label": "ERP-603886",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454471"
+    },
+    {
+      "label": "ERP-603511",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454472"
+    },
+    {
+      "label": "ERP-002027",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454474"
+    },
+    {
+      "label": "ERP-002345",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454475"
+    },
+    {
+      "label": "ERP-000848",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454476"
+    },
+    {
+      "label": "ERP-601928",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454478"
+    },
+    {
+      "label": "ERP-002563",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454479"
+    },
+    {
+      "label": "ERP-002737",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454481"
+    },
+    {
+      "label": "ERP-603515",
+      "fresh": false,
+      "last_date": null,
+      "staleness_days": null,
+      "reason": "国债CN10Y未获取，本次未更新",
+      "checked_at": "2026-11-17T06:58:05.454482"
     }
   ],
-  "stale_count": 3,
+  "stale_count": 45,
   "error_count": 0,
   "warn_count": 0
 }
