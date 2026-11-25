@@ -10,6 +10,12 @@ PUSHPLUS_TOKEN="${PUSHPLUS_TOKEN:-5bffdca861424c56ab8a28b10f29a238}"
 
 push_alert() {
   local title="$1" content="$2" resp code
+  # 自检/演练：ALERT_DRY_RUN=1 时只落日志，不真发（避免测试消息打扰真人）
+  if [ "${ALERT_DRY_RUN:-0}" = "1" ]; then
+    mkdir -p "$(dirname "$ALERT_FAIL_LOG")"
+    printf '%s | DRY_RUN 未发送 | 标题=%s | 内容=%s\n' "$(date '+%F %T')" "$title" "$content" >> "${ALERT_FAIL_LOG}.dryrun"
+    return 0
+  fi
   resp=$(curl -s -m 15 -X POST "https://www.pushplus.plus/send" \
     -H "Content-Type: application/json" \
     -d "{\"token\":\"$PUSHPLUS_TOKEN\",\"title\":\"$title\",\"content\":\"$content\",\"template\":\"txt\"}" 2>/dev/null)

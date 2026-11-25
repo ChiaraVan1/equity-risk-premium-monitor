@@ -12,6 +12,9 @@ mkdir -p "$LOG_DIR"
 . "$SCRIPT_DIR/notify.sh"
 
 log() { echo "$*" >> "$LOG_FILE"; }
+# 告警文案统一带上仓库路径与冲突文件，避免收到"某处冲突"却不知道是哪
+cf_text() { conflicts | paste -sd' ' -; }
+where() { echo "$(basename "$REPO_DIR")@$(git -C "$REPO_DIR" rev-parse --short HEAD)"; }
 conflicts() { git -C "$REPO_DIR" diff --name-only --diff-filter=U; }
 # 冲突路径是否全在 data/ 下（只有这些是脚本自动生成、可安全取远端版本）
 only_data_conflicts() {
@@ -40,13 +43,14 @@ log "===== $(date '+%F %H:%M:%S') 开始拉取云端数据 ====="
 
 # 1) 早就在冲突状态（上次遗留，正是 11-12~11-25 卡住 13 天的情形）
 if [ -n "$(conflicts)" ]; then
-  log "⚠️ 拉取前已存在未解决冲突："
+  CF=$(cf_text)
+  log "⚠️ 拉取前已存在未解决冲突：$CF"
   conflicts | sed 's/^/    /' >> "$LOG_FILE"
   if only_data_conflicts && auto_resolve_data_conflicts; then
     log "✅ 冲突文件均在 data/ 下，已按远端版本自动清理并提交"
   else
     log "❌ 冲突涉及 data/ 以外的文件，需人工处理"
-    push_alert "ERP每日拉取: 仓库有冲突" "冲突涉及非 data/ 文件，需人工处理，本地数据可能停更" || true
+    push_alert "ERP每日拉取: 仓库有冲突" "冲突涉及非 data/ 文件：$CF。需人工处理，本地数据可能停更" || true
     exit 2
   fi
 fi
@@ -55,11 +59,12 @@ fi
 if ! git pull --rebase --autostash origin main >> "$LOG_FILE" 2>&1; then
   # rebase 回放时再撞冲突：data/ 内的自动取远端并继续，其余一律中止并告警
   if rebase_running && only_data_conflicts; then
-    log "⚠️ rebase 途中冲突（全在 data/），按远端版本处理："
+    CF=$(cf_text)
+    log "⚠️ rebase 途中冲突（全在 data/），按远端版本处理：$CF"
     conflicts | sed 's/^/    /' >> "$LOG_FILE"
     if auto_resolve_data_conflicts && GIT_EDITOR=true git rebase --continue >> "$LOG_FILE" 2>&1; then
       log "✅ rebase 冲突已自动清理并继续"
-      push_alert "ERP每日拉取: 冲突已自动清理" "rebase 途中 data/ 冲突已按远端覆盖后继续；非预期请查看日志" || true
+      push_alert "ERP每日拉取: 冲突已自动清理" "rebase 途中冲突：$CF 已按远端 origin/main 覆盖并继续，未提交改动丢弃；如非预期看 logs/dailypull_$(TZ=Asia/Shanghai date +%F).log" || true
     else
       git rebase --abort >/dev/null 2>&1 || true
       log "❌ 自动清理后 rebase 仍未通过"
@@ -76,15 +81,16 @@ fi
 
 # 3) autostash 回弹时可能产生新冲突
 if [ -n "$(conflicts)" ]; then
-  log "⚠️ 拉取后出现冲突（autostash 回弹）："
+  CF=$(cf_text)
+  log "⚠️ 拉取后出现冲突（autostash 回弹）：$CF"
   conflicts | sed 's/^/    /' >> "$LOG_FILE"
   if only_data_conflicts && auto_resolve_data_conflicts; then
     log "✅ 冲突文件均在 data/ 下，已按远端版本自动清理"
-    push_alert "ERP每日拉取: 冲突已自动清理" "autostash 撞冲突，data/ 文件已按远端覆盖；本地未提交改动丢弃，如非预期请查日志" || true
+    push_alert "ERP每日拉取: 冲突已自动清理" "autostash 回弹冲突：$CF。已按远端 origin/main 覆盖，本地未提交改动丢弃；如非预期看 logs/dailypull_$(TZ=Asia/Shanghai date +%F).log" || true
     exit 0
   fi
   log "❌ 冲突涉及 data/ 以外的文件，需人工处理"
-  push_alert "ERP每日拉取: 拉取后冲突" "autostash 回弹出冲突且涉及非 data/ 文件，需人工处理" || true
+  push_alert "ERP每日拉取: 拉取后冲突" "autostash 回弹出冲突且涉及非 data/ 文件：$CF。需人工处理" || true
   exit 2
 fi
 
