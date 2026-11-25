@@ -43,6 +43,7 @@ STATUS.md — 跨 session 运行记忆
 | 2026-11-10 CST | 新增 `backtest_stoploss.py`、`backtest_grid.py`，结论：不设价格止损、维持 5% 间距；只作规则体检，不接日报 |
 | 2026-11-10 CST | 按投资规则重构：删热榜人气信号；仓位改「ERP 分位 → 档位 → 一档定额」；减仓/清仓/止盈不再产出（summary 强制 level 0） |
 | 2026-11-10 CST | ETF 执行质量删价格/量背离与资金加速度，成交额分位改归 A 段下单成本口径；README 清理停用模块 |
+| 2026-11-25 17:15 CST | 告警链路加固：新增 `scripts/notify.sh`（校验 PushPlus 返回体 code，非 200 写 `logs/alert_delivery_fail.log` + 桌面通知兜底）；新增 `scripts/dailypull.sh` 替代 plist 内联命令（冲突必告警，`data/` 内冲突自动取远端版本后继续，非 `data/` 冲突 exit 2 交人工）。实测：data 冲突自动清理 exit 0、README 冲突 exit 2、无效令牌 code=903 被捕获 |
 | 2026-11-25 17:20 CST | 本地抓取任务真正停用：11-09 只做了 unload、plist 仍留在 LaunchAgents，重启后被自动重载复活，11-25 17:00 撞上 11-12 `git stash pop` 残留的 5 个 UU 冲突并推「工作区冲突」假告警；已 bootout 并把 plist 移到 `~/Library/LaunchAgents/_disabled/`，冲突按「数据文件以远端为准」清掉，前复权仍由云端 18:30 产出（实测已到 11-24） |
 | 2026-11-09 14:55 CST | 前复权改云端产出：入 `QUANTDASH_API_KEY` + quantdash 依赖，`etf_price_adj.csv` 补到 11-09；本机 `fetch_and_push.sh` 停用，云端成唯一写入方 |
 | 2026-11-09 13:10 CST | 价格源按新鲜度选（前复权滞后 >5 交易日回退未复权并标注）；价格过期时减仓/止盈/清仓降为「信号暂停」；新鲜度按内容日期校验，error/warn 两级 |
