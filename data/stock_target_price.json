@@ -1,0 +1,400 @@
+{
+  "updated": "2026-11-17",
+  "source": "local",
+  "fetched_at": "2026-11-27 11:00:35",
+  "method": "13年累计分红÷总股本（岭南大肥牛分红内在价值法），锚定13年线；10/15年上下沿见对照表底稿",
+  "stocks": {
+    "601566": {
+      "name": "九牧王",
+      "target": 5.7,
+      "target_old": 5.7,
+      "target_old_date": "2026-09-17",
+      "grade": "无新版预测"
+    },
+    "603587": {
+      "name": "地素时尚",
+      "target": 10.15,
+      "target_old": 8.1,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "002832": {
+      "name": "比音勒芬",
+      "target": 15.76,
+      "target_old": 16.0,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "600177": {
+      "name": "雅戈尔",
+      "target": 6.06,
+      "target_old": 5.7,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002563": {
+      "name": "森马服饰",
+      "target": 4.83,
+      "target_old": 4.6,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "600987": {
+      "name": "航民股份",
+      "target": 6.17,
+      "target_old": 6.1,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002327": {
+      "name": "富安娜",
+      "target": 6.0,
+      "target_old": 6.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603365": {
+      "name": "水星家纺",
+      "target": 14.89,
+      "target_old": 14.6,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603511": {
+      "name": "爱慕股份",
+      "target": 8.66,
+      "target_old": 7.5,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "600398": {
+      "name": "海澜之家",
+      "target": 5.2,
+      "target_old": 5.2,
+      "target_old_date": "2026-09-17",
+      "grade": "无新版预测"
+    },
+    "002003": {
+      "name": "伟星股份",
+      "target": 7.99,
+      "target_old": 6.8,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002293": {
+      "name": "罗莱生活",
+      "target": 7.79,
+      "target_old": 8.3,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002543": {
+      "name": "万和电气",
+      "target": 5.0,
+      "target_old": 5.0,
+      "target_old_date": "2026-09-17",
+      "grade": "无新版预测"
+    },
+    "002884": {
+      "name": "凌霄泵业",
+      "target": 10.89,
+      "target_old": 10.9,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "600261": {
+      "name": "阳光照明",
+      "target": 2.25,
+      "target_old": 2.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002508": {
+      "name": "老板电器",
+      "target": 10.37,
+      "target_old": 12.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603515": {
+      "name": "欧普照明",
+      "target": 11.44,
+      "target_old": 11.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603277": {
+      "name": "银都股份",
+      "target": 8.14,
+      "target_old": 9.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "003006": {
+      "name": "百亚股份",
+      "target": 8.14,
+      "target_old": 7.0,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "603605": {
+      "name": "珀莱雅",
+      "target": 32.83,
+      "target_old": 31.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "605009": {
+      "name": "豪悦护理",
+      "target": 13.95,
+      "target_old": 14.0,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "600897": {
+      "name": "厦门空港",
+      "target": 9.59,
+      "target_old": 9.0,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "603565": {
+      "name": "中谷物流",
+      "target": 8.57,
+      "target_old": 7.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002991": {
+      "name": "甘源食品",
+      "target": 28.0,
+      "target_old": 28.0,
+      "target_old_date": "2026-09-17",
+      "grade": "无新版预测"
+    },
+    "000848": {
+      "name": "承德露露",
+      "target": 6.67,
+      "target_old": 6.5,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603697": {
+      "name": "有友食品",
+      "target": 7.01,
+      "target_old": 6.0,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "603886": {
+      "name": "元祖股份",
+      "target": 10.0,
+      "target_old": 8.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603369": {
+      "name": "今世缘",
+      "target": 19.25,
+      "target_old": 19.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002507": {
+      "name": "涪陵榨菜",
+      "target": 8.67,
+      "target_old": 7.7,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "603043": {
+      "name": "广州酒家",
+      "target": 11.42,
+      "target_old": 9.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603156": {
+      "name": "养元饮品",
+      "target": 18.25,
+      "target_old": 18.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "600598": {
+      "name": "北大荒",
+      "target": 7.87,
+      "target_old": 7.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "605338": {
+      "name": "巴比食品",
+      "target": 14.58,
+      "target_old": 12.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "600585": {
+      "name": "海螺水泥",
+      "target": 16.61,
+      "target_old": 13.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603833": {
+      "name": "欧派家居",
+      "target": 25.76,
+      "target_old": 28.0,
+      "target_old_date": "2026-09-17",
+      "grade": "区间外推13年·下限(线性1.30)"
+    },
+    "603816": {
+      "name": "顾家家居",
+      "target": 16.85,
+      "target_old": 16.0,
+      "target_old_date": "2026-09-17",
+      "grade": "区间外推13年·下限(线性1.30)"
+    },
+    "600415": {
+      "name": "小商品城",
+      "target": 8.74,
+      "target_old": 8.5,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "600031": {
+      "name": "三一重工",
+      "target": 9.79,
+      "target_old": 8.7,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "600219": {
+      "name": "南山铝业",
+      "target": 2.61,
+      "target_old": 2.6,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002737": {
+      "name": "葵花药业",
+      "target": 9.3,
+      "target_old": 9.3,
+      "target_old_date": "2026-09-17",
+      "grade": "无新版预测"
+    },
+    "600085": {
+      "name": "同仁堂",
+      "target": 13.13,
+      "target_old": 12.4,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "600062": {
+      "name": "华润双鹤",
+      "target": 6.71,
+      "target_old": 6.7,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002275": {
+      "name": "桂林三金",
+      "target": 7.97,
+      "target_old": 8.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002287": {
+      "name": "奇正藏药",
+      "target": 11.54,
+      "target_old": 11.0,
+      "target_old_date": "2026-09-17",
+      "grade": "偏乐观"
+    },
+    "000999": {
+      "name": "华润三九",
+      "target": 15.62,
+      "target_old": 15.3,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "600211": {
+      "name": "西藏药业",
+      "target": 24.84,
+      "target_old": 26.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "600750": {
+      "name": "华润江中",
+      "target": 18.08,
+      "target_old": 17.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "600612": {
+      "name": "老凤祥",
+      "target": 29.0,
+      "target_old": 29.0,
+      "target_old_date": "2026-09-17",
+      "grade": "无新版预测"
+    },
+    "600916": {
+      "name": "中国黄金",
+      "target": 5.42,
+      "target_old": 5.0,
+      "target_old_date": "2026-09-17",
+      "grade": "区间外推13年·下限(线性1.30)"
+    },
+    "002867": {
+      "name": "周大生",
+      "target": 8.39,
+      "target_old": 8.4,
+      "target_old_date": "2026-09-17",
+      "grade": "区间外推13年·下限(线性1.30)"
+    },
+    "002345": {
+      "name": "潮宏基",
+      "target": 6.75,
+      "target_old": 6.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002555": {
+      "name": "三七互娱",
+      "target": 13.11,
+      "target_old": 14.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603444": {
+      "name": "吉比特",
+      "target": 277.78,
+      "target_old": 230.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "002027": {
+      "name": "分众传媒",
+      "target": 4.57,
+      "target_old": 4.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "601928": {
+      "name": "凤凰传媒",
+      "target": 7.47,
+      "target_old": 7.5,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    },
+    "603899": {
+      "name": "晨光股份",
+      "target": 16.29,
+      "target_old": 14.0,
+      "target_old_date": "2026-09-17",
+      "grade": "中性"
+    }
+  }
+}

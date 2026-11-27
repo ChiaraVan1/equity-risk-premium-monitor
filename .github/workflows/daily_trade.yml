@@ -84,6 +84,13 @@ jobs:
       - name: Refresh portfolio total
         run: python3 tools/portfolio_snapshot.py || echo "刷新失败，沿用 Secret 还原的基准"
       # 5. 执行主入口（内部自动调度所有数据准备脚本）
+      # 6.x 合理买入价正本：跨仓读 fund-daily-report/target_price/config.json
+      # 失败时沿用上次缓存并 WARN，不阻断主流程（价位层本身是非决策提示）
+      - name: Fetch stock target price
+        env:
+          FD_GH_TOKEN: ${{ secrets.FD_GH_TOKEN }}
+        run: python3 fetch/stock_target_price.py
+
       - name: Prepare Data and Analyze
         env:
           SKIP_ETF_METRICS: ${{ steps.check_local.outputs.skip }}

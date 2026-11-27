@@ -32,6 +32,7 @@ from analysis.dividend_yield_analysis import build_dividend_yield_block
 from analysis.etf_quality import build_etf_quality_block
 from analysis.ma_position import build_ma_position_block
 from grid.grid_plan import build_grid_block
+from report.target_price import build_target_price_suffix
 
 
 def describe_zone(win_rate, is_stock=False):
@@ -473,15 +474,25 @@ def analyze_and_suggest(code, name, prepared_data, summary_list=None):
         except Exception:
             dividend_value_block = ""
 
+    # 价位层（2026-11-27）：个股合理买入价，只并列提示，不覆盖分位动作
+    target_suffix = ""
+    if is_stock and price_series is not None and len(price_series):
+        try:
+            target_suffix = build_target_price_suffix(
+                code, float(price_series.iloc[-1]), zone_pct_num
+            )
+        except Exception:
+            target_suffix = ""
+
     # 单只 6% 仓位上限检查：分母＝全账户总资产（月度复盘解析），分子＝该只市值
     cap_block = build_cap_block(code) if holding else ""
 
     if holding:
-        md = f"""{header_block}{position_block}{cap_block}{grid_block}{dividend_value_block}{unified_block}{trend_block}{sentiment_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
+        md = f"""{header_block}{position_block}{cap_block}{grid_block}{dividend_value_block}{target_suffix}{unified_block}{trend_block}{sentiment_block}{dividend_block}{ma_position_block}{etf_block}{shiller_block}"""
     else:
         # 观察池：不逐只展开模块，只保留一行估值摘要，降低报告长度
         md = (f"{header_block}\n\n"
-              f"**观察池 · 分位 {zone_pct_num:.0f}% · ERP {current_erp:.2%} → {tier}（{action_text}）**\n")
+              f"**观察池 · 分位 {zone_pct_num:.0f}% · ERP {current_erp:.2%} → {tier}（{action_text}）**{target_suffix}\n")
 
     # 汇总信息用于仪表盘
     if summary_list is not None:

@@ -76,3 +76,11 @@ STATUS.md — 跨 session 运行记忆
 | 早期 | 修 SPY 全量重建冲掉增量数据；修胜率分位未剔空值偏低；修红利两只 ETF 代码重复映射 |
 
 > launchd / plist 相关记录仅作审计轨迹，已停用。
+
+### 2026-11-27 个股「合理买入价」接入报告（价位层）
+- 正本唯一：fund-daily-report/target_price/config.json（56 只，updated 2026-11-17），ERP 只读不维护第二份。
+- 新增 `fetch/stock_target_price.py`：三级来源（本地 → raw → GitHub API 需 FD_GH_TOKEN），失败沿用缓存并 WARN，无缓存才 exit 1；产出 `data/stock_target_price.json`。
+- 新增 `report/target_price.py`：`build_target_price_suffix(code, price, zone_pct)` → 行尾并列提示（已到价/未到价/分位偏便宜但高于买入价 ⚠️），无目标价返回空串。
+- `erp_position.py`：个股（is_stock）在观察池摘要行与持仓 md 尾部追加该后缀；动作层完全不变，到价判定唯一＝现价≤买入价，价用不复权收盘（erp_*.csv 的 IndexClose）。
+- `.github/workflows/daily_trade.yml`：Prepare 之前新增 Fetch stock target price（注入 FD_GH_TOKEN）。
+- 未做：微信推送不含目标价（按批准口径）；非持仓 ETF 价位层待定口径；不做目标价反推分位阈值。
