@@ -8,7 +8,8 @@
 
 口径
   第 1 档 = anchor 本身（首笔买入价）
-  第 n 档 = anchor × (1 − 5% × (n−1))，即 95% / 90% / 85% / 80%
+  第 n 档 = anchor × (1 − 档距 × (n−1))；档距默认 10% → 100% / 90% / 80% / 70% / 60%
+  档数不写死，由「最深档 = 成本 −40%」反推，换档距时档数自动跟着变
   anchor 永不改；清仓后重算 anchor。下一买点由「现价与 anchor 的距离」反推，不记「已买几档」
 
 用法
@@ -24,7 +25,19 @@ STATE = os.path.join(BASE, "data", "grid_state.csv")
 PRICE = os.path.join(BASE, "data", "etf_price.csv")
 TIPS = os.path.join(BASE, "data", "tips_10y.csv")
 OUT = os.path.expanduser("~/Desktop/grid_plan.md")
-STEP = 5.0
+# 档距：东财条件单实设 10%（2026-11 起；此前系统按 5%）。可用 GRID_STEP 临时覆盖。
+STEP = 10.0
+# 最深档 = 成本 × (1 − DEPTH_PCT%)，跌破即报「档位用尽」，不再往下排
+DEPTH_PCT = 40.0
+
+
+def cur_step():
+    return float(os.environ.get("GRID_STEP", STEP))
+
+
+def level_count(step):
+    """档数（含第 1 档＝成本本身），使最深一档刚好落在 −DEPTH_PCT%"""
+    return int(round(DEPTH_PCT / step)) + 1
 
 
 def _stock_price(code):
@@ -63,15 +76,16 @@ def build():
 
         anchor = float(anchor)
         # 下一买点：从成本往下，找第一个低于现价的档位（不依赖「已买几档」）
+        step = cur_step()
         trig, nxt = None, None
-        for k in range(0, 8):
-            lvl = anchor * (1 - STEP * k / 100.0)
+        for k in range(level_count(step)):
+            lvl = anchor * (1 - step * k / 100.0)
             if price is None or lvl < price:
                 trig, nxt = lvl, k + 1
                 break
         gap = (trig / price - 1) * 100 if (trig and price) else None
         if trig is None:
-            note = "已跌破成本 40% 以上，档位用尽"
+            note = f"已跌破成本 {DEPTH_PCT:g}%，档位用尽"
         elif nxt == 1:
             note = "高于成本，跌回成本才加仓"
         else:
@@ -118,7 +132,7 @@ def _gold_context():
 
 
 def render(rows, asof):
-    lines = [f"# 档位表 · 截至 {asof}（ETF/个股/黄金同源，均为当日收盘价）", "",
+    lines = [f"# 档位表 · 截至 {asof}（档距 {cur_step():g}%，最深 −{DEPTH_PCT:g}%；当日收盘价）", "",
              "| 标的 | 成本 | 现价 | 相对成本 | 下一买点 | 还差 | 说明 |",
              "|---|---|---|---|---|---|---|"]
     for r in rows:

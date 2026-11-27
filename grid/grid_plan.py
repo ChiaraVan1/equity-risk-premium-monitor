@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""网格档位：按固定成本价 + 等差 5% 档位，算出"下一买点"。
+"""网格档位：按固定成本价 + 等差 10% 档位，算出"下一买点"。
 
 数据来源
   成本价：data/grid_state.csv（code, name, anchor）—— 本地手填；云端由 Secret GRID_STATE 还原
   现价：data/etf_price.csv 最后一个交易日（不复权实际价，与券商成本同口径）
 
 口径
-  第 1 档 = 成本价本身，第 n 档 = 成本 × (1 − 5%×(n−1))
+  第 1 档 = 成本价本身，第 n 档 = 成本 × (1 − 档距×(n−1))，档距默认 10%，最深档 −40%
   成本价冻结，成交不改锚；价格跌到哪条线就买哪档
 """
 
@@ -18,7 +18,16 @@ import pandas as pd
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 仓库根（本文件在 grid/ 下）
 STATE = os.path.join(BASE, "data", "grid_state.csv")
 PRICE = os.path.join(BASE, "data", "etf_price.csv")
-STEP = 5.0
+STEP = 10.0        # 东财条件单实设档距；可用 GRID_STEP 覆盖
+DEPTH_PCT = 40.0   # 最深档 = 成本 −40%，跌破即用尽
+
+
+def cur_step():
+    return float(os.environ.get("GRID_STEP", STEP))
+
+
+def level_count(step):
+    return int(round(DEPTH_PCT / step)) + 1
 
 _state_cache = None
 _price_cache = None
@@ -79,8 +88,9 @@ def next_buy_point(code):
     price = price_of(code)
     if not anchor or not price:
         return None
-    for k in range(0, 8):
-        level = anchor * (1 - STEP * k / 100.0)
+    step = cur_step()
+    for k in range(level_count(step)):
+        level = anchor * (1 - step * k / 100.0)
         if level < price:
             return level, k + 1, (level / price - 1) * 100
     return None
